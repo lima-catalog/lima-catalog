@@ -469,11 +469,12 @@ function openPreviewModal(template) {
     modalTitle.textContent = deriveDisplayName(template);
     modalPath.textContent = template.path;
     modalGithubLink.href = template.url;
+    modalGithubLink.textContent = template.url;
 
     // Show modal and loading state
     modal.style.display = 'flex';
-    modalLoading.style.display = 'block';
-    modalCode.style.display = 'none';
+    modalLoading.classList.remove('hidden');
+    modalCode.classList.add('hidden');
     document.body.style.overflow = 'hidden';
 
     // Fetch and display template content
@@ -506,58 +507,18 @@ async function fetchTemplateContent(template) {
 
         const content = await response.text();
 
-        // Apply syntax highlighting
-        modalCodeContent.innerHTML = highlightYAML(content);
+        // Apply syntax highlighting with highlight.js
+        modalCodeContent.textContent = content;
+        modalCodeContent.removeAttribute('data-highlighted');
+        hljs.highlightElement(modalCodeContent);
 
         // Show code, hide loading
-        modalLoading.style.display = 'none';
-        modalCode.style.display = 'block';
+        modalLoading.classList.add('hidden');
+        modalCode.classList.remove('hidden');
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
     }
-}
-
-// Basic YAML syntax highlighting
-function highlightYAML(yaml) {
-    // Escape HTML first
-    let html = yaml
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    // Split into lines for processing
-    const lines = html.split('\n');
-    const highlighted = lines.map(line => {
-        // Comments
-        if (line.trim().startsWith('#')) {
-            return `<span class="yaml-comment">${line}</span>`;
-        }
-
-        // Key-value pairs
-        line = line.replace(/^(\s*)([a-zA-Z_][a-zA-Z0-9_-]*)(\s*):/g, 
-            '$1<span class="yaml-key">$2</span>$3:');
-
-        // List items (dashes)
-        line = line.replace(/^(\s*)(-\s)/g, 
-            '$1<span class="yaml-dash">-</span> ');
-
-        // Strings in quotes
-        line = line.replace(/(&quot;[^&]*&quot;|'[^']*')/g, 
-            '<span class="yaml-string">$1</span>');
-
-        // Booleans
-        line = line.replace(/\b(true|false|yes|no|on|off)\b/gi, 
-            '<span class="yaml-boolean">$1</span>');
-
-        // Numbers
-        line = line.replace(/\b(\d+\.?\d*)\b/g, 
-            '<span class="yaml-number">$1</span>');
-
-        return line;
-    });
-
-    return highlighted.join('\n');
 }
 
 // Setup modal event listeners
