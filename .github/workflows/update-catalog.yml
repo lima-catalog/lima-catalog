@@ -35,7 +35,7 @@ jobs:
 
       - name: Run catalog collection
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CATALOG_TOKEN }}
           DATA_DIR: ./catalog-data
           INCREMENTAL: "true"
           ANALYZE: "true"
