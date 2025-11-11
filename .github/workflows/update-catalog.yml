@@ -38,6 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DATA_DIR: ./catalog-data
           INCREMENTAL: "true"
+          ANALYZE: "true"
         run: |
           # Copy existing data from data branch to enable incremental updates
           mkdir -p catalog-data
