@@ -2,6 +2,12 @@
 
 A tool to discover and catalog Lima VM templates from GitHub.
 
+## 🌐 Browse the Catalog
+
+**[View the Lima Template Catalog →](https://lima-catalog.github.io/lima-catalog/)**
+
+Browse 100+ templates with search, filtering, and categorization in a beautiful web interface.
+
 ## Overview
 
 This tool searches GitHub for Lima template files and collects metadata about them, their repositories, and maintainers. The data is stored in JSON Lines format for easy version control and minimal diffs.
