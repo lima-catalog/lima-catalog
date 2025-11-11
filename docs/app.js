@@ -168,20 +168,57 @@ function renderTemplates() {
     });
 }
 
+// Derive a nice display name from path if needed
+function deriveDisplayName(template) {
+    // If we have a proper display_name, use it
+    if (template.display_name) return template.display_name;
+    if (template.name) return template.name;
+
+    // Otherwise, derive from path
+    const path = template.path || '';
+    const filename = path.split('/').pop() || '';
+    const nameWithoutExt = filename.replace(/\.(yaml|yml)$/, '');
+
+    // Check if filename is generic
+    const genericNames = ['lima', 'template', 'config', 'default'];
+    if (genericNames.includes(nameWithoutExt.toLowerCase())) {
+        // Use parent directory name
+        const parts = path.split('/');
+        if (parts.length > 1) {
+            const parent = parts[parts.length - 2];
+            return formatName(parent);
+        }
+        // Fall back to repo name
+        const repoName = template.repo.split('/').pop();
+        return formatName(repoName);
+    }
+
+    return formatName(nameWithoutExt);
+}
+
+// Format a name to be more readable
+function formatName(name) {
+    return name
+        .replace(/[-_]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
 // Create template card
 function createTemplateCard(template) {
     const card = document.createElement('div');
     card.className = 'template-card';
 
     const repo = repositories.get(template.repo);
-    const displayName = template.display_name || template.name || template.path;
+    const displayName = deriveDisplayName(template);
     const description = template.short_description || (repo?.description || 'No description available');
 
     card.innerHTML = `
         <div class="template-header">
             <div class="template-title">
                 <h3 class="template-name">${escapeHtml(displayName)}</h3>
-                <div class="template-id">${escapeHtml(template.id)}</div>
+                <div class="template-id">${escapeHtml(template.path)}</div>
             </div>
             <span class="template-badge ${template.is_official ? 'official' : 'community'}">
                 ${template.is_official ? 'Official' : 'Community'}
@@ -190,6 +227,7 @@ function createTemplateCard(template) {
 
         <p class="template-description">${escapeHtml(description)}</p>
 
+        ${template.category || (template.images && template.images.length > 0) ? `
         <div class="template-meta">
             ${template.category ? `
                 <span class="template-category">
@@ -202,6 +240,7 @@ function createTemplateCard(template) {
                 </span>
             ` : ''}
         </div>
+        ` : ''}
 
         ${template.keywords && template.keywords.length > 0 ? `
             <div class="template-keywords">
