@@ -525,6 +525,19 @@ With 700+ templates, the original UI needed improvements for better discoverabil
 - **Repository metadata**: Added `default_branch` field to Repository type
 - **Automatic updates**: Next catalog run will populate default branch for all existing repositories
 
+**Lima 2.0 GitHub URL Scheme** ✅
+- **Shortest URLs**: Generates minimal `github:` scheme URLs for Lima 2.0
+  - Standard format: `github:owner/repo/path`
+  - Org repos (owner==repo): `github:owner//path`
+  - Automatic `.yaml` extension omission
+  - Default `.lima` filename handling
+- **Copy to clipboard**: One-click copy button with visual feedback
+- **Modal display**: Shows github: URL prominently under template name
+- **Smart generation**: `getGitHubSchemeURL()` function creates shortest valid URL
+- **Examples**:
+  - `github:lima-vm/lima/templates/fedora` → displays templates from lima-vm/lima repo
+  - `github:owner//config` → shorthand for org repos where owner==repo
+
 ### Future Enhancements 📋
 - **LLM-based descriptions**: Optional LLM integration for better template descriptions
 - **Time-based search segmentation**: Implement when queries approach 1000 result limit
