@@ -64,6 +64,25 @@ function parseJsonLines(text) {
         .map(line => JSON.parse(line));
 }
 
+// Get URL with default branch instead of commit SHA
+function getDefaultBranchURL(template) {
+    const repo = repositories.get(template.repo);
+    if (!repo || !repo.default_branch) {
+        return template.url; // Fallback to original URL
+    }
+
+    // Pattern: https://github.com/owner/repo/blob/COMMIT_SHA/path
+    const urlPattern = /^https:\/\/github\.com\/([^\/]+\/[^\/]+)\/blob\/([a-f0-9]{40})\/(.+)$/;
+    const match = template.url.match(urlPattern);
+
+    if (!match) {
+        return template.url; // Not a commit URL, return as-is
+    }
+
+    const [, repoPath, , filePath] = match;
+    return `https://github.com/${repoPath}/blob/${repo.default_branch}/${filePath}`;
+}
+
 // Get all keywords with counts from a specific template list
 function getKeywordCounts(templateList) {
     const counts = new Map();
@@ -468,8 +487,11 @@ function openPreviewModal(template) {
     // Set title and path
     modalTitle.textContent = deriveDisplayName(template);
     modalPath.textContent = template.path;
-    modalGithubLink.href = template.url;
-    modalGithubLink.textContent = template.url;
+
+    // Use default branch URL for display
+    const displayURL = getDefaultBranchURL(template);
+    modalGithubLink.href = displayURL;
+    modalGithubLink.textContent = displayURL;
 
     // Show modal and loading state
     modal.style.display = 'flex';
@@ -496,8 +518,11 @@ async function fetchTemplateContent(template) {
     const modalCodeContent = document.getElementById('modal-code-content');
 
     try {
+        // Use default branch URL for fetching latest content
+        const url = getDefaultBranchURL(template);
+
         // Convert GitHub blob URL to raw URL
-        let rawURL = template.url.replace('github.com', 'raw.githubusercontent.com');
+        let rawURL = url.replace('github.com', 'raw.githubusercontent.com');
         rawURL = rawURL.replace('/blob/', '/');
 
         const response = await fetch(rawURL);

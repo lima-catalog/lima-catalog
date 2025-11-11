@@ -36,18 +36,19 @@ func (m *MetadataCollector) CollectRepositoryMetadata(repoFullName string) (*typ
 	}
 
 	repository := &types.Repository{
-		ID:          repoFullName,
-		Owner:       owner,
-		Name:        repo,
-		Description: ghRepo.GetDescription(),
-		Topics:      ghRepo.Topics,
-		Stars:       ghRepo.GetStargazersCount(),
-		Forks:       ghRepo.GetForksCount(),
-		Watchers:    ghRepo.GetWatchersCount(),
-		Language:    ghRepo.GetLanguage(),
-		Homepage:    ghRepo.GetHomepage(),
-		IsFork:      ghRepo.GetFork(),
-		LastFetched: time.Now(),
+		ID:            repoFullName,
+		Owner:         owner,
+		Name:          repo,
+		Description:   ghRepo.GetDescription(),
+		Topics:        ghRepo.Topics,
+		Stars:         ghRepo.GetStargazersCount(),
+		Forks:         ghRepo.GetForksCount(),
+		Watchers:      ghRepo.GetWatchersCount(),
+		Language:      ghRepo.GetLanguage(),
+		DefaultBranch: ghRepo.GetDefaultBranch(),
+		Homepage:      ghRepo.GetHomepage(),
+		IsFork:        ghRepo.GetFork(),
+		LastFetched:   time.Now(),
 	}
 
 	if ghRepo.License != nil {

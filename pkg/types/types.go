@@ -28,23 +28,24 @@ type Template struct {
 
 // Repository represents a GitHub repository containing templates
 type Repository struct {
-	ID          string    `json:"id"`           // owner/repo
-	Owner       string    `json:"owner"`        // owner login
-	Name        string    `json:"name"`         // repo name
-	Description string    `json:"description"`  // repo description
-	Topics      []string  `json:"topics"`       // repo topics/keywords
-	Stars       int       `json:"stars"`        // stargazers count
-	Forks       int       `json:"forks"`        // forks count
-	Watchers    int       `json:"watchers"`     // watchers count
-	Language    string    `json:"language"`     // primary language
-	License     string    `json:"license"`      // license SPDX ID
-	CreatedAt   time.Time `json:"created_at"`   // repo creation date
-	UpdatedAt   time.Time `json:"updated_at"`   // last update date
-	PushedAt    time.Time `json:"pushed_at"`    // last push date
-	Homepage    string    `json:"homepage"`     // homepage URL
-	IsFork      bool      `json:"is_fork"`      // is this a fork?
-	Parent      string    `json:"parent"`       // parent repo if fork (owner/repo)
-	LastFetched time.Time `json:"last_fetched"` // when we fetched this data
+	ID            string    `json:"id"`             // owner/repo
+	Owner         string    `json:"owner"`          // owner login
+	Name          string    `json:"name"`           // repo name
+	Description   string    `json:"description"`    // repo description
+	Topics        []string  `json:"topics"`         // repo topics/keywords
+	Stars         int       `json:"stars"`          // stargazers count
+	Forks         int       `json:"forks"`          // forks count
+	Watchers      int       `json:"watchers"`       // watchers count
+	Language      string    `json:"language"`       // primary language
+	License       string    `json:"license"`        // license SPDX ID
+	DefaultBranch string    `json:"default_branch"` // default branch name (e.g., "main", "master")
+	CreatedAt     time.Time `json:"created_at"`     // repo creation date
+	UpdatedAt     time.Time `json:"updated_at"`     // last update date
+	PushedAt      time.Time `json:"pushed_at"`      // last push date
+	Homepage      string    `json:"homepage"`       // homepage URL
+	IsFork        bool      `json:"is_fork"`        // is this a fork?
+	Parent        string    `json:"parent"`         // parent repo if fork (owner/repo)
+	LastFetched   time.Time `json:"last_fetched"`   // when we fetched this data
 }
 
 // Organization represents a GitHub user or organization
