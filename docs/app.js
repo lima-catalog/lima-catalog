@@ -473,8 +473,8 @@ function openPreviewModal(template) {
 
     // Show modal and loading state
     modal.style.display = 'flex';
-    modalLoading.style.display = 'block';
-    modalCode.style.display = 'none';
+    modalLoading.classList.remove('hidden');
+    modalCode.classList.add('hidden');
     document.body.style.overflow = 'hidden';
 
     // Fetch and display template content
@@ -513,8 +513,8 @@ async function fetchTemplateContent(template) {
         hljs.highlightElement(modalCodeContent);
 
         // Show code, hide loading
-        modalLoading.style.display = 'none';
-        modalCode.style.display = 'block';
+        modalLoading.classList.add('hidden');
+        modalCode.classList.remove('hidden');
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
