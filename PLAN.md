@@ -531,8 +531,9 @@ With 700+ templates, the original UI needed improvements for better discoverabil
   - Org repos (owner==repo): `github:owner//path`
   - Automatic `.yaml` extension omission
   - Default `.lima` filename handling
-- **Copy to clipboard**: One-click copy button with visual feedback
-- **Modal display**: Shows github: URL prominently under template name
+- **Inline copy button**: Compact "Copy" button follows github: URL inline
+- **YAML copy button**: Top-right copy button in code preview to copy entire template
+- **Modal display**: Shows github: URL as second line under template name
 - **Smart generation**: `getGitHubSchemeURL()` function creates shortest valid URL
 - **Examples**:
   - `github:lima-vm/lima/templates/fedora` → displays templates from lima-vm/lima repo
