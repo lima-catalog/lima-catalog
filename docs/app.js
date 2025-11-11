@@ -98,10 +98,9 @@ function getCategoryCounts(templateList) {
 function renderKeywordCloud() {
     const cloud = document.getElementById('keyword-cloud');
 
-    // Get keywords from currently filtered templates (before applying keyword filter)
-    // This shows what keywords are available in the current selection
-    const baseFiltered = getBaseFilteredTemplates();
-    const keywords = getKeywordCounts(baseFiltered);
+    // Get keywords from currently filtered templates
+    // This shows what keywords are available in the current filtered selection
+    const keywords = getKeywordCounts(filteredTemplates);
 
     if (keywords.length === 0) {
         cloud.innerHTML = '<p style="color: var(--text-light); font-size: 0.875rem; padding: 0.5rem 0;">No additional keywords available</p>';
@@ -128,9 +127,8 @@ function renderKeywordCloud() {
 function renderCategoryList() {
     const list = document.getElementById('category-list');
 
-    // Get categories from currently filtered templates (before applying category filter)
-    const baseFiltered = getBaseFilteredTemplates();
-    const categories = getCategoryCounts(baseFiltered);
+    // Get categories from currently filtered templates
+    const categories = getCategoryCounts(filteredTemplates);
 
     if (categories.length === 0) {
         list.innerHTML = '<p style="color: var(--text-light); font-size: 0.875rem; padding: 0.5rem 0;">No categories available</p>';
@@ -237,35 +235,6 @@ function clearAllFilters() {
     updateSelectedKeywords();
     updateCategorySelection();
     filterAndRender();
-}
-
-// Get base filtered templates (search + type filters only, no keyword/category)
-// Used to populate keyword cloud and category list with available options
-function getBaseFilteredTemplates() {
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    const typeFilter = document.getElementById('type-filter').value;
-
-    return templates.filter(template => {
-        // Search filter
-        if (searchTerm) {
-            const searchText = [
-                template.name,
-                template.display_name,
-                template.short_description,
-                template.category,
-                ...(template.keywords || []),
-                ...(template.images || [])
-            ].join(' ').toLowerCase();
-
-            if (!searchText.includes(searchTerm)) return false;
-        }
-
-        // Type filter
-        if (typeFilter === 'official' && !template.is_official) return false;
-        if (typeFilter === 'community' && template.is_official) return false;
-
-        return true;
-    });
 }
 
 // Filter and render templates
