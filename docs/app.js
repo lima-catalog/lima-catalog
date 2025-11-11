@@ -509,15 +509,13 @@ function openPreviewModal(template) {
     currentModalTemplate = template;
     const modal = document.getElementById('preview-modal');
     const modalTitle = document.getElementById('modal-title');
-    const modalPath = document.getElementById('modal-path');
     const modalLoading = document.getElementById('modal-loading');
     const modalCode = document.getElementById('modal-code');
     const modalGithubLink = document.getElementById('modal-github-link');
     const modalGithubScheme = document.getElementById('modal-github-scheme');
 
-    // Set title and path
+    // Set title
     modalTitle.textContent = deriveDisplayName(template);
-    modalPath.textContent = template.path;
 
     // Set github: scheme URL
     const githubSchemeURL = getGitHubSchemeURL(template);
@@ -607,7 +605,7 @@ function setupModalEventListeners() {
 
             // Visual feedback
             const originalText = copyButton.textContent;
-            copyButton.textContent = '✓ Copied!';
+            copyButton.textContent = 'Copied!';
             copyButton.classList.add('copied');
 
             setTimeout(() => {
@@ -616,9 +614,9 @@ function setupModalEventListeners() {
             }, 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
-            copyButton.textContent = '✗ Failed';
+            copyButton.textContent = 'Failed';
             setTimeout(() => {
-                copyButton.textContent = '📋 Copy';
+                copyButton.textContent = 'Copy';
             }, 2000);
         }
     });
