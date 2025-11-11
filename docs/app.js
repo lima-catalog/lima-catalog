@@ -83,6 +83,36 @@ function getDefaultBranchURL(template) {
     return `https://github.com/${repoPath}/blob/${repo.default_branch}/${filePath}`;
 }
 
+// Generate shortest possible github: URL for Lima
+function getGitHubSchemeURL(template) {
+    // Parse the template.repo (format: "owner/repo")
+    const [owner, repo] = template.repo.split('/');
+    let path = template.path;
+
+    // Remove .yaml extension (Lima adds .yaml automatically, not .yml)
+    path = path.replace(/\.yaml$/, '');
+
+    // If path ends with .lima, remove it (default filename)
+    path = path.replace(/\/\.lima$/, '');
+
+    // If path is just .lima (root), can omit entirely
+    if (path === '.lima' || path === '') {
+        // For org repos (owner == repo), use shortest format
+        if (owner === repo) {
+            return `github:${owner}`;
+        }
+        return `github:${owner}/${repo}`;
+    }
+
+    // For org repos (owner == repo), use double slash shorthand
+    if (owner === repo) {
+        return `github:${owner}//${path}`;
+    }
+
+    // Standard format
+    return `github:${owner}/${repo}/${path}`;
+}
+
 // Get all keywords with counts from a specific template list
 function getKeywordCounts(templateList) {
     const counts = new Map();
@@ -479,14 +509,18 @@ function openPreviewModal(template) {
     currentModalTemplate = template;
     const modal = document.getElementById('preview-modal');
     const modalTitle = document.getElementById('modal-title');
-    const modalPath = document.getElementById('modal-path');
     const modalLoading = document.getElementById('modal-loading');
     const modalCode = document.getElementById('modal-code');
     const modalGithubLink = document.getElementById('modal-github-link');
+    const modalGithubScheme = document.getElementById('modal-github-scheme');
+    const copyYamlButton = document.getElementById('copy-yaml');
 
-    // Set title and path
+    // Set title
     modalTitle.textContent = deriveDisplayName(template);
-    modalPath.textContent = template.path;
+
+    // Set github: scheme URL
+    const githubSchemeURL = getGitHubSchemeURL(template);
+    modalGithubScheme.textContent = githubSchemeURL;
 
     // Use default branch URL for display
     const displayURL = getDefaultBranchURL(template);
@@ -497,6 +531,7 @@ function openPreviewModal(template) {
     modal.style.display = 'flex';
     modalLoading.classList.remove('hidden');
     modalCode.classList.add('hidden');
+    copyYamlButton.style.display = 'none';
     document.body.style.overflow = 'hidden';
 
     // Fetch and display template content
@@ -516,6 +551,7 @@ async function fetchTemplateContent(template) {
     const modalLoading = document.getElementById('modal-loading');
     const modalCode = document.getElementById('modal-code');
     const modalCodeContent = document.getElementById('modal-code-content');
+    const copyYamlButton = document.getElementById('copy-yaml');
 
     try {
         // Use default branch URL for fetching latest content
@@ -537,12 +573,14 @@ async function fetchTemplateContent(template) {
         modalCodeContent.removeAttribute('data-highlighted');
         hljs.highlightElement(modalCodeContent);
 
-        // Show code, hide loading
+        // Show code and copy button, hide loading
         modalLoading.classList.add('hidden');
         modalCode.classList.remove('hidden');
+        copyYamlButton.style.display = 'block';
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
+        copyYamlButton.style.display = 'none';
     }
 }
 
@@ -552,6 +590,8 @@ function setupModalEventListeners() {
     const modalOverlay = modal.querySelector('.modal-overlay');
     const modalClose = document.getElementById('modal-close');
     const modalCloseButton = document.getElementById('modal-close-button');
+    const copyGithubUrlButton = document.getElementById('copy-github-url');
+    const copyYamlButton = document.getElementById('copy-yaml');
 
     // Close on overlay click
     modalOverlay.addEventListener('click', closePreviewModal);
@@ -561,6 +601,56 @@ function setupModalEventListeners() {
 
     // Close on Close button click
     modalCloseButton.addEventListener('click', closePreviewModal);
+
+    // Copy github: URL to clipboard
+    copyGithubUrlButton.addEventListener('click', async () => {
+        const githubSchemeURL = document.getElementById('modal-github-scheme').textContent;
+
+        try {
+            await navigator.clipboard.writeText(githubSchemeURL);
+
+            // Visual feedback
+            const originalText = copyGithubUrlButton.textContent;
+            copyGithubUrlButton.textContent = 'Copied!';
+            copyGithubUrlButton.classList.add('copied');
+
+            setTimeout(() => {
+                copyGithubUrlButton.textContent = originalText;
+                copyGithubUrlButton.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            copyGithubUrlButton.textContent = 'Failed';
+            setTimeout(() => {
+                copyGithubUrlButton.textContent = 'Copy';
+            }, 2000);
+        }
+    });
+
+    // Copy YAML template to clipboard
+    copyYamlButton.addEventListener('click', async () => {
+        const yamlContent = document.getElementById('modal-code-content').textContent;
+
+        try {
+            await navigator.clipboard.writeText(yamlContent);
+
+            // Visual feedback
+            const originalText = copyYamlButton.textContent;
+            copyYamlButton.textContent = 'Copied!';
+            copyYamlButton.classList.add('copied');
+
+            setTimeout(() => {
+                copyYamlButton.textContent = originalText;
+                copyYamlButton.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            copyYamlButton.textContent = 'Failed';
+            setTimeout(() => {
+                copyYamlButton.textContent = 'Copy';
+            }, 2000);
+        }
+    });
 
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
