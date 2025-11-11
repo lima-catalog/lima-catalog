@@ -81,14 +81,39 @@ For each discovered template, collect:
 - **Context clues**: Repository description, topics, readme
 - **Fallback**: Repository/org metadata if template is minimal
 
-### Phase 3: Catalog Generation (Future)
+### Phase 3: Catalog Website (Next Step)
 
-#### 3.1 Static Website
-- Browse by category
-- Sort by: stars, recency, popularity
-- Search functionality
+#### 3.1 GitHub Pages Static Site
+Build a static website to browse the catalog, published to GitHub Pages:
 
-#### 3.2 CLI Tool
+**Features:**
+- **Browse templates**: List all templates with names, descriptions, categories
+- **Category pages**: Group templates by category (containers, development, orchestration, etc.)
+- **Search functionality**: Filter by keywords, OS, technologies
+- **Template details**: Show full information for each template
+- **Statistics**: Display catalog metrics (total templates, categories, etc.)
+
+**Technology Stack:**
+- Static site generator (Hugo, Jekyll, or plain HTML/CSS/JS)
+- Fetch data from `data` branch via GitHub API or raw.githubusercontent.com
+- Deploy to GitHub Pages (gh-pages branch or docs/ folder)
+- No backend required - pure static site
+
+**Implementation:**
+1. Create static site structure
+2. Parse templates.jsonl, repos.jsonl, orgs.jsonl
+3. Generate category indexes
+4. Add search/filter functionality
+5. Deploy to GitHub Pages
+6. Update workflow to rebuild site on data changes
+
+**Benefits:**
+- Easy review of analyzed templates
+- Visual validation of categories and descriptions
+- Shareable URL for community discovery
+- No hosting costs (GitHub Pages is free)
+
+#### 3.2 CLI Tool (Future)
 - Search from command line
 - Direct template installation
 
