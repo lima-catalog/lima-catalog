@@ -251,6 +251,7 @@ function filterAndRender() {
                 template.display_name,
                 template.short_description,
                 template.category,
+                template.repo,  // Include repository name (e.g., "owner/repo")
                 ...(template.keywords || []),
                 ...(template.images || [])
             ].join(' ').toLowerCase();
