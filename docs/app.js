@@ -64,13 +64,16 @@ function parseJsonLines(text) {
         .map(line => JSON.parse(line));
 }
 
-// Get all keywords with counts
-function getKeywordCounts() {
+// Get all keywords with counts from a specific template list
+function getKeywordCounts(templateList) {
     const counts = new Map();
-    templates.forEach(template => {
+    templateList.forEach(template => {
         if (template.keywords && Array.isArray(template.keywords)) {
             template.keywords.forEach(kw => {
-                counts.set(kw, (counts.get(kw) || 0) + 1);
+                // Don't include already selected keywords in the cloud
+                if (!selectedKeywords.has(kw)) {
+                    counts.set(kw, (counts.get(kw) || 0) + 1);
+                }
             });
         }
     });
@@ -79,10 +82,10 @@ function getKeywordCounts() {
         .slice(0, MAX_KEYWORDS_DISPLAY);
 }
 
-// Get category counts
-function getCategoryCounts() {
+// Get category counts from a specific template list
+function getCategoryCounts(templateList) {
     const counts = new Map();
-    templates.forEach(template => {
+    templateList.forEach(template => {
         if (template.category) {
             counts.set(template.category, (counts.get(template.category) || 0) + 1);
         }
@@ -91,10 +94,19 @@ function getCategoryCounts() {
         .sort((a, b) => a[0].localeCompare(b[0])); // Sort alphabetically
 }
 
-// Render keyword cloud
+// Render keyword cloud based on current filter state
 function renderKeywordCloud() {
     const cloud = document.getElementById('keyword-cloud');
-    const keywords = getKeywordCounts();
+
+    // Get keywords from currently filtered templates (before applying keyword filter)
+    // This shows what keywords are available in the current selection
+    const baseFiltered = getBaseFilteredTemplates();
+    const keywords = getKeywordCounts(baseFiltered);
+
+    if (keywords.length === 0) {
+        cloud.innerHTML = '<p style="color: var(--text-light); font-size: 0.875rem; padding: 0.5rem 0;">No additional keywords available</p>';
+        return;
+    }
 
     cloud.innerHTML = keywords.map(([keyword, count]) => `
         <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}">
@@ -112,10 +124,18 @@ function renderKeywordCloud() {
     });
 }
 
-// Render category list
+// Render category list based on current filter state
 function renderCategoryList() {
     const list = document.getElementById('category-list');
-    const categories = getCategoryCounts();
+
+    // Get categories from currently filtered templates (before applying category filter)
+    const baseFiltered = getBaseFilteredTemplates();
+    const categories = getCategoryCounts(baseFiltered);
+
+    if (categories.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-light); font-size: 0.875rem; padding: 0.5rem 0;">No categories available</p>';
+        return;
+    }
 
     list.innerHTML = categories.map(([category, count]) => `
         <div class="category-item" data-category="${escapeHtml(category)}">
@@ -219,6 +239,35 @@ function clearAllFilters() {
     filterAndRender();
 }
 
+// Get base filtered templates (search + type filters only, no keyword/category)
+// Used to populate keyword cloud and category list with available options
+function getBaseFilteredTemplates() {
+    const searchTerm = document.getElementById('search').value.toLowerCase();
+    const typeFilter = document.getElementById('type-filter').value;
+
+    return templates.filter(template => {
+        // Search filter
+        if (searchTerm) {
+            const searchText = [
+                template.name,
+                template.display_name,
+                template.short_description,
+                template.category,
+                ...(template.keywords || []),
+                ...(template.images || [])
+            ].join(' ').toLowerCase();
+
+            if (!searchText.includes(searchTerm)) return false;
+        }
+
+        // Type filter
+        if (typeFilter === 'official' && !template.is_official) return false;
+        if (typeFilter === 'community' && template.is_official) return false;
+
+        return true;
+    });
+}
+
 // Filter and render templates
 function filterAndRender() {
     const searchTerm = document.getElementById('search').value.toLowerCase();
@@ -276,6 +325,9 @@ function filterAndRender() {
     });
 
     updateStats();
+    renderKeywordCloud(); // Update keyword cloud based on filtered templates
+    renderCategoryList(); // Update category list based on filtered templates
+    updateCategorySelection(); // Restore category selection state
     renderTemplates();
 }
 
