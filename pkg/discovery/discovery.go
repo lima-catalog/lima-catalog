@@ -87,6 +87,10 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 		templateMap[t.ID] = t
 	}
 
+	// Wait before next query to avoid rate limits
+	fmt.Println("Waiting 5 seconds before next query...")
+	time.Sleep(5 * time.Second)
+
 	// Also search for .yml extension
 	query1b := "minimumLimaVersion extension:yml -repo:lima-vm/lima"
 	fmt.Printf("\nQuery 1b: %s\n", query1b)
@@ -101,6 +105,10 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 			templateMap[t.ID] = t
 		}
 	}
+
+	// Wait before next query to avoid rate limits
+	fmt.Println("Waiting 5 seconds before next query...")
+	time.Sleep(5 * time.Second)
 
 	// Query 2: Search for files with images: and provision: fields (supplementary query)
 	query2 := "images: provision: extension:yaml -repo:lima-vm/lima"
@@ -117,6 +125,10 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 			templateMap[t.ID] = t
 		}
 	}
+
+	// Wait before next query to avoid rate limits
+	fmt.Println("Waiting 5 seconds before next query...")
+	time.Sleep(5 * time.Second)
 
 	// Also search for .yml extension
 	query2b := "images: provision: extension:yml -repo:lima-vm/lima"
