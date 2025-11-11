@@ -40,8 +40,13 @@ func run() error {
 	// Check if incremental mode is enabled
 	incremental := os.Getenv("INCREMENTAL") != ""
 
+	// Check if analysis mode is enabled
+	analyze := os.Getenv("ANALYZE") != ""
+	llmAPIKey := os.Getenv("LLM_API_KEY")
+
 	fmt.Printf("Data directory: %s\n", dataDir)
 	fmt.Printf("Incremental mode: %v\n", incremental)
+	fmt.Printf("Analysis mode: %v\n", analyze)
 	fmt.Println()
 
 	// Initialize storage
@@ -231,6 +236,46 @@ func run() error {
 
 		fmt.Printf("✓ Collected metadata for %d repositories\n", len(repositories))
 		fmt.Printf("✓ Collected metadata for %d organizations\n", len(organizations))
+		fmt.Println()
+	}
+
+	// Phase 3: Template Analysis (optional)
+	if analyze {
+		fmt.Println("=== Phase 3: Template Analysis ===")
+		fmt.Println()
+
+		// Load templates and repositories
+		templates, err := store.LoadTemplates()
+		if err != nil {
+			return fmt.Errorf("failed to load templates: %w", err)
+		}
+
+		repositories, err := store.LoadRepositories()
+		if err != nil {
+			return fmt.Errorf("failed to load repositories: %w", err)
+		}
+
+		// Create repository map for quick lookup
+		repoMap := make(map[string]*types.Repository)
+		for i := range repositories {
+			repoMap[repositories[i].ID] = &repositories[i]
+		}
+
+		// Create analyzer
+		analyzer := discovery.NewAnalyzer(llmAPIKey != "", llmAPIKey)
+
+		// Analyze templates
+		analyzedTemplates, err := analyzer.AnalyzeTemplates(templates, repoMap)
+		if err != nil {
+			return fmt.Errorf("analysis failed: %w", err)
+		}
+
+		// Save analyzed templates
+		if err := store.SaveTemplates(analyzedTemplates); err != nil {
+			return fmt.Errorf("failed to save analyzed templates: %w", err)
+		}
+
+		fmt.Printf("✓ Analyzed %d templates\n", len(analyzedTemplates))
 		fmt.Println()
 	}
 
