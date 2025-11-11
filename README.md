@@ -66,6 +66,38 @@ Incremental mode will:
 
 This is more efficient than a full collection and preserves historical data.
 
+### Template Analysis
+
+To analyze templates and generate descriptions, categories, and keywords:
+
+```bash
+export ANALYZE=true
+./lima-catalog
+```
+
+Analysis mode will:
+- Derive smart names from template paths (handles generic filenames like "lima.yaml")
+- Parse YAML templates to extract images, architecture, and provisioning details
+- Detect technologies (Docker, Kubernetes, databases, dev tools) from scripts
+- Generate categories and use cases
+- Create display names and descriptions
+- Extract keywords for searching
+
+Optional: Enable LLM-enhanced analysis for better descriptions:
+
+```bash
+export ANALYZE=true
+export LLM_API_KEY=your_api_key
+./lima-catalog
+```
+
+**What gets analyzed:**
+- **Smart naming**: Derives meaningful names (e.g., "container-security" from "lima.yaml" in container-security repo)
+- **OS detection**: Extracts Ubuntu, Alpine, Debian, etc. from image URLs
+- **Technology detection**: Finds Docker, Kubernetes, Podman, databases, programming languages
+- **Categorization**: Assigns categories (containers, development, orchestration, security, etc.)
+- **Keywords**: Auto-generates searchable tags from detected technologies
+
 ## Accessing the Catalog Data
 
 The collected catalog data is stored in the `data` branch of this repository. You can access it by:
