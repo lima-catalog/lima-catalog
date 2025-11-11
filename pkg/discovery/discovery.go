@@ -22,16 +22,13 @@ func NewDiscoverer(client *github.Client) *Discoverer {
 	}
 }
 
-// DiscoverCommunityTemplates searches GitHub for community Lima templates
-func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
+// searchWithQuery performs a GitHub code search with pagination
+func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 	var templates []types.Template
-
-	// Search for YAML files containing minimumLimaVersion, excluding lima-vm/lima
-	query := "minimumLimaVersion extension:yml OR extension:yaml -repo:lima-vm/lima"
 
 	page := 1
 	for {
-		fmt.Printf("Searching page %d...\n", page)
+		fmt.Printf("  Searching page %d...\n", page)
 
 		result, _, err := d.client.SearchCode(query, page)
 		if err != nil {
@@ -42,7 +39,7 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 			break
 		}
 
-		fmt.Printf("Found %d results on page %d\n", len(result.CodeResults), page)
+		fmt.Printf("  Found %d results on page %d\n", len(result.CodeResults), page)
 
 		for _, item := range result.CodeResults {
 			template := types.Template{
@@ -67,6 +64,51 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 		page++
 		time.Sleep(2 * time.Second) // Respect rate limits
 	}
+
+	return templates, nil
+}
+
+// DiscoverCommunityTemplates searches GitHub for community Lima templates
+func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
+	// Use a map to deduplicate templates found by multiple queries
+	templateMap := make(map[string]types.Template)
+
+	// Query 1: Search for files with minimumLimaVersion (original query)
+	query1 := "minimumLimaVersion extension:yml OR extension:yaml -repo:lima-vm/lima"
+	fmt.Printf("Query 1: %s\n", query1)
+	templates1, err := d.searchWithQuery(query1)
+	if err != nil {
+		return nil, fmt.Errorf("query 1 failed: %w", err)
+	}
+	fmt.Printf("Query 1 found %d templates\n", len(templates1))
+
+	for _, t := range templates1 {
+		templateMap[t.ID] = t
+	}
+
+	// Query 2: Search for files with images: and provision: fields (supplementary query)
+	query2 := "images: provision: extension:yml OR extension:yaml -repo:lima-vm/lima"
+	fmt.Printf("\nQuery 2: %s\n", query2)
+	templates2, err := d.searchWithQuery(query2)
+	if err != nil {
+		return nil, fmt.Errorf("query 2 failed: %w", err)
+	}
+	fmt.Printf("Query 2 found %d templates\n", len(templates2))
+
+	for _, t := range templates2 {
+		// Only add if not already found
+		if _, exists := templateMap[t.ID]; !exists {
+			templateMap[t.ID] = t
+		}
+	}
+
+	// Convert map to slice
+	var templates []types.Template
+	for _, t := range templateMap {
+		templates = append(templates, t)
+	}
+
+	fmt.Printf("\nTotal unique templates after deduplication: %d\n", len(templates))
 
 	return templates, nil
 }
