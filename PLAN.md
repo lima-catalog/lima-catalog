@@ -6,15 +6,23 @@ Create a searchable catalog of Lima templates found across GitHub, with metadata
 
 ## Architecture
 
-### Phase 1: Data Collection (Current Focus)
+### Phase 1: Data Collection ✅
+
+**Status**: Completed
 
 #### 1.1 Template Discovery
-- **Goal**: Find all YAML files on GitHub containing `minimumLimaVersion`
-- **Method**: GitHub Code Search API
+- **Goal**: Find all YAML files on GitHub that are Lima templates
+- **Method**: GitHub Code Search API with multiple queries
+- **Search Queries**:
+  1. `minimumLimaVersion extension:yaml -repo:lima-vm/lima` (original templates)
+  2. `minimumLimaVersion extension:yml -repo:lima-vm/lima` (original templates)
+  3. `images: provision: extension:yaml -repo:lima-vm/lima` (templates without minimumLimaVersion)
+  4. `images: provision: extension:yml -repo:lima-vm/lima` (templates without minimumLimaVersion)
 - **Filtering**:
-  - Exclude files from `lima-vm/lima` repository (official templates)
-  - Exclude forks of `lima-vm/lima` (clones of official templates)
-  - Only include files with `.yaml` or `.yml` extensions
+  - Exclude files from `lima-vm/lima` repository (handled separately as official templates)
+  - Exclude forks of `lima-vm/lima` (GitHub search doesn't index them anyway)
+  - Automatic deduplication across queries
+- **Results**: ~140 unique templates discovered (51 official + ~90 community)
 
 #### 1.2 Metadata Collection
 For each discovered template, collect:
@@ -43,7 +51,9 @@ For each discovered template, collect:
   - Blog/website
   - Type (user vs org)
 
-### Phase 2: Content Analysis
+### Phase 2: Content Analysis ✅
+
+**Status**: Completed (LLM enhancement deferred to future)
 
 #### 2.1 Template Naming
 - **Smart name derivation**:
@@ -81,12 +91,14 @@ For each discovered template, collect:
 - **Context clues**: Repository description, topics, readme
 - **Fallback**: Repository/org metadata if template is minimal
 
-### Phase 3: Catalog Website (Next Step)
+### Phase 3: Catalog Website ✅
+
+**Status**: Completed (with minor layout issues noted for future improvement)
 
 #### 3.1 GitHub Pages Static Site
-Build a static website to browse the catalog, published to GitHub Pages:
+A static website to browse the catalog, published to GitHub Pages at https://lima-catalog.github.io/lima-catalog/
 
-**Features:**
+**Implemented Features:**
 - **Browse templates**: List all templates with names, descriptions, categories
 - **Category pages**: Group templates by category (containers, development, orchestration, etc.)
 - **Search functionality**: Filter by keywords, OS, technologies
@@ -216,27 +228,40 @@ progress.json      - State tracking for resumability
 ## Implementation
 
 ### Technology Stack
-- **Language**: Python 3.10+
+- **Language**: Go 1.21+
 - **Libraries**:
-  - `requests` or `PyGithub` for GitHub API
-  - `click` for CLI interface
-  - `pyyaml` for template parsing
-  - `gitpython` for git operations
-- **CI/CD**: GitHub Actions
+  - `github.com/google/go-github/v57` for GitHub API
+  - `gopkg.in/yaml.v3` for YAML parsing
+  - Standard library for JSON Lines storage
+- **CI/CD**: GitHub Actions (daily workflow)
+- **Authentication**: Personal access token (CATALOG_TOKEN) for avoiding GitHub Actions rate limits
 
-### CLI Tool Structure
+### Tool Structure
 ```
 lima-catalog/
-├── catalog_tool/
-│   ├── __init__.py
-│   ├── cli.py           # Main CLI interface
-│   ├── discovery.py     # Template discovery
-│   ├── metadata.py      # Metadata collection
-│   ├── storage.py       # Data persistence
-│   ├── progress.py      # Progress tracking
-│   └── github_api.py    # GitHub API wrapper
-├── tests/
-├── requirements.txt
+├── cmd/lima-catalog/
+│   └── main.go          # Main entry point
+├── pkg/
+│   ├── github/
+│   │   └── client.go    # GitHub API client wrapper
+│   ├── discovery/
+│   │   ├── discovery.go # Template discovery with multi-query search
+│   │   ├── metadata.go  # Repository/org metadata collection
+│   │   ├── update.go    # Incremental update merging
+│   │   ├── naming.go    # Smart name derivation
+│   │   ├── parser.go    # YAML template parsing
+│   │   └── analyzer.go  # Template categorization
+│   ├── storage/
+│   │   └── storage.go   # JSON Lines file I/O
+│   └── types/
+│       └── types.go     # Data structures
+├── docs/                # GitHub Pages static site
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+├── data/                # Local data directory (gitignored)
+├── experiments/         # Search query testing scripts
+├── go.mod
 ├── README.md
 └── PLAN.md
 ```
@@ -244,10 +269,12 @@ lima-catalog/
 ### Key Features
 
 #### Rate Limit Management
-- Monitor rate limit before each API call
-- Stop when limit is low (e.g., < 100 requests remaining)
-- Save progress and exit gracefully
-- Resume from last checkpoint on next run
+- **CATALOG_TOKEN**: Uses personal access token instead of GitHub Actions GITHUB_TOKEN to avoid secondary rate limits
+- **Pagination delays**: 3-second delays between paginated search requests (max 20 requests/minute)
+- **Query delays**: 5-second delays between different search queries
+- **Automatic retry**: Detects 403/429 rate limit errors, waits until rate limit reset, then retries
+- **Pre-check**: Verifies sufficient quota before starting (core: 100+, search: 5+)
+- **Monitoring**: Tracks API usage and displays remaining quota
 
 #### Resumability
 - Save progress after each batch (e.g., 10 templates)
@@ -256,10 +283,13 @@ lima-catalog/
 - Allow resuming from any interrupted state
 
 #### Incremental Updates
-- Check file SHA to detect template changes
-- Only re-fetch metadata if template changed
-- Update `last_checked` timestamp for unchanged entries
-- Remove templates that no longer exist
+- **Always runs discovery**: In incremental mode, discovery and metadata collection run on every execution
+- **SHA-based change detection**: Compares file SHA to detect template modifications
+- **Smart merging**: Merges new/updated templates with existing data, preserving historical fields
+- **Preserved fields**: `discovered_at` timestamp kept from original discovery
+- **Updated fields**: `last_checked`, `sha`, and all metadata refreshed
+- **Analysis skipping**: Only analyzes new or modified templates (where `analyzed_at < last_checked`)
+- **Deduplication**: Automatically deduplicates templates found by multiple search queries
 
 #### Error Handling
 - Retry transient failures (network errors)
@@ -291,10 +321,12 @@ python -m catalog_tool commit-data
 ```
 
 ### GitHub Actions
-- Run weekly to discover new templates
-- Run daily to update metadata for existing templates
-- Use GitHub token with appropriate scopes
-- Store data branch with results
+- **Schedule**: Runs daily at 00:00 UTC (cron: `0 0 * * *`)
+- **Manual trigger**: Can be triggered manually via workflow_dispatch
+- **Environment**: Uses CATALOG_TOKEN (personal access token) for API access
+- **Mode**: Runs in incremental mode with analysis enabled
+- **Output**: Commits updated data to `data` branch
+- **Workflow file**: `.github/workflows/update-catalog.yml`
 
 ## Improvements & Considerations
 
@@ -319,10 +351,37 @@ python -m catalog_tool commit-data
 - Only download full content when hash changes
 
 ### Search Optimization
-For GitHub Code Search:
-- Query: `minimumLimaVersion extension:yml OR extension:yaml -repo:lima-vm/lima`
-- Use pagination cursors
-- Handle rate limits (30 requests/minute for code search)
+
+#### Current Implementation
+Multiple targeted queries to find templates:
+1. `minimumLimaVersion extension:yaml -repo:lima-vm/lima`
+2. `minimumLimaVersion extension:yml -repo:lima-vm/lima`
+3. `images: provision: extension:yaml -repo:lima-vm/lima`
+4. `images: provision: extension:yml -repo:lima-vm/lima`
+
+Automatic pagination with 3-second delays between pages, 5-second delays between queries.
+
+#### GitHub Search API Limits
+- **Hard limit**: 1000 results per search query (pages 1-10 at 100 results/page)
+- **Current status**: Query 3 returns ~700 results, approaching the limit
+- **No workaround**: Cannot retrieve results beyond 1000 for a single query
+
+#### Future: Time-Based Segmentation (when approaching 1000 results)
+When any query approaches the 1000 result limit, implement time-based segmentation:
+
+**Strategy**: Split searches by push date to keep each query under 1000 results
+```
+images: provision: pushed:>2024-12-01 extension:yaml -repo:lima-vm/lima
+images: provision: pushed:2024-06-01..2024-11-30 extension:yaml -repo:lima-vm/lima
+images: provision: pushed:<2024-06-01 extension:yaml -repo:lima-vm/lima
+```
+
+**Benefits**:
+- Daily incremental runs only search recent templates (`pushed:>YYYY-MM-DD`)
+- Historical templates already in catalog don't need re-discovery
+- As long as <1000 new templates per day, system scales indefinitely
+
+**Implementation trigger**: Add monitoring to warn when any query returns >900 results
 
 ### Future Enhancements
 - **Template Validation**: Parse and validate YAML structure
@@ -347,13 +406,31 @@ For GitHub Code Search:
 - Accuracy: quality of generated descriptions
 - Usage: number of users finding templates useful
 
-## Next Steps
+## Implementation Progress
 
-1. ✅ Create initial plan
-2. 🔄 Experiment: Count templates on GitHub
-3. ⏳ Design detailed data schemas
-4. ⏳ Implement discovery tool
-5. ⏳ Implement metadata collection
-6. ⏳ Set up data branch and storage
-7. ⏳ Test with rate limits
-8. ⏳ Create GitHub Action workflow
+### Completed ✅
+1. Initial project plan and architecture
+2. Experiments to understand GitHub search behavior and fork indexing
+3. Data schema design (JSON Lines format)
+4. Go-based discovery tool with multi-query search
+5. Metadata collection for repos and organizations
+6. Data branch setup and storage implementation
+7. Rate limit handling with retry logic and delays
+8. GitHub Actions workflow (daily execution)
+9. Incremental update mode with SHA-based change detection
+10. Template analysis with smart naming and categorization
+11. GitHub Pages static website for browsing catalog
+12. Authentication with CATALOG_TOKEN to avoid Actions rate limits
+
+### In Progress 🔄
+- Initial catalog population (first workflow run executing)
+- Data validation and quality review via GitHub Pages
+
+### Future Enhancements 📋
+- **LLM-based descriptions**: Optional LLM integration for better template descriptions
+- **Time-based search segmentation**: Implement when queries approach 1000 result limit
+- **Template validation**: Validate YAML syntax and Lima template structure
+- **Quality scoring**: Rank templates by stars, recency, completeness
+- **CLI search tool**: Command-line interface for finding and installing templates
+- **GitHub Pages improvements**: Fix badge layout issues, add template detail pages
+- **Result count monitoring**: Add warnings when search queries return >900 results
