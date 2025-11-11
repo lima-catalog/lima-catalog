@@ -22,7 +22,17 @@ Create a searchable catalog of Lima templates found across GitHub, with metadata
   - Exclude files from `lima-vm/lima` repository (handled separately as official templates)
   - Exclude forks of `lima-vm/lima` (GitHub search doesn't index them anyway)
   - Automatic deduplication across queries
-- **Results**: ~140 unique templates discovered (51 official + ~90 community)
+  - **Content-based validation**: Fetch file content and verify it contains `images:` as a top-level YAML key
+    - Filters out false positives like Kubernetes ConfigMaps and GitHub Actions workflows
+    - Uses regex pattern `^images:` to validate Lima template structure
+    - Reports exclusion counts per query for monitoring
+- **Detailed Query Logging**:
+  - Lists all template IDs found by each search query
+  - Shows deduplication statistics (new vs duplicate templates)
+  - Helps identify which queries return false positives
+- **Results**: 716 unique templates discovered (51 official + 665 community)
+  - Initial discovery found 1033 templates, but 317 (31%) were false positives
+  - Content-based filtering accurately identifies valid Lima templates
 
 #### 1.2 Metadata Collection
 For each discovered template, collect:
@@ -327,6 +337,9 @@ python -m catalog_tool commit-data
 - **Mode**: Runs in incremental mode with analysis enabled
 - **Output**: Commits updated data to `data` branch
 - **Workflow file**: `.github/workflows/update-catalog.yml`
+- **Commit detection**: Uses `git add` + `git diff --cached` to properly detect both new and modified files
+  - Ensures new catalog data is committed even when data branch starts empty
+  - Handles incremental updates to existing files
 
 ## Improvements & Considerations
 
@@ -349,6 +362,29 @@ python -m catalog_tool commit-data
 ### Content Hashing
 - Store content hash to detect changes without downloading
 - Only download full content when hash changes
+
+### False Positive Filtering
+
+#### Problem Discovery
+Initial implementation using only GitHub Code Search queries found 1033 templates, but many were false positives:
+- **Kubernetes ConfigMaps**: Contained `images:` and `provision:` in discovery configuration contexts
+- **GitHub Actions workflows**: Had jobs named "provision" and container image references
+- **Other YAML files**: Matched search patterns but weren't Lima templates
+
+Example false positives:
+- `wavefrontHQ/observability-for-kubernetes/.../1-default-wavefront-collector-config.yaml` - Kubernetes ConfigMap
+- `github-cloudlabsuser-1270/rachid/.github/workflows/contoso-traders-app-deployment.yml` - GitHub Actions workflow
+
+#### Solution: Content-Based Validation
+Instead of path-based heuristics, implemented content validation:
+1. Fetch file content via GitHub API for each search result
+2. Check for `images:` as a top-level YAML key (pattern: `^images:`)
+3. Only include files that pass validation
+4. Report exclusion counts for monitoring
+
+**Results**: Filtered out 317 false positives (31% reduction), resulting in 716 valid Lima templates.
+
+**Trade-off**: Uses more API quota (one GET request per search result) but significantly improves accuracy.
 
 ### Search Optimization
 
@@ -421,10 +457,14 @@ images: provision: pushed:<2024-06-01 extension:yaml -repo:lima-vm/lima
 10. Template analysis with smart naming and categorization
 11. GitHub Pages static website for browsing catalog
 12. Authentication with CATALOG_TOKEN to avoid Actions rate limits
+13. Content-based filtering to eliminate false positives
+14. Detailed query logging for debugging and monitoring
+15. Workflow commit detection fix for new files
+16. Initial catalog population complete (716 templates: 51 official + 665 community)
 
 ### In Progress 🔄
-- Initial catalog population (first workflow run executing)
-- Data validation and quality review via GitHub Pages
+- Monitoring catalog quality and accuracy
+- Daily automated updates via GitHub Actions
 
 ### Future Enhancements 📋
 - **LLM-based descriptions**: Optional LLM integration for better template descriptions
