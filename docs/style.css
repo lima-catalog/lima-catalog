@@ -183,6 +183,7 @@ main {
 
 .template-title {
     flex: 1;
+    min-width: 0; /* Allow flex item to shrink below content size */
 }
 
 .template-name {
@@ -197,6 +198,8 @@ main {
     font-size: 0.75rem;
     color: var(--text-light);
     font-family: monospace;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .template-badge {
@@ -206,6 +209,7 @@ main {
     font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
+    flex-shrink: 0; /* Prevent badge from shrinking */
 }
 
 .template-badge.official {
@@ -282,6 +286,9 @@ main {
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0; /* Allow flex item to shrink */
 }
 
 .template-repo:hover {
