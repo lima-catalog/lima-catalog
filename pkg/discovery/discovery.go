@@ -74,7 +74,8 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	templateMap := make(map[string]types.Template)
 
 	// Query 1: Search for files with minimumLimaVersion (original query)
-	query1 := "minimumLimaVersion extension:yml OR extension:yaml -repo:lima-vm/lima"
+	// Use simpler syntax - search for .yaml files only (most common)
+	query1 := "minimumLimaVersion extension:yaml -repo:lima-vm/lima"
 	fmt.Printf("Query 1: %s\n", query1)
 	templates1, err := d.searchWithQuery(query1)
 	if err != nil {
@@ -86,8 +87,23 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 		templateMap[t.ID] = t
 	}
 
+	// Also search for .yml extension
+	query1b := "minimumLimaVersion extension:yml -repo:lima-vm/lima"
+	fmt.Printf("\nQuery 1b: %s\n", query1b)
+	templates1b, err := d.searchWithQuery(query1b)
+	if err != nil {
+		return nil, fmt.Errorf("query 1b failed: %w", err)
+	}
+	fmt.Printf("Query 1b found %d templates\n", len(templates1b))
+
+	for _, t := range templates1b {
+		if _, exists := templateMap[t.ID]; !exists {
+			templateMap[t.ID] = t
+		}
+	}
+
 	// Query 2: Search for files with images: and provision: fields (supplementary query)
-	query2 := "images: provision: extension:yml OR extension:yaml -repo:lima-vm/lima"
+	query2 := "images: provision: extension:yaml -repo:lima-vm/lima"
 	fmt.Printf("\nQuery 2: %s\n", query2)
 	templates2, err := d.searchWithQuery(query2)
 	if err != nil {
@@ -96,6 +112,22 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	fmt.Printf("Query 2 found %d templates\n", len(templates2))
 
 	for _, t := range templates2 {
+		// Only add if not already found
+		if _, exists := templateMap[t.ID]; !exists {
+			templateMap[t.ID] = t
+		}
+	}
+
+	// Also search for .yml extension
+	query2b := "images: provision: extension:yml -repo:lima-vm/lima"
+	fmt.Printf("\nQuery 2b: %s\n", query2b)
+	templates2b, err := d.searchWithQuery(query2b)
+	if err != nil {
+		return nil, fmt.Errorf("query 2b failed: %w", err)
+	}
+	fmt.Printf("Query 2b found %d templates\n", len(templates2b))
+
+	for _, t := range templates2b {
 		// Only add if not already found
 		if _, exists := templateMap[t.ID]; !exists {
 			templateMap[t.ID] = t
