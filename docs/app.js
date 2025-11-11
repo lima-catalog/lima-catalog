@@ -430,12 +430,12 @@ function createTemplateCard(template) {
         </div>
     `;
 
-    // Make card clickable
+    // Make card clickable - open preview modal
     card.style.cursor = 'pointer';
     card.addEventListener('click', (e) => {
-        // Don't navigate if clicking on a link
-        if (e.target.tagName === 'A') return;
-        window.open(template.url, '_blank');
+        // Don't open modal if clicking on a link (repo link should open GitHub)
+        if (e.target.tagName === 'A' || e.target.closest('a')) return;
+        openPreviewModal(template);
     });
 
     return card;
@@ -447,3 +447,144 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ============================================================================
+// Template Preview Modal
+// ============================================================================
+
+// Modal state
+let currentModalTemplate = null;
+
+// Open preview modal
+function openPreviewModal(template) {
+    currentModalTemplate = template;
+    const modal = document.getElementById('preview-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalPath = document.getElementById('modal-path');
+    const modalLoading = document.getElementById('modal-loading');
+    const modalCode = document.getElementById('modal-code');
+    const modalGithubLink = document.getElementById('modal-github-link');
+
+    // Set title and path
+    modalTitle.textContent = deriveDisplayName(template);
+    modalPath.textContent = template.path;
+    modalGithubLink.href = template.url;
+
+    // Show modal and loading state
+    modal.style.display = 'flex';
+    modalLoading.style.display = 'block';
+    modalCode.style.display = 'none';
+    document.body.style.overflow = 'hidden';
+
+    // Fetch and display template content
+    fetchTemplateContent(template);
+}
+
+// Close preview modal
+function closePreviewModal() {
+    const modal = document.getElementById('preview-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    currentModalTemplate = null;
+}
+
+// Fetch template content
+async function fetchTemplateContent(template) {
+    const modalLoading = document.getElementById('modal-loading');
+    const modalCode = document.getElementById('modal-code');
+    const modalCodeContent = document.getElementById('modal-code-content');
+
+    try {
+        // Convert GitHub blob URL to raw URL
+        let rawURL = template.url.replace('github.com', 'raw.githubusercontent.com');
+        rawURL = rawURL.replace('/blob/', '/');
+
+        const response = await fetch(rawURL);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const content = await response.text();
+
+        // Apply syntax highlighting
+        modalCodeContent.innerHTML = highlightYAML(content);
+
+        // Show code, hide loading
+        modalLoading.style.display = 'none';
+        modalCode.style.display = 'block';
+    } catch (error) {
+        console.error('Error fetching template:', error);
+        modalLoading.textContent = `Error loading template: ${error.message}`;
+    }
+}
+
+// Basic YAML syntax highlighting
+function highlightYAML(yaml) {
+    // Escape HTML first
+    let html = yaml
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Split into lines for processing
+    const lines = html.split('\n');
+    const highlighted = lines.map(line => {
+        // Comments
+        if (line.trim().startsWith('#')) {
+            return `<span class="yaml-comment">${line}</span>`;
+        }
+
+        // Key-value pairs
+        line = line.replace(/^(\s*)([a-zA-Z_][a-zA-Z0-9_-]*)(\s*):/g, 
+            '$1<span class="yaml-key">$2</span>$3:');
+
+        // List items (dashes)
+        line = line.replace(/^(\s*)(-\s)/g, 
+            '$1<span class="yaml-dash">-</span> ');
+
+        // Strings in quotes
+        line = line.replace(/(&quot;[^&]*&quot;|'[^']*')/g, 
+            '<span class="yaml-string">$1</span>');
+
+        // Booleans
+        line = line.replace(/\b(true|false|yes|no|on|off)\b/gi, 
+            '<span class="yaml-boolean">$1</span>');
+
+        // Numbers
+        line = line.replace(/\b(\d+\.?\d*)\b/g, 
+            '<span class="yaml-number">$1</span>');
+
+        return line;
+    });
+
+    return highlighted.join('\n');
+}
+
+// Setup modal event listeners
+function setupModalEventListeners() {
+    const modal = document.getElementById('preview-modal');
+    const modalOverlay = modal.querySelector('.modal-overlay');
+    const modalClose = document.getElementById('modal-close');
+    const modalCloseButton = document.getElementById('modal-close-button');
+
+    // Close on overlay click
+    modalOverlay.addEventListener('click', closePreviewModal);
+
+    // Close on X button click
+    modalClose.addEventListener('click', closePreviewModal);
+
+    // Close on Close button click
+    modalCloseButton.addEventListener('click', closePreviewModal);
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && currentModalTemplate) {
+            closePreviewModal();
+        }
+    });
+}
+
+// Initialize modal listeners on page load
+document.addEventListener('DOMContentLoaded', () => {
+    setupModalEventListeners();
+});

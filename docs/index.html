@@ -67,6 +67,32 @@
         </main>
     </div>
 
+    <!-- Template Preview Modal -->
+    <div id="preview-modal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h2 id="modal-title" class="modal-title"></h2>
+                    <p id="modal-path" class="modal-path"></p>
+                </div>
+                <button id="modal-close" class="modal-close" title="Close (Esc)">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-loading" class="modal-loading">Loading template...</div>
+                <pre id="modal-code" class="modal-code" style="display: none;"><code id="modal-code-content"></code></pre>
+            </div>
+            <div class="modal-footer">
+                <a id="modal-github-link" href="#" target="_blank" class="modal-button primary">
+                    View on GitHub
+                </a>
+                <button id="modal-close-button" class="modal-button secondary">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div class="container">
             <p>
