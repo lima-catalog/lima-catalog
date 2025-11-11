@@ -43,24 +43,43 @@ For each discovered template, collect:
   - Blog/website
   - Type (user vs org)
 
-### Phase 2: Content Analysis (Future)
+### Phase 2: Content Analysis
 
-#### 2.1 Template Parsing
+#### 2.1 Template Naming
+- **Smart name derivation**:
+  - Use filename when descriptive (e.g., `ubuntu.yaml` → "ubuntu")
+  - For generic names like `lima.yaml`, derive from:
+    - Repository name (e.g., `container-security/lima.yaml` → "container-security")
+    - Template path (e.g., `configs/lima/dev.yaml` → "dev")
+    - Fallback to full path if needed
+- **Display name**: Human-readable name for UI/catalog
+- **Unique identifier**: Keep full path as ID for uniqueness
+
+#### 2.2 Template Parsing
 - Parse YAML structure
 - Extract key fields:
-  - Images used
-  - Provisioning scripts
-  - Mounts
-  - Port forwards
-  - Resource limits
+  - Images used (OS distributions, versions)
+  - Provisioning scripts (detect tools: Docker, K8s, etc.)
+  - Mounts (detect development patterns)
+  - Port forwards (detect services)
+  - Resource limits (CPU, memory)
+  - Architecture (x86_64, aarch64, etc.)
 
-#### 2.2 LLM Analysis
-- Use free LLM (e.g., GitHub Models, Hugging Face Inference API)
+#### 2.3 LLM Analysis
+- Use free LLM (e.g., Anthropic, OpenAI, or local models)
 - Generate:
-  - Short description (1-2 sentences)
-  - Detailed description (paragraph)
-  - Keywords/tags
-  - Category classification
+  - **Display name**: Descriptive name (e.g., "Ubuntu Development Environment")
+  - **Short description**: 1-2 sentences summarizing purpose
+  - **Detailed description**: Paragraph explaining use case
+  - **Keywords/tags**: Technology stack (docker, kubernetes, python, etc.)
+  - **Category**: Primary use case (development, testing, security, ci-cd, etc.)
+  - **Use case**: Specific scenario (web development, ML training, etc.)
+
+#### 2.4 Analysis Strategy
+- **Primary signal**: Provisioning scripts (strongest indicator of purpose)
+- **Secondary signal**: Images used (base OS, pre-built images)
+- **Context clues**: Repository description, topics, readme
+- **Fallback**: Repository/org metadata if template is minimal
 
 ### Phase 3: Catalog Generation (Future)
 
@@ -102,7 +121,18 @@ progress.json      - State tracking for resumability
   "last_modified": "2025-01-15T10:30:00Z",
   "url": "https://raw.githubusercontent.com/...",
   "discovered_at": "2025-01-20T12:00:00Z",
-  "last_checked": "2025-01-20T12:00:00Z"
+  "last_checked": "2025-01-20T12:00:00Z",
+  "is_official": false,
+  "name": "ubuntu-dev",
+  "display_name": "Ubuntu Development Environment",
+  "short_description": "Ubuntu-based development environment with Docker and common dev tools",
+  "description": "Full-featured Ubuntu development environment with Docker, Git, common build tools...",
+  "category": "development",
+  "use_case": "web-development",
+  "keywords": ["ubuntu", "docker", "nodejs", "python", "git"],
+  "images": ["ubuntu:22.04"],
+  "arch": ["x86_64", "aarch64"],
+  "analyzed_at": "2025-01-21T10:00:00Z"
 }
 ```
 

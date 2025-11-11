@@ -4,16 +4,26 @@ import "time"
 
 // Template represents a Lima template file discovered on GitHub
 type Template struct {
-	ID           string    `json:"id"`             // owner/repo/path/to/template.yaml
-	Repo         string    `json:"repo"`           // owner/repo
-	Path         string    `json:"path"`           // path/to/template.yaml
-	SHA          string    `json:"sha"`            // Git blob SHA
-	Size         int       `json:"size"`           // File size in bytes
-	LastModified time.Time `json:"last_modified"`  // Last commit date
-	URL          string    `json:"url"`            // Raw content URL
-	DiscoveredAt time.Time `json:"discovered_at"`  // When we found it
-	LastChecked  time.Time `json:"last_checked"`   // Last time we verified it
-	IsOfficial   bool      `json:"is_official"`    // From lima-vm/lima
+	ID               string    `json:"id"`                         // owner/repo/path/to/template.yaml
+	Repo             string    `json:"repo"`                       // owner/repo
+	Path             string    `json:"path"`                       // path/to/template.yaml
+	SHA              string    `json:"sha"`                        // Git blob SHA
+	Size             int       `json:"size"`                       // File size in bytes
+	LastModified     time.Time `json:"last_modified"`              // Last commit date
+	URL              string    `json:"url"`                        // Raw content URL
+	DiscoveredAt     time.Time `json:"discovered_at"`              // When we found it
+	LastChecked      time.Time `json:"last_checked"`               // Last time we verified it
+	IsOfficial       bool      `json:"is_official"`                // From lima-vm/lima
+	Name             string    `json:"name,omitempty"`             // Short name (e.g., "ubuntu-dev")
+	DisplayName      string    `json:"display_name,omitempty"`     // Human-readable name
+	ShortDescription string    `json:"short_description,omitempty"`// 1-2 sentence summary
+	Description      string    `json:"description,omitempty"`      // Detailed description
+	Category         string    `json:"category,omitempty"`         // Primary category (development, testing, etc.)
+	UseCase          string    `json:"use_case,omitempty"`         // Specific use case
+	Keywords         []string  `json:"keywords,omitempty"`         // Tags for searching
+	Images           []string  `json:"images,omitempty"`           // OS images used
+	Arch             []string  `json:"arch,omitempty"`             // Architectures supported
+	AnalyzedAt       time.Time `json:"analyzed_at,omitempty"`      // When analysis was performed
 }
 
 // Repository represents a GitHub repository containing templates
