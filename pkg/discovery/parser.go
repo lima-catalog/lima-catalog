@@ -59,8 +59,10 @@ type TemplateInfo struct {
 // ParseTemplate downloads and parses a Lima template YAML file
 func ParseTemplate(url string) (*TemplateInfo, error) {
 	// Convert GitHub blob URL to raw URL
-	rawURL := strings.ReplaceAll(url, "/blob/", "/raw/")
-	rawURL = strings.ReplaceAll(rawURL, "https://github.com/", "https://raw.githubusercontent.com/")
+	// Pattern: https://github.com/owner/repo/blob/commit/path
+	// Target: https://raw.githubusercontent.com/owner/repo/commit/path
+	rawURL := strings.Replace(url, "github.com", "raw.githubusercontent.com", 1)
+	rawURL = strings.Replace(rawURL, "/blob/", "/", 1)
 
 	// Download template content
 	resp, err := http.Get(rawURL)
