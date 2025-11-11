@@ -501,6 +501,19 @@ With 700+ templates, the original UI needed improvements for better discoverabil
 - Visual feedback for active filters
 - Easier navigation with 700+ templates
 
+**Template Preview Modal** ✅
+- **In-page preview**: Click any template card to view its YAML content in a modal popup
+- **YAML syntax highlighting**: Color-coded display of keys, strings, numbers, booleans, comments
+- **Multiple close methods**:
+  - Escape key
+  - Click outside modal (on overlay)
+  - Close button in header (×)
+  - Close button in footer
+- **Quick navigation**: Preview templates without leaving the catalog page
+- **GitHub link preserved**: Clicking org/repo name still opens GitHub in new tab
+- **Responsive design**: Modal scales appropriately on mobile devices
+- **Loading state**: Shows loading indicator while fetching template content from raw.githubusercontent.com
+
 ### Future Enhancements 📋
 - **LLM-based descriptions**: Optional LLM integration for better template descriptions
 - **Time-based search segmentation**: Implement when queries approach 1000 result limit
