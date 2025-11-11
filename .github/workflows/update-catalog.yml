@@ -57,14 +57,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check if there are changes
-          if git diff --quiet data/; then
+          # Add all changes (both new and modified files)
+          git add data/
+
+          # Check if there are staged changes
+          if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
           # Commit changes
-          git add data/
           git commit -m "Update Lima template catalog - $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
           git push origin data
 
