@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lima Template Catalog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🖥️ Lima Template Catalog</h1>
+            <p class="subtitle">Discover Lima VM templates from across GitHub</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Search templates by name, keyword, or technology..." />
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Category:</label>
+                    <select id="category-filter">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Type:</label>
+                    <select id="type-filter">
+                        <option value="">All Types</option>
+                        <option value="official">Official</option>
+                        <option value="community">Community</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sort by:</label>
+                    <select id="sort">
+                        <option value="name">Name</option>
+                        <option value="stars">Popularity</option>
+                        <option value="updated">Recently Updated</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-value" id="total-count">-</span>
+                <span class="stat-label">Total Templates</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="official-count">-</span>
+                <span class="stat-label">Official</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="community-count">-</span>
+                <span class="stat-label">Community</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="visible-count">-</span>
+                <span class="stat-label">Showing</span>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading templates...</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="templates-grid" class="templates-grid"></div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                Data automatically collected from GitHub •
+                <a href="https://github.com/lima-catalog/lima-catalog" target="_blank">Source Code</a> •
+                <a href="https://lima-vm.io" target="_blank">Lima Project</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
