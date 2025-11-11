@@ -99,7 +99,11 @@ func run() error {
 	// Phase 1: Discovery
 	var templates []types.Template
 
-	if progress.Phase == "discovery" {
+	// In incremental mode, always check for new/updated templates
+	// In non-incremental mode, only run if phase is "discovery"
+	shouldDiscover := incremental || progress.Phase == "discovery"
+
+	if shouldDiscover {
 		fmt.Println("=== Phase 1: Template Discovery ===")
 		fmt.Println()
 
@@ -146,7 +150,10 @@ func run() error {
 		}
 
 		// Update progress
-		progress.Phase = "metadata"
+		if !incremental {
+			// Only update phase if not in incremental mode
+			progress.Phase = "metadata"
+		}
 		progress.TemplatesDiscovered = len(templates)
 		progress.OfficialTemplates = officialCount
 		progress.CommunityTemplates = communityCount
@@ -169,7 +176,11 @@ func run() error {
 	}
 
 	// Phase 2: Metadata Collection
-	if progress.Phase == "metadata" {
+	// In incremental mode, always update metadata
+	// In non-incremental mode, only run if phase is "metadata"
+	shouldCollectMetadata := incremental || progress.Phase == "metadata"
+
+	if shouldCollectMetadata {
 		fmt.Println("=== Phase 2: Metadata Collection ===")
 		fmt.Println()
 
@@ -218,7 +229,10 @@ func run() error {
 		}
 
 		// Update progress
-		progress.Phase = "complete"
+		if !incremental {
+			// Only update phase if not in incremental mode
+			progress.Phase = "complete"
+		}
 		progress.ReposFetched = len(repositories)
 		progress.OrgsFetched = len(organizations)
 		progress.LastUpdated = time.Now()
