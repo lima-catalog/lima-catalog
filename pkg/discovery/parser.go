@@ -145,7 +145,15 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		info.Categories = appendUnique(info.Categories, "containers")
 	}
 	if info.HasK8s {
-		info.Keywords = appendUnique(info.Keywords, "kubernetes", "k8s")
+		// Only add specific k8s variant keywords if mentioned
+		if strings.Contains(provisioningText, "k3s") {
+			info.Keywords = appendUnique(info.Keywords, "k3s")
+		} else if strings.Contains(provisioningText, "k0s") {
+			info.Keywords = appendUnique(info.Keywords, "k0s")
+		} else {
+			// Generic kubernetes - just use "k8s" abbreviation
+			info.Keywords = appendUnique(info.Keywords, "k8s")
+		}
 		info.Categories = appendUnique(info.Categories, "orchestration")
 	}
 	if info.HasPodman {
