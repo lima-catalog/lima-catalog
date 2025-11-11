@@ -503,7 +503,10 @@ With 700+ templates, the original UI needed improvements for better discoverabil
 
 **Template Preview Modal** ✅
 - **In-page preview**: Click any template card to view its YAML content in a modal popup
-- **YAML syntax highlighting**: Color-coded display of keys, strings, numbers, booleans, comments
+- **Professional syntax highlighting**: Uses highlight.js with atom-one-light theme
+  - Distinct colors for keys, strings, numbers, booleans, comments
+  - Much more accurate than regex-based highlighting
+- **Instant display**: No animation delay - modal appears immediately at full size
 - **Multiple close methods**:
   - Escape key
   - Click outside modal (on overlay)
@@ -511,8 +514,16 @@ With 700+ templates, the original UI needed improvements for better discoverabil
   - Close button in footer
 - **Quick navigation**: Preview templates without leaving the catalog page
 - **GitHub link preserved**: Clicking org/repo name still opens GitHub in new tab
+- **Full URL display**: Shows complete GitHub URL in modal footer instead of generic button text
 - **Responsive design**: Modal scales appropriately on mobile devices
-- **Loading state**: Shows loading indicator while fetching template content from raw.githubusercontent.com
+- **Loading state**: Shows centered loading indicator while fetching template content
+
+**Default Branch URLs** ✅
+- **Latest content**: Template URLs use repository's default branch (main/master) instead of specific commit SHA
+- **Backend tracking**: Commit SHA still stored in database for accurate change detection
+- **Frontend conversion**: `getDefaultBranchURL()` converts SHA URLs to branch URLs on-the-fly
+- **Repository metadata**: Added `default_branch` field to Repository type
+- **Automatic updates**: Next catalog run will populate default branch for all existing repositories
 
 ### Future Enhancements 📋
 - **LLM-based descriptions**: Optional LLM integration for better template descriptions

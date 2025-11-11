@@ -4,27 +4,41 @@ This file contains persistent instructions for Claude when working on this proje
 
 ## Before Creating Pull Requests
 
-**ALWAYS follow these steps before suggesting a PR:**
+**⚠️ CRITICAL: ALWAYS follow these steps IN ORDER before suggesting a PR:**
 
-1. **Check if main has been updated:**
-   ```bash
-   git fetch origin main
-   git log HEAD..origin/main --oneline
-   ```
-   If there are new commits, rebase your branch:
-   ```bash
-   git rebase origin/main
-   ```
+### Step 1: Update PLAN.md (DO THIS FIRST!)
 
-2. **Update PLAN.md if you made significant changes:**
-   - New features → Add to "Completed" section
-   - UI changes → Update "Recent: GitHub Pages UI Redesign" section
-   - Architecture changes → Update relevant sections
-   - Bug fixes → May not need PLAN.md update (use judgment)
+**READ PLAN.md and UPDATE IT if you made significant changes:**
+- New features → Add to appropriate section (e.g., "Template Preview Modal")
+- UI changes → Update "Recent: GitHub Pages UI Redesign" section
+- Backend changes → Add to relevant section
+- Bug fixes → May not need PLAN.md update (use judgment)
 
-3. **Build/test if applicable:**
-   - Go changes: `go build -o lima-catalog ./cmd/lima-catalog`
-   - JavaScript changes: Manual testing on GitHub Pages may be needed
+**Then commit PLAN.md updates:**
+```bash
+git add PLAN.md
+git commit -m "Update PLAN.md to document [feature name]"
+```
+
+### Step 2: Check and rebase on main
+
+**Check if main has been updated:**
+```bash
+git fetch origin main
+git log HEAD..origin/main --oneline
+```
+
+**If there are new commits, rebase your branch:**
+```bash
+git rebase origin/main
+```
+
+### Step 3: Build/test if applicable
+
+- Go changes: `go build -o lima-catalog ./cmd/lima-catalog`
+- JavaScript changes: Manual testing on GitHub Pages may be needed
+
+**REMINDER: If you skip Step 1 (PLAN.md), the user will notice and ask why you forgot!**
 
 ## Project Context
 
