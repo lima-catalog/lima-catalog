@@ -89,8 +89,8 @@ function getGitHubSchemeURL(template) {
     const [owner, repo] = template.repo.split('/');
     let path = template.path;
 
-    // Remove .yaml or .yml extension (Lima adds it automatically)
-    path = path.replace(/\.(yaml|yml)$/, '');
+    // Remove .yaml extension (Lima adds .yaml automatically, not .yml)
+    path = path.replace(/\.yaml$/, '');
 
     // If path ends with .lima, remove it (default filename)
     path = path.replace(/\/\.lima$/, '');
