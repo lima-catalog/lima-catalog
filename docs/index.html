@@ -78,17 +78,17 @@
                 <div class="modal-title-section">
                     <h2 id="modal-title" class="modal-title"></h2>
                     <div class="modal-github-url">
-                        <code id="modal-github-scheme" class="github-scheme-url"></code>
-                        <button id="copy-github-url" class="copy-button" title="Copy to clipboard">
-                            Copy
-                        </button>
+                        <code id="modal-github-scheme" class="github-scheme-url"></code> <button id="copy-github-url" class="copy-button-inline" title="Copy to clipboard">Copy</button>
                     </div>
                 </div>
                 <button id="modal-close" class="modal-close" title="Close (Esc)">×</button>
             </div>
             <div class="modal-body">
                 <div id="modal-loading" class="modal-loading">Loading template...</div>
-                <pre id="modal-code" class="modal-code hidden"><code id="modal-code-content" class="language-yaml"></code></pre>
+                <div class="modal-code-wrapper">
+                    <button id="copy-yaml" class="copy-yaml-button" title="Copy template YAML">Copy</button>
+                    <pre id="modal-code" class="modal-code hidden"><code id="modal-code-content" class="language-yaml"></code></pre>
+                </div>
             </div>
             <div class="modal-footer">
                 <div class="modal-footer-url">
