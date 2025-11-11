@@ -581,7 +581,6 @@ footer a:hover {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -661,55 +660,45 @@ footer a:hover {
 
 .modal-code {
     margin: 0;
-    padding: 1rem;
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    border-radius: 0.375rem;
+    padding: 0;
+    background: transparent;
+    border: none;
     font-size: 0.8125rem;
     line-height: 1.5;
     overflow-x: auto;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
 }
 
 .modal-code code {
     display: block;
-    color: var(--text);
-}
-
-/* YAML Syntax Highlighting */
-.yaml-key {
-    color: #0550ae;
-    font-weight: 500;
-}
-
-.yaml-string {
-    color: #0a3069;
-}
-
-.yaml-number {
-    color: #0550ae;
-}
-
-.yaml-boolean {
-    color: #8250df;
-}
-
-.yaml-comment {
-    color: #57606a;
-    font-style: italic;
-}
-
-.yaml-dash {
-    color: #6e7781;
-    font-weight: 600;
+    padding: 1rem;
+    background: #f6f8fa;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
 }
 
 .modal-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--border);
     display: flex;
-    gap: 0.75rem;
-    justify-content: flex-end;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-footer-url {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.875rem;
+}
+
+.modal-footer-url a {
+    color: var(--primary);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.modal-footer-url a:hover {
+    text-decoration: underline;
 }
 
 .modal-button {

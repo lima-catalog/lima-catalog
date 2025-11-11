@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lima Template Catalog</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
 </head>
 <body>
     <header>
@@ -80,12 +83,12 @@
             </div>
             <div class="modal-body">
                 <div id="modal-loading" class="modal-loading">Loading template...</div>
-                <pre id="modal-code" class="modal-code" style="display: none;"><code id="modal-code-content"></code></pre>
+                <pre id="modal-code" class="modal-code" style="display: none;"><code id="modal-code-content" class="language-yaml"></code></pre>
             </div>
             <div class="modal-footer">
-                <a id="modal-github-link" href="#" target="_blank" class="modal-button primary">
-                    View on GitHub
-                </a>
+                <div class="modal-footer-url">
+                    <a id="modal-github-link" href="#" target="_blank" rel="noopener noreferrer"></a>
+                </div>
                 <button id="modal-close-button" class="modal-button secondary">
                     Close
                 </button>
