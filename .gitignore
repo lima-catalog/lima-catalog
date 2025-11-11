@@ -1,5 +1,5 @@
-# Binaries
-lima-catalog
+# Binaries (exclude from root only)
+/lima-catalog
 *.exe
 *.dll
 *.so
