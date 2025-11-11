@@ -22,9 +22,34 @@ func NewDiscoverer(client *github.Client) *Discoverer {
 	}
 }
 
+// isLimaTemplate checks if a file is a valid Lima template by checking for the required "images:" top-level key
+func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
+	content, err := d.client.GetRepositoryContent(owner, repo, path)
+	if err != nil {
+		return false // If we can't fetch it, exclude it
+	}
+
+	// Decode the content (it's base64 encoded)
+	contentStr, err := content.GetContent()
+	if err != nil {
+		return false
+	}
+
+	// Check for "images:" as a top-level YAML key (at the start of a line)
+	lines := strings.Split(contentStr, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "images:") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // searchWithQuery performs a GitHub code search with pagination
 func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 	var templates []types.Template
+	excludedCount := 0
 
 	page := 1
 	for {
@@ -58,10 +83,26 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 		fmt.Printf("  Found %d results on page %d\n", len(result.CodeResults), page)
 
 		for _, item := range result.CodeResults {
+			repoFullName := item.GetRepository().GetFullName()
+			path := item.GetPath()
+
+			// Parse owner and repo name
+			parts := strings.SplitN(repoFullName, "/", 2)
+			if len(parts) != 2 {
+				continue
+			}
+			owner, repo := parts[0], parts[1]
+
+			// Check if this is actually a Lima template by verifying it has "images:" key
+			if !d.isLimaTemplate(owner, repo, path) {
+				excludedCount++
+				continue
+			}
+
 			template := types.Template{
-				ID:           fmt.Sprintf("%s/%s", item.GetRepository().GetFullName(), item.GetPath()),
-				Repo:         item.GetRepository().GetFullName(),
-				Path:         item.GetPath(),
+				ID:           fmt.Sprintf("%s/%s", repoFullName, path),
+				Repo:         repoFullName,
+				Path:         path,
 				SHA:          item.GetSHA(),
 				URL:          item.GetHTMLURL(),
 				DiscoveredAt: time.Now(),
@@ -84,6 +125,10 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 		time.Sleep(3 * time.Second) // 3 seconds = max 20 requests/minute
 	}
 
+	if excludedCount > 0 {
+		fmt.Printf("  Excluded %d files that don't have 'images:' top-level key\n", excludedCount)
+	}
+
 	return templates, nil
 }
 
@@ -100,9 +145,9 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query 1 failed: %w", err)
 	}
-	fmt.Printf("Query 1 found %d templates\n", len(templates1))
-
+	fmt.Printf("Query 1 found %d templates:\n", len(templates1))
 	for _, t := range templates1 {
+		fmt.Printf("  - %s\n", t.ID)
 		templateMap[t.ID] = t
 	}
 
@@ -117,13 +162,16 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query 1b failed: %w", err)
 	}
-	fmt.Printf("Query 1b found %d templates\n", len(templates1b))
-
+	fmt.Printf("Query 1b found %d templates:\n", len(templates1b))
+	newFromQuery1b := 0
 	for _, t := range templates1b {
 		if _, exists := templateMap[t.ID]; !exists {
+			fmt.Printf("  - %s (new)\n", t.ID)
 			templateMap[t.ID] = t
+			newFromQuery1b++
 		}
 	}
+	fmt.Printf("Query 1b added %d new templates (duplicates: %d)\n", newFromQuery1b, len(templates1b)-newFromQuery1b)
 
 	// Wait before next query to avoid rate limits
 	fmt.Println("Waiting 5 seconds before next query...")
@@ -136,14 +184,17 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query 2 failed: %w", err)
 	}
-	fmt.Printf("Query 2 found %d templates\n", len(templates2))
-
+	fmt.Printf("Query 2 found %d templates:\n", len(templates2))
+	newFromQuery2 := 0
 	for _, t := range templates2 {
 		// Only add if not already found
 		if _, exists := templateMap[t.ID]; !exists {
+			fmt.Printf("  - %s (new)\n", t.ID)
 			templateMap[t.ID] = t
+			newFromQuery2++
 		}
 	}
+	fmt.Printf("Query 2 added %d new templates (duplicates: %d)\n", newFromQuery2, len(templates2)-newFromQuery2)
 
 	// Wait before next query to avoid rate limits
 	fmt.Println("Waiting 5 seconds before next query...")
@@ -156,14 +207,17 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query 2b failed: %w", err)
 	}
-	fmt.Printf("Query 2b found %d templates\n", len(templates2b))
-
+	fmt.Printf("Query 2b found %d templates:\n", len(templates2b))
+	newFromQuery2b := 0
 	for _, t := range templates2b {
 		// Only add if not already found
 		if _, exists := templateMap[t.ID]; !exists {
+			fmt.Printf("  - %s (new)\n", t.ID)
 			templateMap[t.ID] = t
+			newFromQuery2b++
 		}
 	}
+	fmt.Printf("Query 2b added %d new templates (duplicates: %d)\n", newFromQuery2b, len(templates2b)-newFromQuery2b)
 
 	// Convert map to slice
 	var templates []types.Template
