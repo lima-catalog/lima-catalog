@@ -622,6 +622,51 @@ footer a:hover {
     color: var(--text-light);
     font-family: monospace;
     word-break: break-all;
+    margin-bottom: 0.5rem;
+}
+
+.modal-github-url {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f6f8fa;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+}
+
+.github-scheme-url {
+    flex: 1;
+    font-size: 0.875rem;
+    font-family: monospace;
+    color: var(--primary);
+    word-break: break-all;
+}
+
+.copy-button {
+    flex-shrink: 0;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.copy-button:hover {
+    background: var(--primary-dark);
+}
+
+.copy-button:active {
+    transform: scale(0.95);
+}
+
+.copy-button.copied {
+    background: #22c55e;
 }
 
 .modal-close {
