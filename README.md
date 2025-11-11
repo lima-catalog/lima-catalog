@@ -47,14 +47,44 @@ export DATA_DIR=/path/to/data
 ./lima-catalog
 ```
 
-## Output Files
+## Accessing the Catalog Data
+
+The collected catalog data is stored in the `data` branch of this repository. You can access it by:
+
+```bash
+# Clone the data branch
+git clone -b data https://github.com/lima-catalog/lima-catalog.git lima-catalog-data
+
+# Or checkout the data branch in an existing clone
+git fetch origin data:data
+git checkout data
+```
+
+### Data Files
 
 The tool creates these files in the data directory:
 
-- `templates.jsonl` - One template per line
-- `repos.jsonl` - One repository per line
-- `orgs.jsonl` - One organization/user per line
+- `templates.jsonl` - One template per line (108 templates)
+- `repos.jsonl` - One repository per line (36 repositories)
+- `orgs.jsonl` - One organization/user per line (35 orgs/users)
 - `progress.json` - Progress state for resumability
+
+## Automated Updates
+
+The catalog is automatically updated weekly via GitHub Actions. The workflow:
+
+1. Runs every Sunday at 00:00 UTC
+2. Builds the catalog tool
+3. Collects latest template data
+4. Commits changes to the `data` branch
+
+You can also trigger manual updates:
+
+```bash
+# Via GitHub UI: Actions → Update Lima Template Catalog → Run workflow
+# Or via GitHub CLI:
+gh workflow run update-catalog.yml
+```
 
 ## Data Format
 
