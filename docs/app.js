@@ -1,15 +1,20 @@
 // Configuration
 const DATA_BASE_URL = 'https://raw.githubusercontent.com/lima-catalog/lima-catalog/data/data';
+const MAX_KEYWORDS_DISPLAY = 50; // Show top 50 keywords in cloud
 
 // State
 let templates = [];
 let repositories = new Map();
 let filteredTemplates = [];
+let selectedKeywords = new Set();
+let selectedCategory = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
     setupEventListeners();
+    renderKeywordCloud();
+    renderCategoryList();
     renderTemplates();
 });
 
@@ -38,9 +43,6 @@ async function loadData() {
 
         filteredTemplates = [...templates];
 
-        // Populate category filter
-        populateCategoryFilter();
-
         // Update stats
         updateStats();
 
@@ -62,36 +64,164 @@ function parseJsonLines(text) {
         .map(line => JSON.parse(line));
 }
 
-// Populate category filter dropdown
-function populateCategoryFilter() {
-    const categories = new Set();
-    templates.forEach(t => {
-        if (t.category) categories.add(t.category);
+// Get all keywords with counts
+function getKeywordCounts() {
+    const counts = new Map();
+    templates.forEach(template => {
+        if (template.keywords && Array.isArray(template.keywords)) {
+            template.keywords.forEach(kw => {
+                counts.set(kw, (counts.get(kw) || 0) + 1);
+            });
+        }
+    });
+    return Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1]) // Sort by count descending
+        .slice(0, MAX_KEYWORDS_DISPLAY);
+}
+
+// Get category counts
+function getCategoryCounts() {
+    const counts = new Map();
+    templates.forEach(template => {
+        if (template.category) {
+            counts.set(template.category, (counts.get(template.category) || 0) + 1);
+        }
+    });
+    return Array.from(counts.entries())
+        .sort((a, b) => a[0].localeCompare(b[0])); // Sort alphabetically
+}
+
+// Render keyword cloud
+function renderKeywordCloud() {
+    const cloud = document.getElementById('keyword-cloud');
+    const keywords = getKeywordCounts();
+
+    cloud.innerHTML = keywords.map(([keyword, count]) => `
+        <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}">
+            <span>${escapeHtml(keyword)}</span>
+            <span class="keyword-count">${count}</span>
+        </div>
+    `).join('');
+
+    // Add click handlers
+    cloud.querySelectorAll('.keyword-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            const keyword = tag.dataset.keyword;
+            toggleKeyword(keyword);
+        });
+    });
+}
+
+// Render category list
+function renderCategoryList() {
+    const list = document.getElementById('category-list');
+    const categories = getCategoryCounts();
+
+    list.innerHTML = categories.map(([category, count]) => `
+        <div class="category-item" data-category="${escapeHtml(category)}">
+            <span class="category-name">${formatCategoryName(category)}</span>
+            <span class="category-count">${count}</span>
+        </div>
+    `).join('');
+
+    // Add click handlers
+    list.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const category = item.dataset.category;
+            toggleCategory(category);
+        });
+    });
+}
+
+// Toggle keyword selection
+function toggleKeyword(keyword) {
+    if (selectedKeywords.has(keyword)) {
+        selectedKeywords.delete(keyword);
+    } else {
+        selectedKeywords.add(keyword);
+    }
+    updateSelectedKeywords();
+    filterAndRender();
+}
+
+// Toggle category selection
+function toggleCategory(category) {
+    if (selectedCategory === category) {
+        selectedCategory = null;
+    } else {
+        selectedCategory = category;
+    }
+    updateCategorySelection();
+    filterAndRender();
+}
+
+// Update selected keywords display
+function updateSelectedKeywords() {
+    const container = document.getElementById('selected-keywords');
+
+    if (selectedKeywords.size === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = Array.from(selectedKeywords).map(keyword => `
+        <div class="selected-keyword" data-keyword="${escapeHtml(keyword)}">
+            <span>${escapeHtml(keyword)}</span>
+            <span class="remove">×</span>
+        </div>
+    `).join('');
+
+    // Add click handlers for removal
+    container.querySelectorAll('.selected-keyword').forEach(tag => {
+        tag.addEventListener('click', () => {
+            const keyword = tag.dataset.keyword;
+            toggleKeyword(keyword);
+        });
     });
 
-    const select = document.getElementById('category-filter');
-    Array.from(categories)
-        .sort()
-        .forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-            select.appendChild(option);
-        });
+    // Update keyword cloud selected state
+    document.querySelectorAll('.keyword-tag').forEach(tag => {
+        if (selectedKeywords.has(tag.dataset.keyword)) {
+            tag.classList.add('selected');
+        } else {
+            tag.classList.remove('selected');
+        }
+    });
+}
+
+// Update category selection display
+function updateCategorySelection() {
+    document.querySelectorAll('.category-item').forEach(item => {
+        if (item.dataset.category === selectedCategory) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
 }
 
 // Setup event listeners
 function setupEventListeners() {
     document.getElementById('search').addEventListener('input', filterAndRender);
-    document.getElementById('category-filter').addEventListener('change', filterAndRender);
     document.getElementById('type-filter').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
+    document.getElementById('clear-filters').addEventListener('click', clearAllFilters);
+}
+
+// Clear all filters
+function clearAllFilters() {
+    document.getElementById('search').value = '';
+    document.getElementById('type-filter').value = '';
+    selectedKeywords.clear();
+    selectedCategory = null;
+    updateSelectedKeywords();
+    updateCategorySelection();
+    filterAndRender();
 }
 
 // Filter and render templates
 function filterAndRender() {
     const searchTerm = document.getElementById('search').value.toLowerCase();
-    const categoryFilter = document.getElementById('category-filter').value;
     const typeFilter = document.getElementById('type-filter').value;
 
     // Filter templates
@@ -111,7 +241,15 @@ function filterAndRender() {
         }
 
         // Category filter
-        if (categoryFilter && template.category !== categoryFilter) return false;
+        if (selectedCategory && template.category !== selectedCategory) return false;
+
+        // Keyword filter (AND logic - template must have ALL selected keywords)
+        if (selectedKeywords.size > 0) {
+            const templateKeywords = new Set(template.keywords || []);
+            for (const keyword of selectedKeywords) {
+                if (!templateKeywords.has(keyword)) return false;
+            }
+        }
 
         // Type filter
         if (typeFilter === 'official' && !template.is_official) return false;
@@ -147,8 +285,6 @@ function updateStats() {
     const community = templates.filter(t => !t.is_official).length;
 
     document.getElementById('total-count').textContent = templates.length;
-    document.getElementById('official-count').textContent = official;
-    document.getElementById('community-count').textContent = community;
     document.getElementById('visible-count').textContent = filteredTemplates.length;
 }
 
@@ -205,6 +341,14 @@ function formatName(name) {
         .join(' ');
 }
 
+// Format category name
+function formatCategoryName(category) {
+    return category
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
 // Create template card
 function createTemplateCard(template) {
     const card = document.createElement('div');
@@ -231,7 +375,7 @@ function createTemplateCard(template) {
         <div class="template-meta">
             ${template.category ? `
                 <span class="template-category">
-                    📦 ${escapeHtml(template.category)}
+                    📦 ${escapeHtml(formatCategoryName(template.category))}
                 </span>
             ` : ''}
             ${template.images && template.images.length > 0 ? `

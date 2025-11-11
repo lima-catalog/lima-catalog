@@ -466,11 +466,46 @@ images: provision: pushed:<2024-06-01 extension:yaml -repo:lima-vm/lima
 - Monitoring catalog quality and accuracy
 - Daily automated updates via GitHub Actions
 
+### Recent: GitHub Pages UI Redesign ✅
+With 700+ templates, the original UI needed improvements for better discoverability:
+
+**Problems Addressed:**
+- Header took up too much vertical space (1/3 of screen)
+- Filters weren't sticky - users lost context when scrolling
+- No way to filter by multiple keywords simultaneously
+- Categories and keywords were conceptually similar but handled differently
+
+**Solution: Sidebar Layout with Tag Cloud**
+- **Compact sticky header**: Reduced from 3rem to 1.5rem padding, moved stats inline
+- **Sticky top controls**: Search bar and quick filters remain visible while scrolling
+- **Left sidebar (280px)**: Contains keyword cloud and category filters
+  - Always visible on desktop, collapsible on mobile
+  - Sticky positioning keeps filters accessible
+- **Keyword tag cloud**:
+  - Displays top 50 keywords by frequency
+  - Multi-select with AND logic (e.g., "alpine" + "docker")
+  - Shows count for each keyword
+  - Selected keywords displayed prominently above cloud
+  - Click to toggle selection
+- **Category list**:
+  - Click to select single category
+  - Shows count for each category
+  - Visual feedback for selection
+- **Clear filters button**: One-click reset of all filters
+- **Responsive design**: Sidebar moves to top on tablet/mobile
+
+**User Experience Improvements:**
+- More screen space for template cards (reduced header size)
+- Filters always accessible (sticky controls)
+- Powerful multi-keyword filtering for precise discovery
+- Visual feedback for active filters
+- Easier navigation with 700+ templates
+
 ### Future Enhancements 📋
 - **LLM-based descriptions**: Optional LLM integration for better template descriptions
 - **Time-based search segmentation**: Implement when queries approach 1000 result limit
 - **Template validation**: Validate YAML syntax and Lima template structure
 - **Quality scoring**: Rank templates by stars, recency, completeness
 - **CLI search tool**: Command-line interface for finding and installing templates
-- **GitHub Pages improvements**: Fix badge layout issues, add template detail pages
+- **Template detail pages**: Dedicated pages for each template with full metadata
 - **Result count monitoring**: Add warnings when search queries return >900 results
