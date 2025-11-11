@@ -37,7 +37,11 @@ func run() error {
 		dataDir = "./data"
 	}
 
+	// Check if incremental mode is enabled
+	incremental := os.Getenv("INCREMENTAL") != ""
+
 	fmt.Printf("Data directory: %s\n", dataDir)
+	fmt.Printf("Incremental mode: %v\n", incremental)
 	fmt.Println()
 
 	// Initialize storage
@@ -96,9 +100,28 @@ func run() error {
 
 		discoverer := discovery.NewDiscoverer(client)
 
-		templates, err = discoverer.DiscoverAll()
+		discoveredTemplates, err := discoverer.DiscoverAll()
 		if err != nil {
 			return fmt.Errorf("discovery failed: %w", err)
+		}
+
+		// If incremental mode, load existing templates and merge
+		if incremental {
+			existingTemplates, err := store.LoadTemplates()
+			if err != nil {
+				fmt.Printf("Warning: failed to load existing templates: %v\n", err)
+				fmt.Println("Continuing with full collection...")
+				templates = discoveredTemplates
+			} else {
+				fmt.Printf("Loaded %d existing templates for incremental update\n", len(existingTemplates))
+				updateResult := discovery.MergeTemplates(existingTemplates, discoveredTemplates)
+				discovery.PrintUpdateSummary(updateResult)
+
+				// Use all templates (new + updated + unchanged)
+				templates = updateResult.AllTemplates
+			}
+		} else {
+			templates = discoveredTemplates
 		}
 
 		// Save templates
@@ -128,7 +151,7 @@ func run() error {
 			return fmt.Errorf("failed to save progress: %w", err)
 		}
 
-		fmt.Printf("✓ Discovered %d total templates (%d official, %d community)\n",
+		fmt.Printf("✓ Total templates: %d (%d official, %d community)\n",
 			len(templates), officialCount, communityCount)
 		fmt.Println()
 	} else {
@@ -147,9 +170,36 @@ func run() error {
 
 		collector := discovery.NewMetadataCollector(client)
 
-		repositories, organizations, err := collector.CollectAllMetadata(templates)
+		newRepositories, newOrganizations, err := collector.CollectAllMetadata(templates)
 		if err != nil {
 			return fmt.Errorf("metadata collection failed: %w", err)
+		}
+
+		// If incremental mode, merge with existing data
+		var repositories []types.Repository
+		var organizations []types.Organization
+
+		if incremental {
+			existingRepos, err := store.LoadRepositories()
+			if err != nil {
+				fmt.Printf("Warning: failed to load existing repos: %v\n", err)
+				repositories = newRepositories
+			} else {
+				repositories = discovery.MergeRepositories(existingRepos, newRepositories)
+				fmt.Printf("Merged repository data: %d total\n", len(repositories))
+			}
+
+			existingOrgs, err := store.LoadOrganizations()
+			if err != nil {
+				fmt.Printf("Warning: failed to load existing orgs: %v\n", err)
+				organizations = newOrganizations
+			} else {
+				organizations = discovery.MergeOrganizations(existingOrgs, newOrganizations)
+				fmt.Printf("Merged organization data: %d total\n", len(organizations))
+			}
+		} else {
+			repositories = newRepositories
+			organizations = newOrganizations
 		}
 
 		// Save repositories

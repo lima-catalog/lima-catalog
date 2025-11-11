@@ -47,6 +47,25 @@ export DATA_DIR=/path/to/data
 ./lima-catalog
 ```
 
+### Incremental Updates
+
+To perform an incremental update (merge new discoveries with existing data):
+
+```bash
+export INCREMENTAL=true
+./lima-catalog
+```
+
+Incremental mode will:
+- Load existing template data
+- Compare SHAs to detect changes
+- Add newly discovered templates
+- Update changed templates (preserving discovery date)
+- Update last_checked timestamps for unchanged templates
+- Merge repository and organization metadata
+
+This is more efficient than a full collection and preserves historical data.
+
 ## Accessing the Catalog Data
 
 The collected catalog data is stored in the `data` branch of this repository. You can access it by:

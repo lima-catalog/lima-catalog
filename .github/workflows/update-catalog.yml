@@ -37,7 +37,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DATA_DIR: ./catalog-data
-        run: ./lima-catalog
+          INCREMENTAL: "true"
+        run: |
+          # Copy existing data from data branch to enable incremental updates
+          mkdir -p catalog-data
+          cp -r data-branch/data/* catalog-data/ 2>/dev/null || true
+
+          # Run catalog tool in incremental mode
+          ./lima-catalog
 
       - name: Copy data to data branch
         run: |
