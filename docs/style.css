@@ -507,7 +507,7 @@ footer a:hover {
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 640px) {
     .main-layout {
         flex-direction: column;
     }
