@@ -166,7 +166,7 @@ header {
 .sidebar {
     width: var(--sidebar-width);
     flex-shrink: 0;
-    padding: 1.5rem 0;
+    padding: 1.5rem 0.75rem 1.5rem 0;
     position: sticky;
     top: 5rem;
     max-height: calc(100vh - 5rem);
