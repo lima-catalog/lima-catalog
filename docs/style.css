@@ -515,6 +515,9 @@ footer a:hover {
     .sidebar {
         width: 100%;
         padding-top: 1rem;
+        position: static;
+        max-height: none;
+        overflow-y: visible;
     }
 
     .sidebar-section {
