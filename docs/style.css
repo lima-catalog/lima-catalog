@@ -168,8 +168,8 @@ header {
     flex-shrink: 0;
     padding: 1.5rem 0;
     position: sticky;
-    top: 0;
-    max-height: 100vh;
+    top: 5rem;
+    max-height: calc(100vh - 5rem);
     overflow-y: auto;
     overflow-x: hidden;
 }
