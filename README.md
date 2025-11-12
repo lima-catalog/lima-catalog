@@ -1,240 +1,111 @@
 # Lima Template Catalog
 
-A tool to discover and catalog Lima VM templates from GitHub.
+Discover and browse 700+ [Lima VM](https://lima-vm.io/) templates from across GitHub.
 
 ## 🌐 Browse the Catalog
 
-**[View the Lima Template Catalog →](https://lima-catalog.github.io/lima-catalog/)**
+**[lima-catalog.github.io/lima-catalog](https://lima-catalog.github.io/lima-catalog/)**
 
-Browse 100+ templates with search, filtering, and categorization in a beautiful web interface.
+Search, filter, and preview Lima templates with:
+- **Multi-keyword filtering** - Find templates by technology (e.g., "alpine" + "docker" + "k8s")
+- **Category browsing** - Browse by containers, development, orchestration, security, etc.
+- **Template preview** - View YAML content with syntax highlighting without leaving the page
+- **Lima 2.0 URLs** - One-click copy of shortest `github:` URLs for instant use
 
-## Overview
+## What's Inside
 
-This tool searches GitHub for Lima template files and collects metadata about them, their repositories, and maintainers. The data is stored in JSON Lines format for easy version control and minimal diffs.
+- **700+ templates** from across GitHub
+  - 51 official templates from lima-vm/lima
+  - 650+ community templates from independent repositories
+- **Daily automated updates** to discover new templates
+- **Smart categorization** with automatic keyword extraction
+- **Rich metadata** for each template and repository
 
-## Features
+## For Template Authors
 
-- **Template Discovery**: Finds community templates across GitHub and official templates from lima-vm/lima
-- **Metadata Collection**: Gathers repository and organization information
-- **Rate Limit Management**: Respects GitHub API rate limits
-- **Resumability**: Can resume after interruptions
-- **JSON Lines Storage**: Minimal diffs for git-friendly data storage
+Want your Lima template included in the catalog? Just create a valid Lima template (with `images:` field) in a public GitHub repository - it will be automatically discovered within 24 hours!
 
-## Building
+## Project Architecture
+
+This project consists of two main components:
+
+### 1. Web Catalog (GitHub Pages)
+
+A static website (`docs/`) that fetches data from the `data` branch and provides an interactive interface to browse templates.
+
+### 2. Backend Tool (Go)
+
+A CLI tool that:
+- Discovers templates via GitHub Code Search
+- Collects metadata for repositories and organizations
+- Analyzes templates to extract categories and keywords
+- Stores data in JSON Lines format for minimal git diffs
+- Runs daily via GitHub Actions to keep catalog fresh
+
+## For Developers
+
+### Building the Backend Tool
 
 ```bash
 go build -o lima-catalog ./cmd/lima-catalog
 ```
 
-## Usage
-
-Set your GitHub token:
+### Running Template Collection
 
 ```bash
 export GITHUB_TOKEN=your_token_here
-```
-
-Run the collector:
-
-```bash
+export ANALYZE=true  # Enable template analysis
 ./lima-catalog
 ```
 
-The tool will:
-1. Discover community templates (excluding lima-vm/lima)
-2. Discover official templates from lima-vm/lima
-3. Collect metadata for repositories and organizations
-4. Save everything to `./data/` directory
+The tool will discover templates, collect metadata, analyze content, and save to `./data/`.
 
-### Custom Data Directory
+### Options
 
-```bash
-export DATA_DIR=/path/to/data
-./lima-catalog
-```
+- `INCREMENTAL=true` - Merge with existing data (faster, preserves history)
+- `ANALYZE=true` - Parse templates and extract metadata
+- `DATA_DIR=/path` - Use custom output directory
 
-### Incremental Updates
+See [PLAN.md](PLAN.md) for detailed architecture and implementation notes.
 
-To perform an incremental update (merge new discoveries with existing data):
+## Data Access
+
+Catalog data is stored in the `data` branch:
 
 ```bash
-export INCREMENTAL=true
-./lima-catalog
-```
-
-Incremental mode will:
-- Load existing template data
-- Compare SHAs to detect changes
-- Add newly discovered templates
-- Update changed templates (preserving discovery date)
-- Update last_checked timestamps for unchanged templates
-- Merge repository and organization metadata
-
-This is more efficient than a full collection and preserves historical data.
-
-### Template Analysis
-
-To analyze templates and generate descriptions, categories, and keywords:
-
-```bash
-export ANALYZE=true
-./lima-catalog
-```
-
-Analysis mode will:
-- Derive smart names from template paths (handles generic filenames like "lima.yaml")
-- Parse YAML templates to extract images, architecture, and provisioning details
-- Detect technologies (Docker, Kubernetes, databases, dev tools) from scripts
-- Generate categories and use cases
-- Create display names and descriptions
-- Extract keywords for searching
-
-Optional: Enable LLM-enhanced analysis for better descriptions:
-
-```bash
-export ANALYZE=true
-export LLM_API_KEY=your_api_key
-./lima-catalog
-```
-
-**What gets analyzed:**
-- **Smart naming**: Derives meaningful names (e.g., "container-security" from "lima.yaml" in container-security repo)
-- **OS detection**: Extracts Ubuntu, Alpine, Debian, etc. from image URLs
-- **Technology detection**: Finds Docker, Kubernetes, Podman, databases, programming languages
-- **Categorization**: Assigns categories (containers, development, orchestration, security, etc.)
-- **Keywords**: Auto-generates searchable tags from detected technologies
-
-## Accessing the Catalog Data
-
-The collected catalog data is stored in the `data` branch of this repository. You can access it by:
-
-```bash
-# Clone the data branch
+# Clone data branch
 git clone -b data https://github.com/lima-catalog/lima-catalog.git lima-catalog-data
+cd lima-catalog-data/data
 
-# Or checkout the data branch in an existing clone
-git fetch origin data:data
-git checkout data
+# View templates
+cat templates.jsonl | jq .
 ```
 
 ### Data Files
 
-The tool creates these files in the data directory:
+- `templates.jsonl` - Template metadata (700+ templates)
+- `repos.jsonl` - Repository information
+- `orgs.jsonl` - Organization/user information
+- `progress.json` - Collection state
 
-- `templates.jsonl` - One template per line (108 templates)
-- `repos.jsonl` - One repository per line (36 repositories)
-- `orgs.jsonl` - One organization/user per line (35 orgs/users)
-- `progress.json` - Progress state for resumability
+Each file uses JSON Lines format (one JSON object per line) for minimal diffs and easy processing.
 
-## Automated Updates
+## Documentation
 
-The catalog is automatically updated weekly via GitHub Actions. The workflow:
+- **[PLAN.md](PLAN.md)** - Project architecture and implementation details
+- **[FINDINGS.md](FINDINGS.md)** - Research findings on GitHub search behavior
+- **[CLAUDE.md](CLAUDE.md)** - Development workflow and session instructions
+- **[experiments/](experiments/)** - Historical research scripts
 
-1. Runs every Sunday at 00:00 UTC
-2. Builds the catalog tool
-3. Collects latest template data
-4. Commits changes to the `data` branch
+## How It Works
 
-You can also trigger manual updates:
+1. **Discovery**: GitHub Code Search finds templates with `minimumLimaVersion` or Lima structure
+2. **Validation**: Content-based filtering ensures files are valid Lima templates
+3. **Analysis**: YAML parsing extracts OS images, technologies, and patterns
+4. **Categorization**: Auto-assigns categories based on detected technologies
+5. **Storage**: JSON Lines format enables efficient git-based storage
+6. **UI**: Static GitHub Pages site fetches data and provides rich browsing experience
 
-```bash
-# Via GitHub UI: Actions → Update Lima Template Catalog → Run workflow
-# Or via GitHub CLI:
-gh workflow run update-catalog.yml
-```
+## License
 
-## Data Format
-
-### Template
-
-```json
-{
-  "id": "owner/repo/path/to/template.yaml",
-  "repo": "owner/repo",
-  "path": "path/to/template.yaml",
-  "sha": "abc123...",
-  "size": 1234,
-  "last_modified": "2025-01-15T10:30:00Z",
-  "url": "https://github.com/...",
-  "discovered_at": "2025-01-20T12:00:00Z",
-  "last_checked": "2025-01-20T12:00:00Z",
-  "is_official": false
-}
-```
-
-### Repository
-
-```json
-{
-  "id": "owner/repo",
-  "owner": "owner",
-  "name": "repo",
-  "description": "Repository description",
-  "topics": ["kubernetes", "lima"],
-  "stars": 42,
-  "forks": 5,
-  "watchers": 10,
-  "language": "Go",
-  "license": "MIT",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2025-01-15T10:30:00Z",
-  "pushed_at": "2025-01-15T10:30:00Z",
-  "homepage": "https://example.com",
-  "is_fork": false,
-  "parent": null,
-  "last_fetched": "2025-01-20T12:00:00Z"
-}
-```
-
-### Organization
-
-```json
-{
-  "id": "owner",
-  "login": "owner",
-  "type": "Organization",
-  "name": "Display Name",
-  "description": "Org description",
-  "location": "San Francisco, CA",
-  "blog": "https://example.com",
-  "email": "contact@example.com",
-  "last_fetched": "2025-01-20T12:00:00Z"
-}
-```
-
-## Project Structure
-
-```
-lima-catalog/
-├── cmd/
-│   └── lima-catalog/
-│       └── main.go          # CLI entry point
-├── pkg/
-│   ├── types/
-│   │   └── types.go         # Data type definitions
-│   ├── github/
-│   │   └── client.go        # GitHub API client
-│   ├── storage/
-│   │   └── storage.go       # JSON Lines storage
-│   └── discovery/
-│       ├── discovery.go     # Template discovery
-│       └── metadata.go      # Metadata collection
-├── data/                    # Output directory (gitignored)
-├── go.mod
-├── go.sum
-├── PLAN.md                  # Project plan
-├── FINDINGS.md              # Research findings
-└── README.md
-```
-
-## Development
-
-See [PLAN.md](PLAN.md) for the full project plan and [FINDINGS.md](FINDINGS.md) for research findings about GitHub's code search behavior.
-
-## Future Enhancements
-
-- Incremental updates (detect changed templates)
-- LLM-based categorization and descriptions
-- Web catalog interface
-- Template validation
-- Quality scoring
+MIT
