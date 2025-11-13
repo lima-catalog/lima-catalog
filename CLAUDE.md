@@ -33,12 +33,30 @@ git log HEAD..origin/main --oneline
 git rebase origin/main
 ```
 
-### Step 3: Build/test if applicable
+### Step 3: Run tests (REQUIRED!)
+
+**⚠️ CRITICAL: ALL tests must pass before creating a PR:**
+
+```bash
+npm test
+```
+
+**This will run 67+ unit tests covering:**
+- URL helper functions
+- Data parsing (JSONL)
+- Filter logic
+- Template card formatting
+
+**All tests must pass (exit code 0). If any tests fail, fix them before proceeding.**
+
+### Step 4: Build/test additional components if applicable
 
 - Go changes: `go build -o lima-catalog ./cmd/lima-catalog`
-- JavaScript changes: Manual testing on GitHub Pages may be needed
+- JavaScript changes: Tests are automated, but manual testing on GitHub Pages may be helpful
 
-**REMINDER: If you skip Step 1 (PLAN.md), the user will notice and ask why you forgot!**
+**REMINDERS:**
+- **If you skip Step 1 (PLAN.md), the user will notice and ask why you forgot!**
+- **If you skip Step 3 (tests), the PR will be rejected!**
 
 ## Project Context
 
@@ -68,3 +86,57 @@ See [PLAN.md](PLAN.md) for full project architecture, implementation details, an
 - Changes to `parser.go` or `analyzer.go` only affect NEW templates or templates with updated files
 - Existing analyzed templates keep their current keywords/categories until the template file changes
 - To force re-analysis of all templates, would need to clear AnalyzedAt timestamps (generally not needed)
+
+## Writing Tests
+
+**⚠️ CRITICAL: All new code MUST include tests!**
+
+### When to Write Tests
+
+**Always write tests when:**
+- Adding new JavaScript functions or modules
+- Modifying existing business logic
+- Adding new data processing or filtering logic
+- Creating new URL helpers or utility functions
+
+**Tests may not be needed for:**
+- Pure CSS changes
+- HTML structure changes (unless affecting functionality)
+- Documentation updates
+- Configuration changes
+
+### Where to Put Tests
+
+- JavaScript tests: `docs/js/[module-name].test.js`
+- Test framework: `docs/js/test-framework.js` (already exists)
+- Main test runner: `test.js` (Node.js runner)
+
+### How to Write Tests
+
+1. Import the test framework and module to test:
+   ```javascript
+   import { runner, assert } from './test-framework.js';
+   import { myFunction } from './myModule.js';
+   ```
+
+2. Write tests using `runner.test()`:
+   ```javascript
+   runner.test('myFunction: does something', () => {
+       const result = myFunction(input);
+       assert.equal(result, expected);
+   });
+   ```
+
+3. Run tests locally before committing:
+   ```bash
+   npm test
+   ```
+
+4. All tests must pass before creating a PR
+
+### Test Coverage Guidelines
+
+- **Aim for high coverage of pure functions** (functions without side effects)
+- Test edge cases: empty inputs, null values, boundary conditions
+- Test error cases: invalid inputs should throw appropriate errors
+- DOM manipulation functions may need minimal mocking (see `test.js` for examples)

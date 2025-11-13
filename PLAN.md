@@ -196,6 +196,15 @@ Auto-assigns categories based on detected technologies:
 - Debounced search input (300ms) for better performance
 - Improved error handling and display
 
+**Automated Testing** ✅
+- Comprehensive unit test suite (67+ tests)
+- Node.js test runner for command-line execution
+- Browser-based test runner with visual output (optional)
+- Custom lightweight test framework (no external dependencies)
+- Tests cover: URL helpers, data parsing, filters, formatters
+- All tests must pass before PR creation
+- Minimal DOM mocking for Node.js compatibility
+
 ## Implementation Milestones
 
 ### Phase 1: Data Collection ✅
