@@ -232,33 +232,43 @@ Auto-assigns categories based on detected technologies:
 - **Search shortcuts**:
   - Auto-focus search box on page load for immediate typing
   - "/" hotkey to focus search (Gmail/GitHub pattern)
-  - ESC key to clear search (keeps focus for new search)
+  - ESC key to clear search and restore focus to search input
+  - Uppercase letters blocked in search field (reserved for shortcuts)
 - **Section jump shortcuts** (single-letter, Gmail-style):
-  - K to jump to keywords
-  - C to jump to categories
-  - T to jump to first template card
-- **Arrow key navigation within sections**:
-  - Keywords: Arrow keys (↑↓←→) to navigate between keyword tags
-  - Selected keywords: Arrow keys to navigate, Delete/Backspace to remove
-  - Categories: Arrow keys (↑↓) to navigate between categories
-  - Template cards: Arrow keys (↑↓←→) to navigate between cards in grid
+  - K (or Shift+K) to jump to keywords
+  - S (or Shift+S) to jump to selected keywords
+  - C (or Shift+C) to jump to categories
+  - T (or Shift+T) to jump to first template card
+  - Uppercase variants work even when typing in search field
+  - Unassigned uppercase letters trigger shake animation feedback
+- **Row-based arrow key navigation**:
+  - Keywords: Left/Right for adjacent tags, Up/Down to jump to first tag on previous/next row
+  - Selected keywords: Same row-based navigation, Delete/Backspace to remove
+  - Categories: Up/Down to navigate between categories (vertical list)
+  - Template cards: Arrow keys navigate by grid rows/columns (calculates column count dynamically)
 - **Interactive element navigation**:
   - Keywords: Tab to focus, Enter/Space to select, fully keyboard accessible
   - Selected keywords: Tab to focus, Enter/Space/Delete/Backspace to remove
-  - Categories: Tab to focus, Enter/Space to select, aria-pressed state
+  - Categories: Tab to focus, Enter/Space to select/deselect, aria-pressed state
   - Template cards: Tab to focus, Enter/Space to open preview modal
+- **Focus management**:
+  - Focus preservation when toggling keywords/categories (doesn't lose position)
+  - Focus restoration when closing modal (returns to template card)
+  - Focus jumps to first keyword in cloud after selecting one
+  - Focus returns to search after clearing with ESC or clear button
 - **Modal focus management**:
   - Focus trap when modal is open for accessibility
   - ESC to close modal and restore focus to the template card that opened it
   - Seamless navigation flow with focus restoration
 - **Keyboard help overlay**:
   - "?" key to show/hide keyboard shortcuts reference
-  - Discoverable question mark icon in header for easy access
+  - Discoverable question mark icon (?) in header for easy access
   - Lists all available shortcuts organized by category (Navigation & Actions)
+  - Documents both lowercase and uppercase (Shift+) shortcut variants
   - ESC or "?" to close the help overlay
 - **Accessibility features**:
   - All interactive elements have tabindex="0" for keyboard focus
-  - Proper ARIA labels (aria-label, role="button", aria-pressed)
+  - Proper ARIA labels (aria-label, role="button", aria-pressed, aria-modal)
   - Visible focus indicators with 2px primary color outlines
   - Complete keyboard-only navigation without mouse requirement
   - Full WCAG 2.1 AA keyboard navigation compliance
