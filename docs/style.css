@@ -13,12 +13,35 @@
     --warning: #f59e0b;
     --bg: #f8fafc;
     --surface: #ffffff;
+    --surface-elevated: #ffffff;
+    --surface-code: #f8fafc;
     --text: #1e293b;
     --text-light: #64748b;
     --border: #e2e8f0;
+    --border-elevated: #cbd5e1;
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     --sidebar-width: 280px;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+    --secondary: #94a3b8;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-elevated: #2d3748;
+    --surface-code: #1a202c;
+    --text: #f1f5f9;
+    --text-light: #94a3b8;
+    --border: #334155;
+    --border-elevated: #475569;
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
 }
 
 body {
@@ -26,6 +49,7 @@ body {
     line-height: 1.6;
     color: var(--text);
     background: var(--bg);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Header - Compact */
@@ -80,6 +104,44 @@ header {
     letter-spacing: 0.05em;
 }
 
+/* Theme Switcher */
+.theme-switcher {
+    display: flex;
+    gap: 0.25rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.theme-option {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.25rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.theme-option:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.theme-option.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.theme-option:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
 /* Sidebar Search Box */
 .sidebar .search-box {
     width: 100%;
@@ -93,7 +155,8 @@ header {
     border: 1px solid var(--border);
     border-radius: 0.375rem;
     transition: border-color 0.2s;
-    background: white;
+    background: var(--surface);
+    color: var(--text);
 }
 
 .sidebar .search-box input:focus {
@@ -119,7 +182,8 @@ header {
 
 .clear-search-btn:hover {
     color: var(--primary);
-    background: var(--bg);
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 0.25rem;
 }
 
 /* Type Checkboxes */
@@ -156,7 +220,8 @@ header {
     font-size: 0.875rem;
     border: 1px solid var(--border);
     border-radius: 0.375rem;
-    background: white;
+    background: var(--surface);
+    color: var(--text);
     cursor: pointer;
     transition: border-color 0.2s;
 }
@@ -181,7 +246,7 @@ header {
 }
 
 .sidebar .clear-btn:hover {
-    background: white;
+    background: var(--surface);
     border-color: var(--primary);
     color: var(--primary);
 }
@@ -246,7 +311,7 @@ header {
 
 .clear-keywords-btn:hover {
     color: var(--primary);
-    background: var(--bg);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 /* Selected Keywords */
@@ -297,7 +362,7 @@ header {
     align-items: center;
     gap: 0.25rem;
     padding: 0.25rem 0.5rem;
-    background: var(--bg);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     font-size: 0.75rem;
@@ -308,9 +373,10 @@ header {
 }
 
 .keyword-tag:hover {
-    background: white;
     border-color: var(--primary);
     color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .keyword-tag.selected {
@@ -337,7 +403,7 @@ header {
     align-items: center;
     justify-content: space-between;
     padding: 0.25rem 0.5rem;
-    background: var(--bg);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     cursor: pointer;
@@ -345,8 +411,9 @@ header {
 }
 
 .category-item:hover {
-    background: white;
     border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .category-item.selected {
@@ -447,13 +514,13 @@ header {
 }
 
 .template-badge.official {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--primary-light);
+    color: white;
 }
 
 .template-badge.community {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--secondary);
+    color: white;
 }
 
 .template-description {
@@ -480,7 +547,8 @@ header {
     align-items: center;
     gap: 0.25rem;
     padding: 0.25rem 0.625rem;
-    background: #f1f5f9;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 0.375rem;
     color: var(--text);
     font-weight: 500;
@@ -504,7 +572,7 @@ header {
 
 .keyword {
     padding: 0.125rem 0.5rem;
-    background: #f8fafc;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     font-size: 0.6875rem;
@@ -652,7 +720,8 @@ footer a:hover {
 
 .modal-content {
     position: relative;
-    background: var(--surface);
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-elevated);
     border-radius: 0.5rem;
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
     width: 100%;
@@ -668,7 +737,7 @@ footer a:hover {
     align-items: start;
     justify-content: space-between;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-elevated);
     gap: 1rem;
 }
 
@@ -696,6 +765,7 @@ footer a:hover {
 
 .copy-button-inline {
     padding: 0.125rem 0.375rem;
+    margin-left: 0.5rem;
     font-size: 0.625rem;
     font-weight: 500;
     background: transparent;
@@ -708,7 +778,7 @@ footer a:hover {
 }
 
 .copy-button-inline:hover {
-    background: var(--bg);
+    background: var(--surface);
     border-color: var(--primary);
 }
 
@@ -733,9 +803,9 @@ footer a:hover {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
     font-weight: 500;
-    background: var(--bg);
+    background: var(--surface-elevated);
     color: var(--primary);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-elevated);
     border-radius: 0.25rem;
     cursor: pointer;
     transition: all 0.2s;
@@ -767,7 +837,7 @@ footer a:hover {
     align-items: center;
     justify-content: center;
     border: none;
-    background: var(--bg);
+    background: transparent;
     border-radius: 0.25rem;
     cursor: pointer;
     font-size: 1.5rem;
@@ -777,8 +847,8 @@ footer a:hover {
 }
 
 .modal-close:hover {
-    background: var(--border);
-    color: var(--text);
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
 }
 
 .modal-body {
@@ -820,14 +890,14 @@ footer a:hover {
 .modal-code code {
     display: block;
     padding: 1rem;
-    background: #fafafa;
+    background: var(--surface-code);
     border: 1px solid var(--border);
     border-radius: 0.375rem;
 }
 
 .modal-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-elevated);
     display: flex;
     gap: 1rem;
     justify-content: space-between;
@@ -872,13 +942,13 @@ footer a:hover {
 }
 
 .modal-button.secondary {
-    background: var(--bg);
+    background: transparent;
     color: var(--text);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-elevated);
 }
 
 .modal-button.secondary:hover {
-    background: white;
+    background: var(--surface);
     border-color: var(--primary);
     color: var(--primary);
 }

@@ -22,7 +22,13 @@ global.document = {
             }
         };
     },
-    getElementById: () => null
+    getElementById: () => null,
+    documentElement: {
+        setAttribute: () => {},
+        removeAttribute: () => {}
+    },
+    querySelector: () => null,
+    querySelectorAll: () => []
 };
 
 // Import all test files
@@ -30,6 +36,7 @@ await import('./docs/js/urlHelpers.test.js');
 await import('./docs/js/data.test.js');
 await import('./docs/js/filters.test.js');
 await import('./docs/js/templateCard.test.js');
+await import('./docs/js/theme.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');

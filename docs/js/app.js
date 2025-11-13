@@ -9,6 +9,7 @@ import { updateSidebar } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
 import { openPreviewModal, setupModalEventListeners } from './modal.js';
 import { debounce } from './utils.js';
+import { initializeTheme } from './theme.js';
 
 /**
  * Update statistics display
@@ -163,6 +164,9 @@ function setupEventListeners() {
  * Load data and initialize application
  */
 async function initialize() {
+    // Initialize theme early to prevent flash
+    initializeTheme();
+
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
 
