@@ -22,17 +22,25 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
     }
 
     cloudElement.innerHTML = keywords.map(([keyword, count]) => `
-        <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}">
+        <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
             <span class="keyword-count">${count}</span>
         </div>
     `).join('');
 
-    // Add click handlers
+    // Add click and keyboard handlers
     cloudElement.querySelectorAll('.keyword-tag').forEach(tag => {
+        const keyword = tag.dataset.keyword;
+
         tag.addEventListener('click', () => {
-            const keyword = tag.dataset.keyword;
             onKeywordClick(keyword);
+        });
+
+        tag.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onKeywordClick(keyword);
+            }
         });
     });
 }
@@ -50,17 +58,25 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
     }
 
     containerElement.innerHTML = Array.from(selectedKeywords).map(keyword => `
-        <div class="selected-keyword" data-keyword="${escapeHtml(keyword)}">
+        <div class="selected-keyword" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Remove keyword filter: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
             <span class="remove">×</span>
         </div>
     `).join('');
 
-    // Add click handlers for removal
+    // Add click and keyboard handlers for removal
     containerElement.querySelectorAll('.selected-keyword').forEach(tag => {
+        const keyword = tag.dataset.keyword;
+
         tag.addEventListener('click', () => {
-            const keyword = tag.dataset.keyword;
             onRemoveClick(keyword);
+        });
+
+        tag.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                onRemoveClick(keyword);
+            }
         });
     });
 }
@@ -84,18 +100,26 @@ export function renderCategoryList(filteredTemplates, selectedCategory, listElem
     listElement.innerHTML = categories.map(([category, count]) => {
         const isSelected = category === selectedCategory;
         return `
-            <div class="category-item ${isSelected ? 'selected' : ''}" data-category="${escapeHtml(category)}">
+            <div class="category-item ${isSelected ? 'selected' : ''}" data-category="${escapeHtml(category)}" tabindex="0" role="button" aria-label="Filter by category: ${formatCategoryName(category)}" aria-pressed="${isSelected}">
                 <span class="category-name">${formatCategoryName(category)}</span>
                 <span class="category-count">${count}</span>
             </div>
         `;
     }).join('');
 
-    // Add click handlers
+    // Add click and keyboard handlers
     listElement.querySelectorAll('.category-item').forEach(item => {
+        const category = item.dataset.category;
+
         item.addEventListener('click', () => {
-            const category = item.dataset.category;
             onCategoryClick(category);
+        });
+
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onCategoryClick(category);
+            }
         });
     });
 }

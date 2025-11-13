@@ -158,6 +158,9 @@ function setupEventListeners() {
     // Clear buttons
     document.getElementById('clear-search').addEventListener('click', clearSearch);
     document.getElementById('clear-keywords').addEventListener('click', clearKeywords);
+
+    // Keyboard help button
+    document.getElementById('keyboard-help-btn').addEventListener('click', showKeyboardHelp);
 }
 
 /**
@@ -166,20 +169,50 @@ function setupEventListeners() {
 function setupKeyboardShortcuts() {
     const searchInput = document.getElementById('search');
 
-    // "/" hotkey to focus search box (like Gmail, GitHub)
+    // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Only trigger if:
-        // - Key is "/"
-        // - Not already focused on an input/textarea
-        // - Not in a modal or other interactive element
-        if (e.key === '/' &&
-            document.activeElement.tagName !== 'INPUT' &&
-            document.activeElement.tagName !== 'TEXTAREA' &&
-            !document.activeElement.isContentEditable) {
+        // Skip if user is typing in an input/textarea
+        const isTyping = document.activeElement.tagName === 'INPUT' ||
+                        document.activeElement.tagName === 'TEXTAREA' ||
+                        document.activeElement.isContentEditable;
 
-            e.preventDefault(); // Prevent "/" from being typed
+        // "/" hotkey to focus search box (like Gmail, GitHub)
+        if (e.key === '/' && !isTyping) {
+            e.preventDefault();
             searchInput.focus();
-            searchInput.select(); // Select any existing text for easy replacement
+            searchInput.select();
+            return;
+        }
+
+        // "?" hotkey to show keyboard help
+        if (e.key === '?' && !isTyping) {
+            e.preventDefault();
+            showKeyboardHelp();
+            return;
+        }
+
+        // Shift+K to focus first keyword
+        if (e.shiftKey && e.key === 'K' && !isTyping) {
+            e.preventDefault();
+            const firstKeyword = document.querySelector('.keyword-tag');
+            if (firstKeyword) firstKeyword.focus();
+            return;
+        }
+
+        // Shift+C to focus first category
+        if (e.shiftKey && e.key === 'C' && !isTyping) {
+            e.preventDefault();
+            const firstCategory = document.querySelector('.category-item');
+            if (firstCategory) firstCategory.focus();
+            return;
+        }
+
+        // Shift+T to focus first template card
+        if (e.shiftKey && e.key === 'T' && !isTyping) {
+            e.preventDefault();
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+            return;
         }
     });
 
@@ -189,6 +222,85 @@ function setupKeyboardShortcuts() {
             clearSearch();
         }
     });
+}
+
+/**
+ * Show keyboard help overlay
+ */
+function showKeyboardHelp() {
+    const existingOverlay = document.getElementById('keyboard-help-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+        return; // Toggle off if already shown
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'keyboard-help-overlay';
+    overlay.className = 'keyboard-help-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-labelledby', 'keyboard-help-title');
+    overlay.setAttribute('aria-modal', 'true');
+
+    overlay.innerHTML = `
+        <div class="keyboard-help-content">
+            <div class="keyboard-help-header">
+                <h2 id="keyboard-help-title">Keyboard Shortcuts</h2>
+                <button class="keyboard-help-close" aria-label="Close keyboard help">×</button>
+            </div>
+            <div class="keyboard-help-body">
+                <div class="keyboard-help-section">
+                    <h3>Navigation</h3>
+                    <dl class="keyboard-shortcuts">
+                        <dt><kbd>/</kbd></dt>
+                        <dd>Focus search box</dd>
+                        <dt><kbd>Esc</kbd></dt>
+                        <dd>Clear search box</dd>
+                        <dt><kbd>Shift</kbd>+<kbd>K</kbd></dt>
+                        <dd>Jump to keywords</dd>
+                        <dt><kbd>Shift</kbd>+<kbd>C</kbd></dt>
+                        <dd>Jump to categories</dd>
+                        <dt><kbd>Shift</kbd>+<kbd>T</kbd></dt>
+                        <dd>Jump to templates</dd>
+                        <dt><kbd>Tab</kbd></dt>
+                        <dd>Navigate between elements</dd>
+                    </dl>
+                </div>
+                <div class="keyboard-help-section">
+                    <h3>Actions</h3>
+                    <dl class="keyboard-shortcuts">
+                        <dt><kbd>Enter</kbd> or <kbd>Space</kbd></dt>
+                        <dd>Select keyword/category/template</dd>
+                        <dt><kbd>Delete</kbd> or <kbd>Backspace</kbd></dt>
+                        <dd>Remove selected keyword</dd>
+                        <dt><kbd>?</kbd></dt>
+                        <dd>Show/hide this help</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Close on click outside or close button
+    const closeBtn = overlay.querySelector('.keyboard-help-close');
+    const content = overlay.querySelector('.keyboard-help-content');
+
+    closeBtn.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+
+    // Close on Escape key
+    overlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === '?') {
+            e.preventDefault();
+            overlay.remove();
+        }
+    });
+
+    // Focus the close button for accessibility
+    closeBtn.focus();
 }
 
 /**

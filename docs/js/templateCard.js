@@ -80,6 +80,9 @@ export function deriveDisplayName(template) {
 export function createTemplateCard(template, repo, onCardClick) {
     const card = document.createElement('div');
     card.className = 'template-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'article');
+    card.setAttribute('aria-label', `Template: ${deriveDisplayName(template)}`);
 
     const displayName = deriveDisplayName(template);
     const description = template.short_description || (repo?.description || 'No description available');
@@ -136,10 +139,24 @@ export function createTemplateCard(template, repo, onCardClick) {
 
     // Make card clickable - open preview modal
     card.style.cursor = 'pointer';
-    card.addEventListener('click', (e) => {
+
+    const handleOpen = (e) => {
         // Don't open modal if clicking on a link (repo link should open GitHub)
         if (e.target.tagName === 'A' || e.target.closest('a')) return;
         onCardClick(template);
+    };
+
+    card.addEventListener('click', handleOpen);
+
+    // Add keyboard support
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            // Only prevent default if not on a link
+            if (e.target.tagName !== 'A' && !e.target.closest('a')) {
+                e.preventDefault();
+                onCardClick(template);
+            }
+        }
     });
 
     return card;
