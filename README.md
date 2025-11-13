@@ -44,6 +44,25 @@ A CLI tool that:
 
 ## For Developers
 
+### Testing the Web App Locally
+
+The web app uses ES6 modules which require a web server (cannot be opened directly as `file://`).
+
+**Option 1: Python**
+```bash
+cd docs
+python3 -m http.server 8000
+# Visit: http://localhost:8000
+```
+
+**Option 2: Node.js**
+```bash
+npx serve docs
+# Visit: http://localhost:3000
+```
+
+**Important:** Never open `index.html` directly in a browser - ES6 modules will fail to load.
+
 ### Building the Backend Tool
 
 ```bash
@@ -108,4 +127,4 @@ Each file uses JSON Lines format (one JSON object per line) for minimal diffs an
 
 ## License
 
-MIT
+Apache 2.0

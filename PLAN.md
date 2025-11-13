@@ -39,7 +39,13 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 - Responsive design for mobile/tablet/desktop
 - Fetches data directly from `data` branch
 
-**Tech Stack**: Pure HTML/CSS/JavaScript + highlight.js
+**Tech Stack**: Modular ES6 JavaScript + highlight.js (no build step)
+
+**Local Development**:
+- Uses native ES6 modules (requires web server)
+- Cannot be opened directly as `file://` URLs
+- Test locally with: `cd docs && python3 -m http.server 8000`
+- Or use: `npx serve docs`
 
 ## Discovery Strategy
 
@@ -175,6 +181,20 @@ Auto-assigns categories based on detected technologies:
 - Shows latest template content from default branch
 - Backend stores commit SHA for change detection
 - Frontend converts SHA URLs to branch URLs on-the-fly
+
+**Modular ES6 Architecture** ✅
+- Refactored 667-line monolith into 10 focused ES6 modules
+- Clear separation of concerns (config, state, data, filters, UI)
+- Pure functions for easier testing and maintainability
+- JSDoc documentation throughout all modules
+- Zero build step required (native ES modules)
+
+**Accessibility & UX Enhancements** ✅
+- Comprehensive ARIA labels for screen reader support
+- Semantic HTML roles (main, complementary, dialog)
+- Keyboard focus trap for modal navigation
+- Debounced search input (300ms) for better performance
+- Improved error handling and display
 
 ## Implementation Milestones
 
