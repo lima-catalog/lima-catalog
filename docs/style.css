@@ -547,7 +547,8 @@ header {
     align-items: center;
     gap: 0.25rem;
     padding: 0.25rem 0.625rem;
-    background: #f1f5f9;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 0.375rem;
     color: var(--text);
     font-weight: 500;
