@@ -218,77 +218,18 @@ Auto-assigns categories based on detected technologies:
 
 ## Design System
 
-**📖 Full interface guidelines**: See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete interaction patterns, button behaviors, accessibility requirements, and animation guidelines.
+**📖 Complete design system documentation**: See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)
 
-### Color Palette & Guidelines
+All UI/UX guidelines are documented in INTERFACE_GUIDELINES.md, including:
+- Color palette (light & dark themes)
+- Button interaction patterns
+- Badge & tag styles
+- Interactive element feedback
+- Accessibility requirements (WCAG AA)
+- Dark mode principles
+- Animation timing guidelines
 
-Based on Material Design and Apple Human Interface Guidelines for proper dark mode implementation.
-
-**Light Theme Colors**:
-```css
---primary: #2563eb       /* Primary blue for interactive elements */
---primary-dark: #1e40af  /* Darker blue for hover states */
---primary-light: #3b82f6 /* Lighter blue for selected states */
---bg: #f8fafc            /* Page background (light gray) */
---surface: #ffffff       /* Cards, tags, inputs (white) */
---surface-elevated: #ffffff  /* Modals (same as surface in light mode) */
---surface-code: #f8fafc  /* Code blocks (matches page background) */
---text: #1e293b          /* Primary text (dark gray) */
---text-light: #64748b    /* Secondary text (medium gray) */
---border: #e2e8f0        /* Standard borders */
---border-elevated: #cbd5e1  /* Modal borders (slightly darker) */
-```
-
-**Dark Theme Colors**:
-```css
---primary: #3b82f6       /* Primary blue (brighter for visibility) */
---primary-dark: #2563eb  /* Darker blue for hover */
---primary-light: #60a5fa /* Lighter blue for selected states */
---bg: #0f172a            /* Page background (very dark blue-gray) */
---surface: #1e293b       /* Cards, tags, inputs (dark blue-gray) */
---surface-elevated: #2d3748  /* Modals (lighter, shows elevation) */
---surface-code: #1a202c  /* Code blocks (distinct from surface) */
---text: #f1f5f9          /* Primary text (off-white) */
---text-light: #94a3b8    /* Secondary text (light gray) */
---border: #334155        /* Standard borders */
---border-elevated: #475569  /* Modal borders (lighter) */
-```
-
-### Design Principles
-
-**1. Elevation & Hierarchy** (Material Design)
-- Modals use `--surface-elevated` to appear "on top" of regular content
-- In dark mode: elevation = lighter background (adds ~16% white overlay effect)
-- Regular surfaces: `#1e293b` → Elevated surfaces: `#2d3748`
-- Provides visual separation between UI layers
-
-**2. Contrast Requirements** (WCAG/Apple HIG)
-- **Minimum 4.5:1 contrast ratio** for text and interactive elements
-- **Avoid pure white (#ffffff)** on dark backgrounds (causes blurring/distortion)
-- Use **light gray (#f1f5f9)** for primary text in dark mode
-- Reduce saturation for colors in dark mode to avoid visual intensity
-
-**3. Surface Differentiation**
-- `--bg`: Page/container backgrounds (lowest level)
-- `--surface`: Cards, tags, buttons, inputs (mid level)
-- `--surface-elevated`: Modals, dialogs, popovers (highest level)
-- `--surface-code`: Code blocks (specialized, distinct from other surfaces)
-
-**4. Button & Interactive Elements**
-- **Primary buttons**: Use `--primary` background with white text
-- **Secondary buttons**: Transparent background with `--border-elevated` outline
-- **Hover states**: Border color changes, subtle lift effect (translateY + shadow)
-- Never use `--bg` for button backgrounds (blends with page)
-
-**5. Color Saturation**
-- Light mode: Full saturation for vibrant feel
-- Dark mode: Reduced saturation to prevent eye strain
-- Primary blue: #2563eb (light) → #3b82f6 (dark, 10% lighter and less saturated)
-
-### References
-- [Material Design Dark Theme](https://m3.material.io/styles/color/dark-theme/overview)
-- [Apple HIG Dark Mode](https://developer.apple.com/design/human-interface-guidelines/foundations/dark-mode/)
-- [Dark Mode UI Design Best Practices](https://blog.logrocket.com/ux-design/dark-mode-ui-design-best-practices-and-examples/)
+Refer to that document for all design decisions and UI implementation details.
 
 ## Implementation Milestones
 
