@@ -1,13 +1,13 @@
 {
   "phase": "discovery",
   "last_search_cursor": "",
-  "templates_discovered": 716,
-  "repos_fetched": 369,
-  "orgs_fetched": 335,
-  "last_updated": "2025-11-12T00:56:46.708863454Z",
-  "rate_limit_remaining": 3283,
-  "rate_limit_reset": "2025-11-12T01:46:23Z",
+  "templates_discovered": 717,
+  "repos_fetched": 370,
+  "orgs_fetched": 336,
+  "last_updated": "2025-11-13T00:58:33.819697398Z",
+  "rate_limit_remaining": 3277,
+  "rate_limit_reset": "2025-11-13T01:22:58Z",
   "templates_fetched": 0,
   "official_templates": 51,
-  "community_templates": 665
+  "community_templates": 666
 }
