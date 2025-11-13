@@ -22,6 +22,29 @@ function updateStats() {
 }
 
 /**
+ * Update clear button visibility
+ */
+function updateClearButtons() {
+    // Clear search button
+    const searchInput = document.getElementById('search');
+    const clearSearchBtn = document.getElementById('clear-search');
+    if (searchInput.value) {
+        clearSearchBtn.style.display = 'block';
+    } else {
+        clearSearchBtn.style.display = 'none';
+    }
+
+    // Clear keywords button
+    const selectedKeywords = State.getSelectedKeywords();
+    const clearKeywordsBtn = document.getElementById('clear-keywords');
+    if (selectedKeywords.size > 0) {
+        clearKeywordsBtn.style.display = 'block';
+    } else {
+        clearKeywordsBtn.style.display = 'none';
+    }
+}
+
+/**
  * Filter and render templates based on current state
  */
 function filterAndRender() {
@@ -66,6 +89,7 @@ function filterAndRender() {
         selectedKeywords,
         selectedCategory
     }, handleKeywordToggle, handleCategoryToggle);
+    updateClearButtons();
 
     // Render templates
     const gridElement = document.getElementById('templates-grid');
@@ -98,12 +122,17 @@ function handleTemplateClick(template) {
 }
 
 /**
- * Clear all filters
+ * Clear search field
  */
-function clearAllFilters() {
+function clearSearch() {
     document.getElementById('search').value = '';
-    document.getElementById('show-official').checked = true;
-    document.getElementById('show-community').checked = true;
+    filterAndRender();
+}
+
+/**
+ * Clear all selected keywords
+ */
+function clearKeywords() {
     State.clearAllSelections();
     filterAndRender();
 }
@@ -114,13 +143,20 @@ function clearAllFilters() {
 function setupEventListeners() {
     // Debounce search input to avoid filtering on every keystroke
     const debouncedFilter = debounce(filterAndRender, 300);
-    document.getElementById('search').addEventListener('input', debouncedFilter);
+    const searchInput = document.getElementById('search');
+    searchInput.addEventListener('input', debouncedFilter);
 
-    // Immediate filtering for checkboxes, dropdown, and buttons
+    // Update clear search button visibility on input
+    searchInput.addEventListener('input', updateClearButtons);
+
+    // Immediate filtering for checkboxes and dropdown
     document.getElementById('show-official').addEventListener('change', filterAndRender);
     document.getElementById('show-community').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
-    document.getElementById('clear-filters').addEventListener('click', clearAllFilters);
+
+    // Clear buttons
+    document.getElementById('clear-search').addEventListener('click', clearSearch);
+    document.getElementById('clear-keywords').addEventListener('click', clearKeywords);
 }
 
 /**

@@ -36,6 +36,7 @@
                 <div class="search-box">
                     <input type="text" id="search" placeholder="Search templates..."
                            aria-label="Search templates" />
+                    <button id="clear-search" class="clear-search-btn" title="Clear search" aria-label="Clear search" style="display: none;">×</button>
                 </div>
             </div>
 
@@ -63,7 +64,10 @@
             </div>
 
             <div class="sidebar-section">
-                <h3 class="sidebar-title">Keywords</h3>
+                <div class="sidebar-header">
+                    <h3 class="sidebar-title">Keywords</h3>
+                    <button id="clear-keywords" class="clear-keywords-btn" title="Clear keywords" aria-label="Clear keywords" style="display: none;">Clear</button>
+                </div>
                 <div id="selected-keywords" class="selected-keywords" aria-label="Selected keywords"></div>
                 <div id="keyword-cloud" class="keyword-cloud" role="list" aria-label="Available keywords"></div>
             </div>
@@ -71,10 +75,6 @@
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Categories</h3>
                 <div id="category-list" class="category-list" role="list" aria-label="Template categories"></div>
-            </div>
-
-            <div class="sidebar-section">
-                <button id="clear-filters" class="clear-btn" title="Clear all filters" aria-label="Clear all filters">Clear All Filters</button>
             </div>
         </aside>
 
