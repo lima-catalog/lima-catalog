@@ -233,14 +233,22 @@ Auto-assigns categories based on detected technologies:
   - Auto-focus search box on page load for immediate typing
   - "/" hotkey to focus search (Gmail/GitHub pattern)
   - ESC key to clear search and restore focus to search input
+  - "?" works everywhere, even in search field (opens keyboard help)
   - Uppercase letters blocked in search field (reserved for shortcuts)
 - **Section jump shortcuts** (single-letter, Gmail-style):
   - K (or Shift+K) to jump to keywords
   - S (or Shift+S) to jump to selected keywords
   - C (or Shift+C) to jump to categories
+  - O (or Shift+O) to jump to sort dropdown
   - T (or Shift+T) to jump to first template card
   - Uppercase variants work even when typing in search field
   - Unassigned uppercase letters trigger shake animation feedback
+- **Unified keyword navigation** (seamless between selected/unselected):
+  - ArrowRight from last selected keyword → jumps to first unselected keyword
+  - ArrowLeft from first unselected keyword → jumps to last selected keyword
+  - ArrowUp from first row of unselected → jumps to last row of selected keywords
+  - ArrowDown from last row of selected → jumps to first row of unselected keywords
+  - Keywords and selected keywords feel like one continuous list
 - **Row-based arrow key navigation**:
   - Keywords: Left/Right for adjacent tags, Up/Down to jump to first tag on previous/next row
   - Selected keywords: Same row-based navigation, Delete/Backspace to remove
@@ -251,21 +259,26 @@ Auto-assigns categories based on detected technologies:
   - Selected keywords: Tab to focus, Enter/Space/Delete/Backspace to remove
   - Categories: Tab to focus, Enter/Space to select/deselect, aria-pressed state
   - Template cards: Tab to focus, Enter/Space to open preview modal
-- **Focus management**:
+  - Sort dropdown: O shortcut to focus, Arrow keys to navigate options
+- **Smart focus management**:
   - Focus preservation when toggling keywords/categories (doesn't lose position)
-  - Focus restoration when closing modal (returns to template card)
   - Focus jumps to first keyword in cloud after selecting one
+  - Focus jumps to next selected keyword when deselecting (or last if deselected was last)
+  - Focus jumps to first unselected keyword only when all selected are removed
   - Focus returns to search after clearing with ESC or clear button
-- **Modal focus management**:
+- **Keyboard help modal**:
+  - "?" key works everywhere (even in search field) to show/hide help
+  - Discoverable question mark icon (?) in header for easy access
+  - Focus trap: TAB stays within modal, cycles between close button and content
+  - ESC or "?" to close the help overlay
+  - Shortcuts (K/C/S/T/O/?) close modal and execute action
+  - Smart focus restoration: returns to search if opened from search, otherwise to previous element
+  - Lists all available shortcuts organized by category (Navigation & Actions)
+  - Documents both lowercase and uppercase (Shift+) shortcut variants
+- **Template preview modal focus management**:
   - Focus trap when modal is open for accessibility
   - ESC to close modal and restore focus to the template card that opened it
   - Seamless navigation flow with focus restoration
-- **Keyboard help overlay**:
-  - "?" key to show/hide keyboard shortcuts reference
-  - Discoverable question mark icon (?) in header for easy access
-  - Lists all available shortcuts organized by category (Navigation & Actions)
-  - Documents both lowercase and uppercase (Shift+) shortcut variants
-  - ESC or "?" to close the help overlay
 - **Accessibility features**:
   - All interactive elements have tabindex="0" for keyboard focus
   - Proper ARIA labels (aria-label, role="button", aria-pressed, aria-modal)

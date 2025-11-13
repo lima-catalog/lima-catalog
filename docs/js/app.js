@@ -102,9 +102,14 @@ function filterAndRender(options = {}) {
  */
 function handleKeywordToggle(keyword) {
     const wasSelected = State.getSelectedKeywords().has(keyword);
+    const wasLastSelected = wasSelected && State.getSelectedKeywords().size === 1;
     State.toggleKeywordSelection(keyword);
     // If we just added a keyword, focus should move to first keyword in cloud
-    filterAndRender({ focusFirstKeyword: !wasSelected });
+    // If we just removed the last selected keyword, focus should move to first unselected keyword
+    filterAndRender({
+        focusFirstKeyword: !wasSelected,
+        focusFirstUnselected: wasLastSelected
+    });
 }
 
 /**
@@ -181,6 +186,9 @@ function setupKeyboardShortcuts() {
                         document.activeElement.tagName === 'TEXTAREA' ||
                         document.activeElement.isContentEditable;
 
+        // Check if typing in search specifically
+        const isTypingInSearch = document.activeElement === searchInput;
+
         // "/" hotkey to focus search box (like Gmail, GitHub)
         if (e.key === '/' && !isTyping) {
             e.preventDefault();
@@ -189,10 +197,10 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // "?" hotkey to show keyboard help
-        if (e.key === '?' && !isTyping) {
+        // "?" hotkey to show keyboard help - works everywhere, even in search
+        if (e.key === '?') {
             e.preventDefault();
-            showKeyboardHelp();
+            showKeyboardHelp(isTypingInSearch);
             return;
         }
 
@@ -214,21 +222,30 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // T/t to focus first template card
-        // Uppercase works even when typing
-        if ((e.key === 't' && !isTyping) || e.key === 'T') {
-            e.preventDefault();
-            const firstTemplate = document.querySelector('.template-card');
-            if (firstTemplate) firstTemplate.focus();
-            return;
-        }
-
         // S/s to focus first selected keyword
         // Uppercase works even when typing
         if ((e.key === 's' && !isTyping) || e.key === 'S') {
             e.preventDefault();
             const firstSelected = document.querySelector('.selected-keyword');
             if (firstSelected) firstSelected.focus();
+            return;
+        }
+
+        // O/o to focus sort dropdown
+        // Uppercase works even when typing
+        if ((e.key === 'o' && !isTyping) || e.key === 'O') {
+            e.preventDefault();
+            const sortDropdown = document.getElementById('sort');
+            if (sortDropdown) sortDropdown.focus();
+            return;
+        }
+
+        // T/t to focus first template card
+        // Uppercase works even when typing
+        if ((e.key === 't' && !isTyping) || e.key === 'T') {
+            e.preventDefault();
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
             return;
         }
     });
@@ -247,8 +264,8 @@ function setupKeyboardShortcuts() {
             // Always prevent uppercase letters from being typed
             e.preventDefault();
 
-            // If it's an assigned shortcut (K, C, S, T), the global handler will handle navigation
-            const assignedShortcuts = ['K', 'C', 'S', 'T'];
+            // If it's an assigned shortcut (K, C, S, T, O), the global handler will handle navigation
+            const assignedShortcuts = ['K', 'C', 'S', 'T', 'O'];
             if (!assignedShortcuts.includes(e.key)) {
                 // For unassigned uppercase letters, give visual feedback
                 searchInput.classList.add('shake');
@@ -256,18 +273,26 @@ function setupKeyboardShortcuts() {
             }
             // Note: assigned shortcuts will trigger navigation via the global handler
         }
+        // Note: '?' is handled by the global handler and works in search field
     });
 }
 
 /**
  * Show keyboard help overlay
  */
-function showKeyboardHelp() {
+let keyboardHelpPreviousFocus = null;
+let shouldRestoreFocus = true;
+
+function showKeyboardHelp(returnFocusToSearch = false) {
     const existingOverlay = document.getElementById('keyboard-help-overlay');
     if (existingOverlay) {
-        existingOverlay.remove();
+        closeKeyboardHelp(returnFocusToSearch);
         return; // Toggle off if already shown
     }
+
+    // Store the currently focused element to restore later
+    keyboardHelpPreviousFocus = document.activeElement;
+    shouldRestoreFocus = true;
 
     const overlay = document.createElement('div');
     overlay.id = 'keyboard-help-overlay';
@@ -280,7 +305,7 @@ function showKeyboardHelp() {
         <div class="keyboard-help-content">
             <div class="keyboard-help-header">
                 <h2 id="keyboard-help-title">Keyboard Shortcuts</h2>
-                <button class="keyboard-help-close" aria-label="Close keyboard help">×</button>
+                <button class="keyboard-help-close" tabindex="0" aria-label="Close keyboard help">×</button>
             </div>
             <div class="keyboard-help-body">
                 <div class="keyboard-help-section">
@@ -296,6 +321,8 @@ function showKeyboardHelp() {
                         <dd>Jump to selected keywords</dd>
                         <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
                         <dd>Jump to categories</dd>
+                        <dt><kbd>O</kbd> or <kbd>Shift+O</kbd></dt>
+                        <dd>Jump to sort dropdown</dd>
                         <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
                         <dd>Jump to templates</dd>
                         <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
@@ -304,7 +331,7 @@ function showKeyboardHelp() {
                         <dd>Navigate between elements</dd>
                     </dl>
                     <p style="font-size: 0.875rem; color: var(--text-light); margin-top: 1rem; font-style: italic;">
-                        Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
+                        Tip: Uppercase shortcuts (Shift+K/C/S/T/O) work even when typing in the search box
                     </p>
                 </div>
                 <div class="keyboard-help-section">
@@ -328,21 +355,90 @@ function showKeyboardHelp() {
     const closeBtn = overlay.querySelector('.keyboard-help-close');
     const content = overlay.querySelector('.keyboard-help-content');
 
-    closeBtn.addEventListener('click', () => overlay.remove());
+    closeBtn.addEventListener('click', () => closeKeyboardHelp(returnFocusToSearch));
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.remove();
+        if (e.target === overlay) closeKeyboardHelp(returnFocusToSearch);
     });
 
-    // Close on Escape key
+    // Get all focusable elements in the modal for focus trap
+    const focusableElements = content.querySelectorAll('button, [tabindex="0"]');
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+
+    // Handle keyboard events - ESC, ?, and focus trap
     overlay.addEventListener('keydown', (e) => {
+        // Close on Escape or ?
         if (e.key === 'Escape' || e.key === '?') {
             e.preventDefault();
+            closeKeyboardHelp(returnFocusToSearch);
+            return;
+        }
+
+        // Focus trap - keep Tab within modal
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                // Shift+Tab
+                if (document.activeElement === firstFocusable) {
+                    e.preventDefault();
+                    lastFocusable.focus();
+                }
+            } else {
+                // Tab
+                if (document.activeElement === lastFocusable) {
+                    e.preventDefault();
+                    firstFocusable.focus();
+                }
+            }
+        }
+
+        // Handle shortcuts - close modal and execute shortcut
+        const isShortcutKey = (e.key === 'k' || e.key === 'K' ||
+                              e.key === 'c' || e.key === 'C' ||
+                              e.key === 's' || e.key === 'S' ||
+                              e.key === 't' || e.key === 'T' ||
+                              e.key === 'o' || e.key === 'O' ||
+                              e.key === '/');
+
+        if (isShortcutKey) {
+            e.preventDefault();
+            shouldRestoreFocus = false; // Don't restore focus, let the shortcut handle it
             overlay.remove();
+            // Re-dispatch the event to trigger the global handler
+            const newEvent = new KeyboardEvent('keydown', {
+                key: e.key,
+                code: e.code,
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                metaKey: e.metaKey,
+                bubbles: true
+            });
+            document.dispatchEvent(newEvent);
         }
     });
 
     // Focus the close button for accessibility
     closeBtn.focus();
+}
+
+function closeKeyboardHelp(returnFocusToSearch = false) {
+    const overlay = document.getElementById('keyboard-help-overlay');
+    if (overlay) {
+        overlay.remove();
+
+        // Restore focus
+        if (shouldRestoreFocus) {
+            if (returnFocusToSearch) {
+                const searchInput = document.getElementById('search');
+                if (searchInput) searchInput.focus();
+            } else if (keyboardHelpPreviousFocus && keyboardHelpPreviousFocus.focus) {
+                keyboardHelpPreviousFocus.focus();
+            }
+        }
+
+        keyboardHelpPreviousFocus = null;
+        shouldRestoreFocus = true;
+    }
 }
 
 /**

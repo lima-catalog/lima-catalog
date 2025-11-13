@@ -57,7 +57,15 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
                 const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
                 const currentIndex = tags.indexOf(tag);
                 const prevTag = tags[currentIndex - 1];
-                if (prevTag) prevTag.focus();
+                if (prevTag) {
+                    prevTag.focus();
+                } else {
+                    // We're at the first unselected keyword, jump to last selected keyword
+                    const selectedTags = document.querySelectorAll('.selected-keyword');
+                    if (selectedTags.length > 0) {
+                        selectedTags[selectedTags.length - 1].focus();
+                    }
+                }
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
@@ -79,6 +87,17 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
                     // Find the first tag on that row
                     const prevRowTag = tags.find(t => t.offsetTop === closestRowTop);
                     if (prevRowTag) prevRowTag.focus();
+                } else {
+                    // No previous row in unselected, try to go to last row of selected keywords
+                    const selectedTags = Array.from(document.querySelectorAll('.selected-keyword'));
+                    if (selectedTags.length > 0) {
+                        // Find the last row of selected keywords
+                        const lastSelectedTop = Math.max(...selectedTags.map(t => t.offsetTop));
+                        const lastRowTags = selectedTags.filter(t => t.offsetTop === lastSelectedTop);
+                        if (lastRowTags.length > 0) {
+                            lastRowTags[0].focus(); // Focus first tag on last row
+                        }
+                    }
                 }
             }
         });
@@ -101,14 +120,31 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
  * @param {Set} selectedKeywords - Currently selected keywords
  * @param {HTMLElement} containerElement - Container element
  * @param {Function} onRemoveClick - Click handler for removal
+ * @param {boolean} focusFirstUnselected - Whether to focus first unselected keyword after render
+ * @param {number} focusIndex - Index of selected keyword to focus (-1 for last)
  */
-export function renderSelectedKeywords(selectedKeywords, containerElement, onRemoveClick) {
+export function renderSelectedKeywords(selectedKeywords, containerElement, onRemoveClick, focusFirstUnselected = false, focusIndex = null) {
     // Store currently focused keyword before re-rendering
     const focusedKeyword = document.activeElement?.dataset?.keyword;
     const isFocusedInSelected = document.activeElement?.classList?.contains('selected-keyword');
 
+    // If we're deselecting a keyword, find its index for focus management
+    let deselectedIndex = null;
+    if (focusedKeyword && isFocusedInSelected && !selectedKeywords.has(focusedKeyword)) {
+        // The focused keyword was just deselected, find where it was
+        const currentTags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+        deselectedIndex = currentTags.findIndex(tag => tag.dataset.keyword === focusedKeyword);
+    }
+
     if (selectedKeywords.size === 0) {
         containerElement.innerHTML = '';
+        // If we should focus first unselected keyword (e.g., after removing last selected)
+        if (focusFirstUnselected) {
+            setTimeout(() => {
+                const firstKeyword = document.querySelector('.keyword-tag');
+                if (firstKeyword) firstKeyword.focus();
+            }, 0);
+        }
         return;
     }
 
@@ -120,8 +156,10 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
     `).join('');
 
     // Add click and keyboard handlers for removal
-    containerElement.querySelectorAll('.selected-keyword').forEach(tag => {
+    const newTags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+    newTags.forEach((tag, index, allTags) => {
         const keyword = tag.dataset.keyword;
+        const isLastSelected = index === allTags.length - 1;
 
         tag.addEventListener('click', () => {
             onRemoveClick(keyword);
@@ -136,7 +174,13 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
                 const currentIndex = tags.indexOf(tag);
                 const nextTag = tags[currentIndex + 1];
-                if (nextTag) nextTag.focus();
+                if (nextTag) {
+                    nextTag.focus();
+                } else {
+                    // We're at the last selected keyword, jump to first unselected keyword
+                    const firstUnselected = document.querySelector('.keyword-tag');
+                    if (firstUnselected) firstUnselected.focus();
+                }
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
@@ -150,7 +194,13 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
 
                 // Find the first tag on the next row (offsetTop > currentTop)
                 const nextRowTag = tags.find(t => t.offsetTop > currentTop);
-                if (nextRowTag) nextRowTag.focus();
+                if (nextRowTag) {
+                    nextRowTag.focus();
+                } else {
+                    // No next row in selected, try to go to unselected keywords
+                    const firstUnselected = document.querySelector('.keyword-tag');
+                    if (firstUnselected) firstUnselected.focus();
+                }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
@@ -168,8 +218,19 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
             }
         });
 
-        // Restore focus if this was the focused keyword (and it was in selected keywords)
-        if (focusedKeyword && isFocusedInSelected && keyword === focusedKeyword) {
+        // Focus management after deselection
+        if (deselectedIndex !== null) {
+            // A keyword was just deselected, focus the next one or last one
+            if (index === deselectedIndex && newTags[index]) {
+                // Focus the keyword now at the deselected index (the next one)
+                setTimeout(() => tag.focus(), 0);
+            } else if (index === newTags.length - 1 && deselectedIndex >= newTags.length) {
+                // The last keyword was deselected, focus the new last keyword
+                setTimeout(() => tag.focus(), 0);
+            }
+        }
+        // Or restore focus if this was the focused keyword (and it's still selected)
+        else if (focusedKeyword && isFocusedInSelected && keyword === focusedKeyword) {
             // Use setTimeout to ensure DOM is ready
             setTimeout(() => tag.focus(), 0);
         }
@@ -251,7 +312,7 @@ export function updateSidebar(state, onKeywordToggle, onCategoryToggle, options 
     const keywordCloudEl = document.getElementById('keyword-cloud');
     const categoryListEl = document.getElementById('category-list');
 
-    renderSelectedKeywords(state.selectedKeywords, selectedKeywordsEl, onKeywordToggle);
+    renderSelectedKeywords(state.selectedKeywords, selectedKeywordsEl, onKeywordToggle, options.focusFirstUnselected);
     renderKeywordCloud(state.filteredTemplates, state.selectedKeywords, keywordCloudEl, onKeywordToggle, options.focusFirstKeyword);
     renderCategoryList(state.filteredTemplates, state.selectedCategory, categoryListEl, onCategoryToggle);
 }
