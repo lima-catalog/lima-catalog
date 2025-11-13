@@ -73,8 +73,14 @@ See [PLAN.md](PLAN.md) for full project architecture, implementation details, an
 
 ### Making UI Changes
 1. Edit `docs/` files (HTML/CSS/JS)
-2. Test changes will be visible after GitHub Pages deploys
-3. Remind user about browser cache (hard refresh)
+2. **ALWAYS include accessibility features:**
+   - Add `aria-label` attributes to interactive elements (buttons, inputs, links)
+   - Add `role` attributes for semantic structure (main, complementary, dialog, etc.)
+   - Add `title` attributes for additional context on hover
+   - Add `aria-live` regions for dynamic content updates
+   - Ensure keyboard navigation works properly
+3. Test changes will be visible after GitHub Pages deploys
+4. Remind user about browser cache (hard refresh)
 
 ### Making Backend Changes
 1. Edit `pkg/` or `cmd/` files
