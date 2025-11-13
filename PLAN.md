@@ -205,6 +205,17 @@ Auto-assigns categories based on detected technologies:
 - All tests must pass before PR creation
 - Minimal DOM mocking for Node.js compatibility
 
+**UI Simplification & Consistency** ✅
+- Removed top filter bar - all controls consolidated in sidebar
+- Replaced Type dropdown with checkboxes (Official/Community)
+- Moved search, sort, and clear filters to sidebar
+- Contextual clear buttons (× symbol) that appear only when needed
+- Search field clear button (visible when text entered)
+- Keywords clear button (visible when keywords selected)
+- Smaller, tighter checkbox styling matching category list
+- Improved sidebar scroll positioning (no gap at top)
+- No empty space reserved for keywords when none selected
+
 ## Implementation Milestones
 
 ### Phase 1: Data Collection ✅
