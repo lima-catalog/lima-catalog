@@ -3,6 +3,7 @@
  */
 
 import { DATA_BASE_URL } from './config.js';
+import { fetchWithRetry } from './utils.js';
 
 /**
  * Parse JSON Lines format (one JSON object per line)
@@ -18,27 +19,21 @@ export function parseJsonLines(text) {
 }
 
 /**
- * Load templates data from GitHub
+ * Load templates data from GitHub with retry logic
  * @returns {Promise<Array>} Array of template objects
  */
 export async function loadTemplates() {
-    const response = await fetch(`${DATA_BASE_URL}/templates.jsonl`);
-    if (!response.ok) {
-        throw new Error('Failed to load templates');
-    }
+    const response = await fetchWithRetry(`${DATA_BASE_URL}/templates.jsonl`);
     const text = await response.text();
     return parseJsonLines(text);
 }
 
 /**
- * Load repositories data from GitHub
+ * Load repositories data from GitHub with retry logic
  * @returns {Promise<Map>} Map of repo ID to repo object
  */
 export async function loadRepositories() {
-    const response = await fetch(`${DATA_BASE_URL}/repos.jsonl`);
-    if (!response.ok) {
-        throw new Error('Failed to load repositories');
-    }
+    const response = await fetchWithRetry(`${DATA_BASE_URL}/repos.jsonl`);
     const text = await response.text();
     const repos = parseJsonLines(text);
 

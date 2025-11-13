@@ -4,9 +4,11 @@
 
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
+import { fetchWithRetry, trapFocus } from './utils.js';
 
 // Modal state
 let currentTemplate = null;
+let releaseFocusTrap = null;
 
 /**
  * Open preview modal for a template
@@ -42,6 +44,11 @@ export function openPreviewModal(template, repo) {
     copyYamlButton.style.display = 'none';
     document.body.style.overflow = 'hidden';
 
+    // Trap focus within modal for accessibility
+    setTimeout(() => {
+        releaseFocusTrap = trapFocus(modal.querySelector('.modal-content'));
+    }, 100);
+
     // Fetch and display template content
     fetchTemplateContent(template, repo);
 }
@@ -54,6 +61,12 @@ export function closePreviewModal() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
     currentTemplate = null;
+
+    // Release focus trap
+    if (releaseFocusTrap) {
+        releaseFocusTrap();
+        releaseFocusTrap = null;
+    }
 }
 
 /**
@@ -72,11 +85,7 @@ async function fetchTemplateContent(template, repo) {
         const url = getDefaultBranchURL(template, repo);
         const rawURL = getRawContentURL(url);
 
-        const response = await fetch(rawURL);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
+        const response = await fetchWithRetry(rawURL);
         const content = await response.text();
 
         // Apply syntax highlighting with highlight.js

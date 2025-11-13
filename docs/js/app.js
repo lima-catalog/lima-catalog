@@ -8,6 +8,7 @@ import { applyFilters, sortTemplates } from './filters.js';
 import { updateSidebar } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
 import { openPreviewModal, setupModalEventListeners } from './modal.js';
+import { debounce } from './utils.js';
 
 /**
  * Update statistics display
@@ -100,7 +101,11 @@ function clearAllFilters() {
  * Setup UI event listeners
  */
 function setupEventListeners() {
-    document.getElementById('search').addEventListener('input', filterAndRender);
+    // Debounce search input to avoid filtering on every keystroke
+    const debouncedFilter = debounce(filterAndRender, 300);
+    document.getElementById('search').addEventListener('input', debouncedFilter);
+
+    // Immediate filtering for dropdowns and buttons
     document.getElementById('type-filter').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
     document.getElementById('clear-filters').addEventListener('click', clearAllFilters);
