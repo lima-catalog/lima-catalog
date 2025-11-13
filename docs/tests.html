@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lima Catalog - Test Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .header {
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header p {
+            color: #8b949e;
+        }
+
+        #run-tests {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        #run-tests:hover {
+            background-color: #2ea043;
+        }
+
+        #run-tests:disabled {
+            background-color: #21262d;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .status.running {
+            background-color: #1f6feb;
+            color: white;
+        }
+
+        .status.success {
+            background-color: #238636;
+            color: white;
+        }
+
+        .status.failure {
+            background-color: #da3633;
+            color: white;
+        }
+
+        #summary {
+            background-color: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        #summary.visible {
+            display: block;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1rem;
+            background-color: #0d1117;
+            border-radius: 6px;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            color: #8b949e;
+            font-size: 0.875rem;
+        }
+
+        #test-output {
+            background-color: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 1.5rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        #test-output div {
+            margin-bottom: 0.25rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #21262d;
+            text-align: center;
+            color: #8b949e;
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Lima Catalog Test Suite</h1>
+            <p>Browser-based unit tests for modular JavaScript components</p>
+        </div>
+
+        <button id="run-tests">Run Tests</button>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div id="summary">
+            <h2>Test Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value" id="total-tests">0</div>
+                    <div class="summary-label">Total Tests</div>
+                </div>
+                <div class="summary-item" style="color: #3fb950;">
+                    <div class="summary-value" id="passed-tests">0</div>
+                    <div class="summary-label">Passed</div>
+                </div>
+                <div class="summary-item" style="color: #f85149;">
+                    <div class="summary-value" id="failed-tests">0</div>
+                    <div class="summary-label">Failed</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="test-output"></div>
+
+        <div class="footer">
+            <p>
+                <a href="index.html">← Back to Lima Catalog</a> |
+                <a href="https://github.com/lima-catalog/lima-catalog" target="_blank">View on GitHub</a>
+            </p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { runner } from './js/test-framework.js';
+
+        // Import all test files
+        import './js/urlHelpers.test.js';
+        import './js/data.test.js';
+        import './js/filters.test.js';
+        import './js/templateCard.test.js';
+
+        const runButton = document.getElementById('run-tests');
+        const statusDiv = document.getElementById('status');
+        const summaryDiv = document.getElementById('summary');
+        const outputDiv = document.getElementById('test-output');
+
+        runButton.addEventListener('click', async () => {
+            // Disable button and show running status
+            runButton.disabled = true;
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status running';
+            statusDiv.textContent = '⏳ Running tests...';
+
+            // Clear previous output
+            outputDiv.innerHTML = '';
+            summaryDiv.classList.remove('visible');
+
+            // Run tests
+            const results = await runner.run();
+
+            // Display summary
+            runner.displaySummary();
+
+            // Update summary panel
+            document.getElementById('total-tests').textContent = results.total;
+            document.getElementById('passed-tests').textContent = results.passed;
+            document.getElementById('failed-tests').textContent = results.failed;
+            summaryDiv.classList.add('visible');
+
+            // Update status
+            if (results.failed === 0) {
+                statusDiv.className = 'status success';
+                statusDiv.textContent = `✅ All tests passed! (${results.passed}/${results.total})`;
+            } else {
+                statusDiv.className = 'status failure';
+                statusDiv.textContent = `❌ ${results.failed} test(s) failed (${results.passed}/${results.total} passed)`;
+            }
+
+            // Re-enable button
+            runButton.disabled = false;
+        });
+
+        // Auto-run tests on load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                runButton.click();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

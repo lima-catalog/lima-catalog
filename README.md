@@ -63,6 +63,24 @@ npx serve docs
 
 **Important:** Never open `index.html` directly in a browser - ES6 modules will fail to load.
 
+### Running Tests
+
+The project includes a browser-based unit test suite for the JavaScript modules. Tests run directly in the browser with no build step required.
+
+**To run tests:**
+
+1. Start a local web server (see above)
+2. Visit: http://localhost:8000/tests.html (or http://localhost:3000/tests.html with Node.js)
+3. Tests will run automatically and display results
+
+The test suite includes:
+- URL helper functions (GitHub scheme URLs, raw content URLs)
+- Data parsing (JSONL format)
+- Filter logic (search, keywords, categories, sorting)
+- Template card formatting (name derivation, HTML escaping)
+
+All tests are written using a lightweight custom test framework with no external dependencies, keeping the project simple and maintainable.
+
 ### Building the Backend Tool
 
 ```bash
