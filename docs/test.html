@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Testing ES Modules</h1>
+    <div id="output"></div>
+    <script type="module">
+        const output = document.getElementById('output');
+
+        try {
+            output.innerHTML += '<p>Loading modules...</p>';
+
+            const { loadAllData } = await import('./js/data.js');
+            output.innerHTML += '<p>✓ data.js loaded</p>';
+
+            const data = await loadAllData();
+            output.innerHTML += `<p>✓ Data loaded: ${data.templates.length} templates</p>`;
+
+        } catch (error) {
+            output.innerHTML += `<p style="color: red;">✗ Error: ${error.message}</p>`;
+            console.error('Full error:', error);
+        }
+    </script>
+</body>
+</html>

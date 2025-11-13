@@ -119,10 +119,13 @@ async function initialize() {
     const error = document.getElementById('error');
 
     try {
+        console.log('Starting initialization...');
         loading.textContent = 'Loading templates...';
 
         // Load data
+        console.log('Calling loadAllData...');
         const { templates, repositories } = await loadAllData();
+        console.log(`Loaded ${templates.length} templates and ${repositories.size} repositories`);
 
         // Update state
         State.setTemplates(templates);
@@ -146,6 +149,16 @@ async function initialize() {
         error.textContent = `Error loading catalog data: ${err.message}`;
     }
 }
+
+// Global error handler for debugging
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    const error = document.getElementById('error');
+    if (error) {
+        error.style.display = 'block';
+        error.textContent = `JavaScript Error: ${event.error.message}\n${event.error.stack}`;
+    }
+});
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', initialize);
