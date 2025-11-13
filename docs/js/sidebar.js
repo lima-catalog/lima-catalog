@@ -40,6 +40,18 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 onKeywordClick(keyword);
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
+                const currentIndex = tags.indexOf(tag);
+                const nextTag = tags[currentIndex + 1];
+                if (nextTag) nextTag.focus();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
+                const currentIndex = tags.indexOf(tag);
+                const prevTag = tags[currentIndex - 1];
+                if (prevTag) prevTag.focus();
             }
         });
     });
@@ -76,6 +88,18 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
             if (e.key === 'Enter' || e.key === ' ' || e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
                 onRemoveClick(keyword);
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+                const currentIndex = tags.indexOf(tag);
+                const nextTag = tags[currentIndex + 1];
+                if (nextTag) nextTag.focus();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+                const currentIndex = tags.indexOf(tag);
+                const prevTag = tags[currentIndex - 1];
+                if (prevTag) prevTag.focus();
             }
         });
     });
@@ -119,6 +143,18 @@ export function renderCategoryList(filteredTemplates, selectedCategory, listElem
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 onCategoryClick(category);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const items = Array.from(listElement.querySelectorAll('.category-item'));
+                const currentIndex = items.indexOf(item);
+                const nextItem = items[currentIndex + 1];
+                if (nextItem) nextItem.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const items = Array.from(listElement.querySelectorAll('.category-item'));
+                const currentIndex = items.indexOf(item);
+                const prevItem = items[currentIndex - 1];
+                if (prevItem) prevItem.focus();
             }
         });
     });

@@ -156,6 +156,20 @@ export function createTemplateCard(template, repo, onCardClick) {
                 e.preventDefault();
                 onCardClick(template);
             }
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+            const nextCard = cards[currentIndex + 1];
+            if (nextCard) nextCard.focus();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+            const prevCard = cards[currentIndex - 1];
+            if (prevCard) prevCard.focus();
         }
     });
 

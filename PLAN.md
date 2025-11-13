@@ -233,25 +233,34 @@ Auto-assigns categories based on detected technologies:
   - Auto-focus search box on page load for immediate typing
   - "/" hotkey to focus search (Gmail/GitHub pattern)
   - ESC key to clear search (keeps focus for new search)
-- **Section navigation shortcuts**:
-  - Shift+K to jump to keywords
-  - Shift+C to jump to categories
-  - Shift+T to jump to first template card
+- **Section jump shortcuts** (single-letter, Gmail-style):
+  - K to jump to keywords
+  - C to jump to categories
+  - T to jump to first template card
+- **Arrow key navigation within sections**:
+  - Keywords: Arrow keys (↑↓←→) to navigate between keyword tags
+  - Selected keywords: Arrow keys to navigate, Delete/Backspace to remove
+  - Categories: Arrow keys (↑↓) to navigate between categories
+  - Template cards: Arrow keys (↑↓←→) to navigate between cards in grid
 - **Interactive element navigation**:
   - Keywords: Tab to focus, Enter/Space to select, fully keyboard accessible
   - Selected keywords: Tab to focus, Enter/Space/Delete/Backspace to remove
   - Categories: Tab to focus, Enter/Space to select, aria-pressed state
   - Template cards: Tab to focus, Enter/Space to open preview modal
+- **Modal focus management**:
+  - Focus trap when modal is open for accessibility
+  - ESC to close modal and restore focus to the template card that opened it
+  - Seamless navigation flow with focus restoration
 - **Keyboard help overlay**:
   - "?" key to show/hide keyboard shortcuts reference
-  - Discoverable help icon (?) in header for easy access
-  - Lists all available shortcuts organized by category
+  - Discoverable question mark icon in header for easy access
+  - Lists all available shortcuts organized by category (Navigation & Actions)
   - ESC or "?" to close the help overlay
 - **Accessibility features**:
   - All interactive elements have tabindex="0" for keyboard focus
   - Proper ARIA labels (aria-label, role="button", aria-pressed)
   - Visible focus indicators with 2px primary color outlines
-  - Focus trap in modal for accessibility
+  - Complete keyboard-only navigation without mouse requirement
   - Full WCAG 2.1 AA keyboard navigation compliance
 
 ## Design System

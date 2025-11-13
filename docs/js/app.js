@@ -191,24 +191,24 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // Shift+K to focus first keyword
-        if (e.shiftKey && e.key === 'K' && !isTyping) {
+        // K to focus first keyword
+        if (e.key === 'k' && !isTyping) {
             e.preventDefault();
             const firstKeyword = document.querySelector('.keyword-tag');
             if (firstKeyword) firstKeyword.focus();
             return;
         }
 
-        // Shift+C to focus first category
-        if (e.shiftKey && e.key === 'C' && !isTyping) {
+        // C to focus first category
+        if (e.key === 'c' && !isTyping) {
             e.preventDefault();
             const firstCategory = document.querySelector('.category-item');
             if (firstCategory) firstCategory.focus();
             return;
         }
 
-        // Shift+T to focus first template card
-        if (e.shiftKey && e.key === 'T' && !isTyping) {
+        // T to focus first template card
+        if (e.key === 't' && !isTyping) {
             e.preventDefault();
             const firstTemplate = document.querySelector('.template-card');
             if (firstTemplate) firstTemplate.focus();
@@ -255,12 +255,14 @@ function showKeyboardHelp() {
                         <dd>Focus search box</dd>
                         <dt><kbd>Esc</kbd></dt>
                         <dd>Clear search box</dd>
-                        <dt><kbd>Shift</kbd>+<kbd>K</kbd></dt>
+                        <dt><kbd>K</kbd></dt>
                         <dd>Jump to keywords</dd>
-                        <dt><kbd>Shift</kbd>+<kbd>C</kbd></dt>
+                        <dt><kbd>C</kbd></dt>
                         <dd>Jump to categories</dd>
-                        <dt><kbd>Shift</kbd>+<kbd>T</kbd></dt>
+                        <dt><kbd>T</kbd></dt>
                         <dd>Jump to templates</dd>
+                        <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
+                        <dd>Navigate within sections</dd>
                         <dt><kbd>Tab</kbd></dt>
                         <dd>Navigate between elements</dd>
                     </dl>
