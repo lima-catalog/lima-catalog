@@ -188,11 +188,11 @@ export function setupModalEventListeners() {
         }
 
         // Scroll the YAML content with keyboard
-        const modalCode = document.getElementById('modal-code');
-        if (!modalCode || modalCode.classList.contains('hidden')) return;
+        const modalBody = document.querySelector('#preview-modal .modal-body');
+        if (!modalBody) return;
 
         const scrollAmount = 40; // pixels per arrow key press
-        const pageScrollAmount = modalCode.clientHeight * 0.9; // 90% of visible height
+        const pageScrollAmount = modalBody.clientHeight * 0.9; // 90% of visible height
 
         let shouldScroll = false;
         let scrollTo = null;
@@ -206,37 +206,37 @@ export function setupModalEventListeners() {
 
             case 'End':
                 e.preventDefault();
-                scrollTo = modalCode.scrollHeight;
+                scrollTo = modalBody.scrollHeight;
                 shouldScroll = true;
                 break;
 
             case 'PageUp':
                 e.preventDefault();
-                scrollTo = Math.max(0, modalCode.scrollTop - pageScrollAmount);
+                scrollTo = Math.max(0, modalBody.scrollTop - pageScrollAmount);
                 shouldScroll = true;
                 break;
 
             case 'PageDown':
                 e.preventDefault();
-                scrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + pageScrollAmount);
+                scrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + pageScrollAmount);
                 shouldScroll = true;
                 break;
 
             case 'ArrowUp':
                 e.preventDefault();
-                scrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
+                scrollTo = Math.max(0, modalBody.scrollTop - scrollAmount);
                 shouldScroll = true;
                 break;
 
             case 'ArrowDown':
                 e.preventDefault();
-                scrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
+                scrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + scrollAmount);
                 shouldScroll = true;
                 break;
         }
 
         if (shouldScroll && scrollTo !== null) {
-            modalCode.scrollTo({
+            modalBody.scrollTo({
                 top: scrollTo,
                 behavior: e.key.startsWith('Arrow') ? 'auto' : 'smooth'
             });
