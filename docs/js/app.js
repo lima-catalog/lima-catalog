@@ -126,8 +126,11 @@ function handleTemplateClick(template) {
  * Clear search field
  */
 function clearSearch() {
-    document.getElementById('search').value = '';
+    const searchInput = document.getElementById('search');
+    searchInput.value = '';
     filterAndRender();
+    // Restore focus to search input for continued keyboard navigation
+    searchInput.focus();
 }
 
 /**
