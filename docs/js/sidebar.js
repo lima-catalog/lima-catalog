@@ -12,7 +12,7 @@ import { getKeywordCounts, getCategoryCounts } from './filters.js';
  * @param {HTMLElement} cloudElement - Cloud container element
  * @param {Function} onKeywordClick - Click handler for keywords
  */
-export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudElement, onKeywordClick) {
+export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudElement, onKeywordClick, shouldFocusFirst = false) {
     // Store currently focused keyword before re-rendering
     const focusedKeyword = document.activeElement?.dataset?.keyword;
     const isFocusedInCloud = document.activeElement?.classList?.contains('keyword-tag');
@@ -28,12 +28,14 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
     cloudElement.innerHTML = keywords.map(([keyword, count]) => `
         <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
-            <span class="keyword-count">${count}</span>
+            <span class="keyword-count">${count</span>
         </div>
     `).join('');
 
     // Add click and keyboard handlers
-    cloudElement.querySelectorAll('.keyword-tag').forEach(tag => {
+    let firstTag = null;
+    cloudElement.querySelectorAll('.keyword-tag').forEach((tag, index) => {
+        if (index === 0) firstTag = tag;
         const keyword = tag.dataset.keyword;
 
         tag.addEventListener('click', () => {
@@ -87,6 +89,11 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
             setTimeout(() => tag.focus(), 0);
         }
     });
+
+    // Focus first keyword if requested (e.g., after selecting a keyword)
+    if (shouldFocusFirst && firstTag) {
+        setTimeout(() => firstTag.focus(), 0);
+    }
 }
 
 /**
@@ -239,12 +246,12 @@ export function renderCategoryList(filteredTemplates, selectedCategory, listElem
  * @param {Function} onKeywordToggle - Keyword toggle handler
  * @param {Function} onCategoryToggle - Category toggle handler
  */
-export function updateSidebar(state, onKeywordToggle, onCategoryToggle) {
+export function updateSidebar(state, onKeywordToggle, onCategoryToggle, options = {}) {
     const selectedKeywordsEl = document.getElementById('selected-keywords');
     const keywordCloudEl = document.getElementById('keyword-cloud');
     const categoryListEl = document.getElementById('category-list');
 
     renderSelectedKeywords(state.selectedKeywords, selectedKeywordsEl, onKeywordToggle);
-    renderKeywordCloud(state.filteredTemplates, state.selectedKeywords, keywordCloudEl, onKeywordToggle);
+    renderKeywordCloud(state.filteredTemplates, state.selectedKeywords, keywordCloudEl, onKeywordToggle, options.focusFirstKeyword);
     renderCategoryList(state.filteredTemplates, state.selectedCategory, categoryListEl, onCategoryToggle);
 }

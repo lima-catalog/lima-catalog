@@ -48,7 +48,7 @@ function updateClearButtons() {
 /**
  * Filter and render templates based on current state
  */
-function filterAndRender() {
+function filterAndRender(options = {}) {
     const templates = State.getTemplates();
     const repositories = State.getRepositories();
     const selectedKeywords = State.getSelectedKeywords();
@@ -89,7 +89,7 @@ function filterAndRender() {
         filteredTemplates: filtered,
         selectedKeywords,
         selectedCategory
-    }, handleKeywordToggle, handleCategoryToggle);
+    }, handleKeywordToggle, handleCategoryToggle, options);
     updateClearButtons();
 
     // Render templates
@@ -101,8 +101,10 @@ function filterAndRender() {
  * Handle keyword toggle
  */
 function handleKeywordToggle(keyword) {
+    const wasSelected = State.getSelectedKeywords().has(keyword);
     State.toggleKeywordSelection(keyword);
-    filterAndRender();
+    // If we just added a keyword, focus should move to first keyword in cloud
+    filterAndRender({ focusFirstKeyword: !wasSelected });
 }
 
 /**
@@ -217,6 +219,14 @@ function setupKeyboardShortcuts() {
             if (firstTemplate) firstTemplate.focus();
             return;
         }
+
+        // S to focus first selected keyword
+        if (e.key === 's' && !isTyping) {
+            e.preventDefault();
+            const firstSelected = document.querySelector('.selected-keyword');
+            if (firstSelected) firstSelected.focus();
+            return;
+        }
     });
 
     // ESC key to clear search box
@@ -260,6 +270,8 @@ function showKeyboardHelp() {
                         <dd>Clear search box</dd>
                         <dt><kbd>K</kbd></dt>
                         <dd>Jump to keywords</dd>
+                        <dt><kbd>S</kbd></dt>
+                        <dd>Jump to selected keywords</dd>
                         <dt><kbd>C</kbd></dt>
                         <dd>Jump to categories</dd>
                         <dt><kbd>T</kbd></dt>
