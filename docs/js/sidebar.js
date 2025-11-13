@@ -28,7 +28,7 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
     cloudElement.innerHTML = keywords.map(([keyword, count]) => `
         <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
-            <span class="keyword-count">${count</span>
+            <span class="keyword-count">${count}</span>
         </div>
     `).join('');
 
