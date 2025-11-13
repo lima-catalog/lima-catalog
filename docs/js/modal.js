@@ -4,7 +4,7 @@
 
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
-import { fetchWithRetry, trapFocus } from './utils.js';
+import { trapFocus } from './utils.js';
 
 // Modal state
 let currentTemplate = null;
@@ -85,7 +85,10 @@ async function fetchTemplateContent(template, repo) {
         const url = getDefaultBranchURL(template, repo);
         const rawURL = getRawContentURL(url);
 
-        const response = await fetchWithRetry(rawURL);
+        const response = await fetch(rawURL);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         const content = await response.text();
 
         // Apply syntax highlighting with highlight.js
