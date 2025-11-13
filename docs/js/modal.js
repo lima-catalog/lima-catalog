@@ -223,23 +223,15 @@ export function setupModalEventListeners() {
                 break;
 
             case 'ArrowUp':
-                // Only handle if not in a button/input
-                if (document.activeElement.tagName !== 'BUTTON' &&
-                    document.activeElement.tagName !== 'INPUT') {
-                    e.preventDefault();
-                    scrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
-                    shouldScroll = true;
-                }
+                e.preventDefault();
+                scrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
+                shouldScroll = true;
                 break;
 
             case 'ArrowDown':
-                // Only handle if not in a button/input
-                if (document.activeElement.tagName !== 'BUTTON' &&
-                    document.activeElement.tagName !== 'INPUT') {
-                    e.preventDefault();
-                    scrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
-                    shouldScroll = true;
-                }
+                e.preventDefault();
+                scrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
+                shouldScroll = true;
                 break;
         }
 
