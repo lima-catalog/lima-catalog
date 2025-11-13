@@ -196,32 +196,36 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // K to focus first keyword
-        if (e.key === 'k' && !isTyping) {
+        // K/k to focus first keyword
+        // Uppercase works even when typing (e.g., Shift+K from search box)
+        if ((e.key === 'k' && !isTyping) || e.key === 'K') {
             e.preventDefault();
             const firstKeyword = document.querySelector('.keyword-tag');
             if (firstKeyword) firstKeyword.focus();
             return;
         }
 
-        // C to focus first category
-        if (e.key === 'c' && !isTyping) {
+        // C/c to focus first category
+        // Uppercase works even when typing
+        if ((e.key === 'c' && !isTyping) || e.key === 'C') {
             e.preventDefault();
             const firstCategory = document.querySelector('.category-item');
             if (firstCategory) firstCategory.focus();
             return;
         }
 
-        // T to focus first template card
-        if (e.key === 't' && !isTyping) {
+        // T/t to focus first template card
+        // Uppercase works even when typing
+        if ((e.key === 't' && !isTyping) || e.key === 'T') {
             e.preventDefault();
             const firstTemplate = document.querySelector('.template-card');
             if (firstTemplate) firstTemplate.focus();
             return;
         }
 
-        // S to focus first selected keyword
-        if (e.key === 's' && !isTyping) {
+        // S/s to focus first selected keyword
+        // Uppercase works even when typing
+        if ((e.key === 's' && !isTyping) || e.key === 'S') {
             e.preventDefault();
             const firstSelected = document.querySelector('.selected-keyword');
             if (firstSelected) firstSelected.focus();
@@ -268,19 +272,22 @@ function showKeyboardHelp() {
                         <dd>Focus search box</dd>
                         <dt><kbd>Esc</kbd></dt>
                         <dd>Clear search box</dd>
-                        <dt><kbd>K</kbd></dt>
+                        <dt><kbd>K</kbd> or <kbd>Shift+K</kbd></dt>
                         <dd>Jump to keywords</dd>
-                        <dt><kbd>S</kbd></dt>
+                        <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
                         <dd>Jump to selected keywords</dd>
-                        <dt><kbd>C</kbd></dt>
+                        <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
                         <dd>Jump to categories</dd>
-                        <dt><kbd>T</kbd></dt>
+                        <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
                         <dd>Jump to templates</dd>
                         <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
                         <dd>Navigate within sections</dd>
                         <dt><kbd>Tab</kbd></dt>
                         <dd>Navigate between elements</dd>
                     </dl>
+                    <p style="font-size: 0.875rem; color: var(--text-light); margin-top: 1rem; font-style: italic;">
+                        Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
+                    </p>
                 </div>
                 <div class="keyboard-help-section">
                     <h3>Actions</h3>
