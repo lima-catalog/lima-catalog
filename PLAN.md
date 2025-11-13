@@ -216,6 +216,18 @@ Auto-assigns categories based on detected technologies:
 - Improved sidebar scroll positioning (no gap at top)
 - No empty space reserved for keywords when none selected
 
+**Dark/Light/Auto Theme Switcher** ✅
+- Segmented control in header with icon buttons (☀️ 🌓 🌙)
+- Three modes: Light, Auto (follows system), Dark (default: Auto)
+- localStorage persistence across sessions
+- System preference detection via prefers-color-scheme
+- Automatic theme switching when system preference changes
+- Complete dark theme with proper color hierarchy
+- Elevation-based modal colors (lighter surfaces = higher elevation)
+- All UI elements adapt: buttons, tags, badges, code blocks
+- Consistent interaction patterns following Material Design / Apple HIG
+- Accessible with ARIA labels and keyboard support
+
 ## Design System
 
 **📖 Complete design system documentation**: See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)
