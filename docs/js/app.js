@@ -239,6 +239,25 @@ function setupKeyboardShortcuts() {
             clearSearch();
         }
     });
+
+    // Prevent uppercase letters in search box (reserved for shortcuts)
+    searchInput.addEventListener('keydown', (e) => {
+        // Check if it's an uppercase letter
+        if (e.key.length === 1 && e.key >= 'A' && e.key <= 'Z') {
+            // If it's an assigned shortcut (K, C, S, T), let the global handler deal with it
+            const assignedShortcuts = ['K', 'C', 'S', 'T'];
+            if (assignedShortcuts.includes(e.key)) {
+                // Already handled by global keydown handler
+                return;
+            }
+
+            // For unassigned uppercase letters, prevent default and give feedback
+            e.preventDefault();
+            // Add a brief shake animation to indicate it's not allowed
+            searchInput.classList.add('shake');
+            setTimeout(() => searchInput.classList.remove('shake'), 300);
+        }
+    });
 }
 
 /**
