@@ -68,6 +68,11 @@ See [PLAN.md](PLAN.md) for full project architecture, implementation details, an
 - **Browser caching:** GitHub Pages changes may need hard refresh (Cmd+Shift+R / Ctrl+Shift+R)
 - **Branch naming:** Must start with `claude/` and end with session ID for push permissions
 - **No PR creation:** Cannot run `gh pr create` directly - provide command for user to run
+- **⚠️ CRITICAL: NO CODE BLOCKS IN PR DESCRIPTIONS!**
+  - NEVER use ``` code blocks in `gh pr create --body` text
+  - Code blocks will break the heredoc (<<'EOF') and make the command uncopyable
+  - Use indentation or plain text for code examples instead
+  - If you need to show code, use 4-space indentation without backticks
 
 ## Common Workflows
 

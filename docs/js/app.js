@@ -161,6 +161,30 @@ function setupEventListeners() {
 }
 
 /**
+ * Setup global keyboard shortcuts
+ */
+function setupKeyboardShortcuts() {
+    const searchInput = document.getElementById('search');
+
+    // "/" hotkey to focus search box (like Gmail, GitHub)
+    document.addEventListener('keydown', (e) => {
+        // Only trigger if:
+        // - Key is "/"
+        // - Not already focused on an input/textarea
+        // - Not in a modal or other interactive element
+        if (e.key === '/' &&
+            document.activeElement.tagName !== 'INPUT' &&
+            document.activeElement.tagName !== 'TEXTAREA' &&
+            !document.activeElement.isContentEditable) {
+
+            e.preventDefault(); // Prevent "/" from being typed
+            searchInput.focus();
+            searchInput.select(); // Select any existing text for easy replacement
+        }
+    });
+}
+
+/**
  * Load data and initialize application
  */
 async function initialize() {
@@ -187,9 +211,13 @@ async function initialize() {
         // Setup UI
         setupEventListeners();
         setupModalEventListeners();
+        setupKeyboardShortcuts();
 
         // Initial render
         filterAndRender();
+
+        // Auto-focus search box for immediate typing
+        document.getElementById('search').focus();
 
     } catch (err) {
         console.error('Error loading data:', err);
