@@ -156,19 +156,47 @@ export function createTemplateCard(template, repo, onCardClick) {
                 e.preventDefault();
                 onCardClick(template);
             }
-        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        } else if (e.key === 'ArrowRight') {
             e.preventDefault();
             const grid = card.parentElement;
             const cards = Array.from(grid.querySelectorAll('.template-card'));
             const currentIndex = cards.indexOf(card);
             const nextCard = cards[currentIndex + 1];
             if (nextCard) nextCard.focus();
-        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        } else if (e.key === 'ArrowLeft') {
             e.preventDefault();
             const grid = card.parentElement;
             const cards = Array.from(grid.querySelectorAll('.template-card'));
             const currentIndex = cards.indexOf(card);
             const prevCard = cards[currentIndex - 1];
+            if (prevCard) prevCard.focus();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+
+            // Calculate number of columns in the grid
+            const gridStyle = window.getComputedStyle(grid);
+            const gridTemplateColumns = gridStyle.gridTemplateColumns;
+            const columnCount = gridTemplateColumns.split(' ').length;
+
+            // Move down by one row (columnCount cards)
+            const nextCard = cards[currentIndex + columnCount];
+            if (nextCard) nextCard.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+
+            // Calculate number of columns in the grid
+            const gridStyle = window.getComputedStyle(grid);
+            const gridTemplateColumns = gridStyle.gridTemplateColumns;
+            const columnCount = gridTemplateColumns.split(' ').length;
+
+            // Move up by one row (columnCount cards)
+            const prevCard = cards[currentIndex - columnCount];
             if (prevCard) prevCard.focus();
         }
     });

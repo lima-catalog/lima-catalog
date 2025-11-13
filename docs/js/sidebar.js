@@ -40,18 +40,35 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 onKeywordClick(keyword);
-            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            } else if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
                 const currentIndex = tags.indexOf(tag);
                 const nextTag = tags[currentIndex + 1];
                 if (nextTag) nextTag.focus();
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
                 const currentIndex = tags.indexOf(tag);
                 const prevTag = tags[currentIndex - 1];
                 if (prevTag) prevTag.focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
+                const currentTop = tag.offsetTop;
+
+                // Find the first tag on the next row (offsetTop > currentTop)
+                const nextRowTag = tags.find(t => t.offsetTop > currentTop);
+                if (nextRowTag) nextRowTag.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
+                const currentTop = tag.offsetTop;
+
+                // Find the first tag on the previous row (offsetTop < currentTop)
+                // Go through tags in reverse to find the first one on the previous row
+                const prevRowTag = tags.reverse().find(t => t.offsetTop < currentTop);
+                if (prevRowTag) prevRowTag.focus();
             }
         });
     });
@@ -88,18 +105,34 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
             if (e.key === 'Enter' || e.key === ' ' || e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
                 onRemoveClick(keyword);
-            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            } else if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
                 const currentIndex = tags.indexOf(tag);
                 const nextTag = tags[currentIndex + 1];
                 if (nextTag) nextTag.focus();
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
                 const currentIndex = tags.indexOf(tag);
                 const prevTag = tags[currentIndex - 1];
                 if (prevTag) prevTag.focus();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+                const currentTop = tag.offsetTop;
+
+                // Find the first tag on the next row (offsetTop > currentTop)
+                const nextRowTag = tags.find(t => t.offsetTop > currentTop);
+                if (nextRowTag) nextRowTag.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+                const currentTop = tag.offsetTop;
+
+                // Find the first tag on the previous row (offsetTop < currentTop)
+                const prevRowTag = tags.reverse().find(t => t.offsetTop < currentTop);
+                if (prevRowTag) prevRowTag.focus();
             }
         });
     });
