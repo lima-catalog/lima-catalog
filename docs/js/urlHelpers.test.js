@@ -72,7 +72,7 @@ runner.test('getGitHubSchemeURL: removes .lima from path', () => {
         path: 'examples/.lima.yaml'
     };
     const result = getGitHubSchemeURL(template);
-    assert.equal(result, 'github:owner/repo/examples/.lima');
+    assert.equal(result, 'github:owner/repo/examples');
 });
 
 runner.test('getGitHubSchemeURL: handles root .lima.yaml', () => {

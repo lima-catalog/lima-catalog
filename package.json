@@ -1,0 +1,11 @@
+{
+  "name": "lima-catalog",
+  "version": "1.0.0",
+  "description": "Lima VM Template Catalog",
+  "type": "module",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": ["lima", "vm", "templates"],
+  "license": "Apache-2.0"
+}

@@ -65,19 +65,28 @@ npx serve docs
 
 ### Running Tests
 
-The project includes a browser-based unit test suite for the JavaScript modules. Tests run directly in the browser with no build step required.
+The project includes a comprehensive unit test suite (67+ tests) for the JavaScript modules. Tests can run in Node.js or in the browser, with no build step or dependencies required.
 
-**To run tests:**
-
-1. Start a local web server (see above)
-2. Visit: http://localhost:8000/tests.html (or http://localhost:3000/tests.html with Node.js)
-3. Tests will run automatically and display results
+**Quick test (recommended):**
+```bash
+npm test
+# or
+node test.js
+```
 
 The test suite includes:
 - URL helper functions (GitHub scheme URLs, raw content URLs)
 - Data parsing (JSONL format)
 - Filter logic (search, keywords, categories, sorting)
 - Template card formatting (name derivation, HTML escaping)
+
+**Browser testing (optional):**
+
+If you prefer to run tests in a browser with visual output:
+
+1. Start a local web server (see above)
+2. Visit: http://localhost:8000/tests.html (or http://localhost:3000/tests.html)
+3. Tests will run automatically and display results
 
 All tests are written using a lightweight custom test framework with no external dependencies, keeping the project simple and maintainable.
 
