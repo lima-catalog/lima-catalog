@@ -177,10 +177,77 @@ export function setupModalEventListeners() {
         await copyToClipboard(yamlContent, copyYamlButton);
     });
 
-    // Close on Escape key
+    // Handle keyboard navigation in modal
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && currentTemplate) {
+        if (!currentTemplate) return; // Modal not open
+
+        // Close on Escape key
+        if (e.key === 'Escape') {
             closePreviewModal();
+            return;
+        }
+
+        // Scroll the YAML content with keyboard
+        const modalCode = document.getElementById('modal-code');
+        if (!modalCode || modalCode.classList.contains('hidden')) return;
+
+        const scrollAmount = 40; // pixels per arrow key press
+        const pageScrollAmount = modalCode.clientHeight * 0.9; // 90% of visible height
+
+        let shouldScroll = false;
+        let scrollTo = null;
+
+        switch(e.key) {
+            case 'Home':
+                e.preventDefault();
+                scrollTo = 0;
+                shouldScroll = true;
+                break;
+
+            case 'End':
+                e.preventDefault();
+                scrollTo = modalCode.scrollHeight;
+                shouldScroll = true;
+                break;
+
+            case 'PageUp':
+                e.preventDefault();
+                scrollTo = Math.max(0, modalCode.scrollTop - pageScrollAmount);
+                shouldScroll = true;
+                break;
+
+            case 'PageDown':
+                e.preventDefault();
+                scrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + pageScrollAmount);
+                shouldScroll = true;
+                break;
+
+            case 'ArrowUp':
+                // Only handle if not in a button/input
+                if (document.activeElement.tagName !== 'BUTTON' &&
+                    document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    scrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
+                    shouldScroll = true;
+                }
+                break;
+
+            case 'ArrowDown':
+                // Only handle if not in a button/input
+                if (document.activeElement.tagName !== 'BUTTON' &&
+                    document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    scrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
+                    shouldScroll = true;
+                }
+                break;
+        }
+
+        if (shouldScroll && scrollTo !== null) {
+            modalCode.scrollTo({
+                top: scrollTo,
+                behavior: e.key.startsWith('Arrow') ? 'auto' : 'smooth'
+            });
         }
     });
 }
