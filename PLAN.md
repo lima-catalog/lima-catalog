@@ -228,6 +228,12 @@ Auto-assigns categories based on detected technologies:
 - Consistent interaction patterns following Material Design / Apple HIG
 - Accessible with ARIA labels and keyboard support
 
+**Keyboard Navigation** ✅
+- Auto-focus search box on page load for immediate typing
+- "/" hotkey to focus search (Gmail/GitHub pattern)
+- ESC key to clear search (keeps focus for new search)
+- Full keyboard accessibility with proper focus management
+
 ## Design System
 
 **📖 Complete design system documentation**: See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)
