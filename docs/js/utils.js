@@ -21,50 +21,7 @@ export function debounce(func, wait = 300) {
 }
 
 /**
- * Retry a function with exponential backoff
- * @param {Function} fn - Async function to retry
- * @param {number} maxRetries - Maximum number of retries
- * @param {number} baseDelay - Base delay in milliseconds
- * @returns {Promise} Result of the function
- */
-export async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
-    let lastError;
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            return await fn();
-        } catch (error) {
-            lastError = error;
-
-            if (attempt < maxRetries) {
-                const delay = baseDelay * Math.pow(2, attempt);
-                console.warn(`Attempt ${attempt + 1} failed, retrying in ${delay}ms...`, error);
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }
-    }
-
-    throw lastError;
-}
-
-/**
- * Fetch with retry logic
- * @param {string} url - URL to fetch
- * @param {Object} options - Fetch options
- * @returns {Promise<Response>} Fetch response
- */
-export async function fetchWithRetry(url, options = {}) {
-    return retryWithBackoff(async () => {
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response;
-    });
-}
-
-/**
- * Trap focus within an element
+ * Trap focus within an element for keyboard accessibility
  * @param {HTMLElement} element - Element to trap focus within
  * @returns {Function} Cleanup function
  */
