@@ -121,11 +121,20 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
  * @param {HTMLElement} containerElement - Container element
  * @param {Function} onRemoveClick - Click handler for removal
  * @param {boolean} focusFirstUnselected - Whether to focus first unselected keyword after render
+ * @param {number} focusIndex - Index of selected keyword to focus (-1 for last)
  */
-export function renderSelectedKeywords(selectedKeywords, containerElement, onRemoveClick, focusFirstUnselected = false) {
+export function renderSelectedKeywords(selectedKeywords, containerElement, onRemoveClick, focusFirstUnselected = false, focusIndex = null) {
     // Store currently focused keyword before re-rendering
     const focusedKeyword = document.activeElement?.dataset?.keyword;
     const isFocusedInSelected = document.activeElement?.classList?.contains('selected-keyword');
+
+    // If we're deselecting a keyword, find its index for focus management
+    let deselectedIndex = null;
+    if (focusedKeyword && isFocusedInSelected && !selectedKeywords.has(focusedKeyword)) {
+        // The focused keyword was just deselected, find where it was
+        const currentTags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+        deselectedIndex = currentTags.findIndex(tag => tag.dataset.keyword === focusedKeyword);
+    }
 
     if (selectedKeywords.size === 0) {
         containerElement.innerHTML = '';
@@ -147,7 +156,8 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
     `).join('');
 
     // Add click and keyboard handlers for removal
-    containerElement.querySelectorAll('.selected-keyword').forEach((tag, index, allTags) => {
+    const newTags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
+    newTags.forEach((tag, index, allTags) => {
         const keyword = tag.dataset.keyword;
         const isLastSelected = index === allTags.length - 1;
 
@@ -208,8 +218,19 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
             }
         });
 
-        // Restore focus if this was the focused keyword (and it was in selected keywords)
-        if (focusedKeyword && isFocusedInSelected && keyword === focusedKeyword) {
+        // Focus management after deselection
+        if (deselectedIndex !== null) {
+            // A keyword was just deselected, focus the next one or last one
+            if (index === deselectedIndex && newTags[index]) {
+                // Focus the keyword now at the deselected index (the next one)
+                setTimeout(() => tag.focus(), 0);
+            } else if (index === newTags.length - 1 && deselectedIndex >= newTags.length) {
+                // The last keyword was deselected, focus the new last keyword
+                setTimeout(() => tag.focus(), 0);
+            }
+        }
+        // Or restore focus if this was the focused keyword (and it's still selected)
+        else if (focusedKeyword && isFocusedInSelected && keyword === focusedKeyword) {
             // Use setTimeout to ensure DOM is ready
             setTimeout(() => tag.focus(), 0);
         }
