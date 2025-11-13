@@ -182,6 +182,13 @@ function setupKeyboardShortcuts() {
             searchInput.select(); // Select any existing text for easy replacement
         }
     });
+
+    // ESC key to clear search box
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            clearSearch();
+        }
+    });
 }
 
 /**
