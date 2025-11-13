@@ -218,6 +218,8 @@ Auto-assigns categories based on detected technologies:
 
 ## Design System
 
+**📖 Full interface guidelines**: See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete interaction patterns, button behaviors, accessibility requirements, and animation guidelines.
+
 ### Color Palette & Guidelines
 
 Based on Material Design and Apple Human Interface Guidelines for proper dark mode implementation.
