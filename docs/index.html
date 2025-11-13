@@ -29,38 +29,52 @@
         </div>
     </header>
 
-    <div class="top-controls">
-        <div class="container-wide">
-            <div class="search-box">
-                <input type="text" id="search" placeholder="Search templates by name or technology..."
-                       aria-label="Search templates" />
+    <div class="main-layout">
+        <aside class="sidebar" role="complementary" aria-label="Filters">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Search</h3>
+                <div class="search-box">
+                    <input type="text" id="search" placeholder="Search templates..."
+                           aria-label="Search templates" />
+                </div>
             </div>
-            <div class="quick-filters">
-                <select id="type-filter" aria-label="Filter by template type">
-                    <option value="">All Types</option>
-                    <option value="official">Official</option>
-                    <option value="community">Community</option>
-                </select>
-                <select id="sort" aria-label="Sort templates">
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Types</h3>
+                <div class="type-checkboxes">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="show-official" checked aria-label="Show official templates" />
+                        <span>Official</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="show-community" checked aria-label="Show community templates" />
+                        <span>Community</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Sort By</h3>
+                <select id="sort" class="sidebar-select" aria-label="Sort templates">
                     <option value="name">Name</option>
                     <option value="stars">Popularity</option>
                     <option value="updated">Recently Updated</option>
                 </select>
-                <button id="clear-filters" class="clear-btn" title="Clear all filters" aria-label="Clear all filters">Clear Filters</button>
             </div>
-        </div>
-    </div>
 
-    <div class="main-layout">
-        <aside class="sidebar" role="complementary" aria-label="Filters">
             <div class="sidebar-section">
-                <h3 class="sidebar-title">Filter by Keywords</h3>
+                <h3 class="sidebar-title">Keywords</h3>
                 <div id="selected-keywords" class="selected-keywords" aria-label="Selected keywords"></div>
                 <div id="keyword-cloud" class="keyword-cloud" role="list" aria-label="Available keywords"></div>
             </div>
+
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Categories</h3>
                 <div id="category-list" class="category-list" role="list" aria-label="Template categories"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <button id="clear-filters" class="clear-btn" title="Clear all filters" aria-label="Clear all filters">Clear All Filters</button>
             </div>
         </aside>
 

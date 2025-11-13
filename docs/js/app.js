@@ -32,8 +32,18 @@ function filterAndRender() {
 
     // Get filter values from UI
     const searchTerm = document.getElementById('search').value;
-    const typeFilter = document.getElementById('type-filter').value;
+    const showOfficial = document.getElementById('show-official').checked;
+    const showCommunity = document.getElementById('show-community').checked;
     const sortBy = document.getElementById('sort').value;
+
+    // Determine type filter based on checkboxes
+    let typeFilter = '';
+    if (showOfficial && !showCommunity) {
+        typeFilter = 'official';
+    } else if (!showOfficial && showCommunity) {
+        typeFilter = 'community';
+    }
+    // If both or neither checked, typeFilter remains '' (show all)
 
     // Apply filters
     let filtered = applyFilters(templates, {
@@ -92,7 +102,8 @@ function handleTemplateClick(template) {
  */
 function clearAllFilters() {
     document.getElementById('search').value = '';
-    document.getElementById('type-filter').value = '';
+    document.getElementById('show-official').checked = true;
+    document.getElementById('show-community').checked = true;
     State.clearAllSelections();
     filterAndRender();
 }
@@ -105,8 +116,9 @@ function setupEventListeners() {
     const debouncedFilter = debounce(filterAndRender, 300);
     document.getElementById('search').addEventListener('input', debouncedFilter);
 
-    // Immediate filtering for dropdowns and buttons
-    document.getElementById('type-filter').addEventListener('change', filterAndRender);
+    // Immediate filtering for checkboxes, dropdown, and buttons
+    document.getElementById('show-official').addEventListener('change', filterAndRender);
+    document.getElementById('show-community').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
     document.getElementById('clear-filters').addEventListener('click', clearAllFilters);
 }
