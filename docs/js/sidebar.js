@@ -69,10 +69,15 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
                 const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
                 const currentTop = tag.offsetTop;
 
-                // Find the first tag on the previous row (offsetTop < currentTop)
-                // Go through tags in reverse to find the first one on the previous row
-                const prevRowTag = tags.reverse().find(t => t.offsetTop < currentTop);
-                if (prevRowTag) prevRowTag.focus();
+                // Find all tags on previous rows (offsetTop < currentTop)
+                const tagsAbove = tags.filter(t => t.offsetTop < currentTop);
+                if (tagsAbove.length > 0) {
+                    // Find the closest row above (maximum offsetTop of tags above)
+                    const closestRowTop = Math.max(...tagsAbove.map(t => t.offsetTop));
+                    // Find the first tag on that row
+                    const prevRowTag = tags.find(t => t.offsetTop === closestRowTop);
+                    if (prevRowTag) prevRowTag.focus();
+                }
             }
         });
 
@@ -144,9 +149,15 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
                 const currentTop = tag.offsetTop;
 
-                // Find the first tag on the previous row (offsetTop < currentTop)
-                const prevRowTag = tags.reverse().find(t => t.offsetTop < currentTop);
-                if (prevRowTag) prevRowTag.focus();
+                // Find all tags on previous rows (offsetTop < currentTop)
+                const tagsAbove = tags.filter(t => t.offsetTop < currentTop);
+                if (tagsAbove.length > 0) {
+                    // Find the closest row above (maximum offsetTop of tags above)
+                    const closestRowTop = Math.max(...tagsAbove.map(t => t.offsetTop));
+                    // Find the first tag on that row
+                    const prevRowTag = tags.find(t => t.offsetTop === closestRowTop);
+                    if (prevRowTag) prevRowTag.focus();
+                }
             }
         });
 
