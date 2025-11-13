@@ -41,6 +41,12 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 
 **Tech Stack**: Modular ES6 JavaScript + highlight.js (no build step)
 
+**Local Development**:
+- Uses native ES6 modules (requires web server)
+- Cannot be opened directly as `file://` URLs
+- Test locally with: `cd docs && python3 -m http.server 8000`
+- Or use: `npx serve docs`
+
 ## Discovery Strategy
 
 ### Search Queries
