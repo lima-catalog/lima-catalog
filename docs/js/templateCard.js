@@ -80,6 +80,9 @@ export function deriveDisplayName(template) {
 export function createTemplateCard(template, repo, onCardClick) {
     const card = document.createElement('div');
     card.className = 'template-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'article');
+    card.setAttribute('aria-label', `Template: ${deriveDisplayName(template)}`);
 
     const displayName = deriveDisplayName(template);
     const description = template.short_description || (repo?.description || 'No description available');
@@ -136,10 +139,66 @@ export function createTemplateCard(template, repo, onCardClick) {
 
     // Make card clickable - open preview modal
     card.style.cursor = 'pointer';
-    card.addEventListener('click', (e) => {
+
+    const handleOpen = (e) => {
         // Don't open modal if clicking on a link (repo link should open GitHub)
         if (e.target.tagName === 'A' || e.target.closest('a')) return;
         onCardClick(template);
+    };
+
+    card.addEventListener('click', handleOpen);
+
+    // Add keyboard support
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            // Only prevent default if not on a link
+            if (e.target.tagName !== 'A' && !e.target.closest('a')) {
+                e.preventDefault();
+                onCardClick(template);
+            }
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+            const nextCard = cards[currentIndex + 1];
+            if (nextCard) nextCard.focus();
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+            const prevCard = cards[currentIndex - 1];
+            if (prevCard) prevCard.focus();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+
+            // Calculate number of columns in the grid
+            const gridStyle = window.getComputedStyle(grid);
+            const gridTemplateColumns = gridStyle.gridTemplateColumns;
+            const columnCount = gridTemplateColumns.split(' ').length;
+
+            // Move down by one row (columnCount cards)
+            const nextCard = cards[currentIndex + columnCount];
+            if (nextCard) nextCard.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const grid = card.parentElement;
+            const cards = Array.from(grid.querySelectorAll('.template-card'));
+            const currentIndex = cards.indexOf(card);
+
+            // Calculate number of columns in the grid
+            const gridStyle = window.getComputedStyle(grid);
+            const gridTemplateColumns = gridStyle.gridTemplateColumns;
+            const columnCount = gridTemplateColumns.split(' ').length;
+
+            // Move up by one row (columnCount cards)
+            const prevCard = cards[currentIndex - columnCount];
+            if (prevCard) prevCard.focus();
+        }
     });
 
     return card;

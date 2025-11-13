@@ -9,6 +9,7 @@ import { trapFocus } from './utils.js';
 // Modal state
 let currentTemplate = null;
 let releaseFocusTrap = null;
+let previouslyFocusedElement = null;
 
 /**
  * Open preview modal for a template
@@ -17,6 +18,10 @@ let releaseFocusTrap = null;
  */
 export function openPreviewModal(template, repo) {
     currentTemplate = template;
+
+    // Store the currently focused element to restore later
+    previouslyFocusedElement = document.activeElement;
+
     const modal = document.getElementById('preview-modal');
     const modalTitle = document.getElementById('modal-title');
     const modalLoading = document.getElementById('modal-loading');
@@ -66,6 +71,12 @@ export function closePreviewModal() {
     if (releaseFocusTrap) {
         releaseFocusTrap();
         releaseFocusTrap = null;
+    }
+
+    // Restore focus to the element that opened the modal
+    if (previouslyFocusedElement && previouslyFocusedElement.focus) {
+        previouslyFocusedElement.focus();
+        previouslyFocusedElement = null;
     }
 }
 

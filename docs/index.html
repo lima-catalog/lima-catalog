@@ -26,16 +26,25 @@
                     <span class="stat-label">Showing</span>
                 </div>
             </div>
-            <div class="theme-switcher" role="radiogroup" aria-label="Theme selection">
-                <button class="theme-option" data-theme="light" aria-label="Light theme" title="Light theme">
-                    ☀️
+            <div class="header-controls">
+                <button id="keyboard-help-btn" class="keyboard-help-btn" aria-label="Show keyboard shortcuts" title="Keyboard shortcuts (?)">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+                        <path d="M10 11.5C10 10.5 10.5 10 11.5 9C12.5 8 13 7.5 13 6.5C13 5.12 11.88 4 10.5 4C9.12 4 8 5.12 8 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <circle cx="10" cy="15" r="0.75" fill="currentColor"/>
+                    </svg>
                 </button>
-                <button class="theme-option active" data-theme="auto" aria-label="Auto theme" title="Auto (follow system)">
-                    🌓
-                </button>
-                <button class="theme-option" data-theme="dark" aria-label="Dark theme" title="Dark theme">
-                    🌙
-                </button>
+                <div class="theme-switcher" role="radiogroup" aria-label="Theme selection">
+                    <button class="theme-option" data-theme="light" aria-label="Light theme" title="Light theme">
+                        ☀️
+                    </button>
+                    <button class="theme-option active" data-theme="auto" aria-label="Auto theme" title="Auto (follow system)">
+                        🌓
+                    </button>
+                    <button class="theme-option" data-theme="dark" aria-label="Dark theme" title="Dark theme">
+                        🌙
+                    </button>
+                </div>
             </div>
         </div>
     </header>

@@ -104,6 +104,40 @@ header {
     letter-spacing: 0.05em;
 }
 
+/* Header Controls (Theme + Help) */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Keyboard Help Button */
+.keyboard-help-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.keyboard-help-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.keyboard-help-btn:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
 /* Theme Switcher */
 .theme-switcher {
     display: flex;
@@ -343,6 +377,11 @@ header {
     background: var(--primary-dark);
 }
 
+.selected-keyword:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
 .selected-keyword .remove {
     font-weight: 700;
     font-size: 1rem;
@@ -377,6 +416,11 @@ header {
     color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.keyword-tag:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .keyword-tag.selected {
@@ -414,6 +458,11 @@ header {
     border-color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-item:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .category-item.selected {
@@ -473,6 +522,11 @@ header {
 .template-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+}
+
+.template-card:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .template-header {
@@ -953,6 +1007,121 @@ footer a:hover {
     color: var(--primary);
 }
 
+/* Keyboard Help Overlay */
+.keyboard-help-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.keyboard-help-content {
+    background: var(--surface);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+}
+
+.keyboard-help-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.keyboard-help-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text);
+}
+
+.keyboard-help-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.keyboard-help-close:hover {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.keyboard-help-close:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.keyboard-help-body {
+    padding: 1.5rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.keyboard-help-section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.125rem;
+    color: var(--text);
+}
+
+.keyboard-shortcuts {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.keyboard-shortcuts dt {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.keyboard-shortcuts dd {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.875rem;
+    padding-left: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.keyboard-shortcuts kbd {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: var(--text);
+    font-weight: 600;
+}
+
 /* Mobile Modal */
 @media (max-width: 768px) {
     .modal {
@@ -972,4 +1141,25 @@ footer a:hover {
         width: 100%;
         text-align: center;
     }
+
+    .keyboard-help-content {
+        max-height: 95vh;
+        border-radius: 0.5rem;
+    }
+
+    .keyboard-help-header,
+    .keyboard-help-body {
+        padding: 1rem;
+    }
+}
+
+/* Shake animation for feedback when typing disallowed characters */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+.shake {
+    animation: shake 0.3s ease-in-out;
 }
