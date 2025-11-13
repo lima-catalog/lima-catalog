@@ -108,4 +108,4 @@ Each file uses JSON Lines format (one JSON object per line) for minimal diffs an
 
 ## License
 
-MIT
+Apache 2.0
