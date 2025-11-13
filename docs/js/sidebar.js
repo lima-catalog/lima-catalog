@@ -13,6 +13,10 @@ import { getKeywordCounts, getCategoryCounts } from './filters.js';
  * @param {Function} onKeywordClick - Click handler for keywords
  */
 export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudElement, onKeywordClick) {
+    // Store currently focused keyword before re-rendering
+    const focusedKeyword = document.activeElement?.dataset?.keyword;
+    const isFocusedInCloud = document.activeElement?.classList?.contains('keyword-tag');
+
     // Get keywords from currently filtered templates, excluding selected ones
     const keywords = getKeywordCounts(filteredTemplates, selectedKeywords);
 
@@ -71,6 +75,12 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
                 if (prevRowTag) prevRowTag.focus();
             }
         });
+
+        // Restore focus if this was the focused keyword (and it was in the cloud, not selected keywords)
+        if (focusedKeyword && isFocusedInCloud && keyword === focusedKeyword) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => tag.focus(), 0);
+        }
     });
 }
 
@@ -81,6 +91,10 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
  * @param {Function} onRemoveClick - Click handler for removal
  */
 export function renderSelectedKeywords(selectedKeywords, containerElement, onRemoveClick) {
+    // Store currently focused keyword before re-rendering
+    const focusedKeyword = document.activeElement?.dataset?.keyword;
+    const isFocusedInSelected = document.activeElement?.classList?.contains('selected-keyword');
+
     if (selectedKeywords.size === 0) {
         containerElement.innerHTML = '';
         return;
@@ -135,6 +149,12 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
                 if (prevRowTag) prevRowTag.focus();
             }
         });
+
+        // Restore focus if this was the focused keyword (and it was in selected keywords)
+        if (focusedKeyword && isFocusedInSelected && keyword === focusedKeyword) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => tag.focus(), 0);
+        }
     });
 }
 
@@ -146,6 +166,9 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
  * @param {Function} onCategoryClick - Click handler for categories
  */
 export function renderCategoryList(filteredTemplates, selectedCategory, listElement, onCategoryClick) {
+    // Store currently focused category before re-rendering
+    const focusedCategory = document.activeElement?.dataset?.category;
+
     // Get categories from currently filtered templates
     const categories = getCategoryCounts(filteredTemplates);
 
@@ -190,6 +213,12 @@ export function renderCategoryList(filteredTemplates, selectedCategory, listElem
                 if (prevItem) prevItem.focus();
             }
         });
+
+        // Restore focus if this was the focused category
+        if (focusedCategory && category === focusedCategory) {
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => item.focus(), 0);
+        }
     });
 }
 
