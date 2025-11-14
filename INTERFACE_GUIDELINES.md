@@ -238,6 +238,86 @@ Understanding the three-level surface system:
 - **Usage**: Code blocks, YAML displays
 - **Purpose**: Visually distinct from other surfaces
 
+## Scrollbar Styling
+
+Custom scrollbar styling ensures consistent appearance across light and dark themes.
+
+### Color Scheme Declaration
+
+The `color-scheme` CSS property tells the browser which color scheme is active, enabling automatic theming of native browser UI elements (including the main window scrollbar, form controls, etc.):
+
+```css
+:root {
+    color-scheme: light;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+```
+
+This property makes the browser's default scrollbars adapt to the theme automatically. However, for custom scrollable elements within the page (like modals), explicit scrollbar styling is still required.
+
+### Scrollbar Colors
+
+**Light Theme**:
+```css
+--scrollbar-thumb: #cbd5e1  /* Light gray thumb */
+--scrollbar-track: #f1f5f9  /* Very light gray track */
+```
+
+**Dark Theme**:
+```css
+--scrollbar-thumb: #475569  /* Medium gray thumb */
+--scrollbar-track: #1e293b  /* Dark gray track (matches --surface) */
+```
+
+### Implementation Pattern
+
+```css
+/* Firefox (standard properties) */
+.scrollable-element {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+.scrollable-element::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.scrollable-element::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+.scrollable-element::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 6px;
+    border: 2px solid var(--scrollbar-track);
+}
+
+.scrollable-element::-webkit-scrollbar-thumb:hover {
+    background: var(--border-elevated);
+}
+```
+
+### Design Rationale
+
+- **Visibility**: Scrollbar is always visible, making overflow content discoverable
+- **Theme consistency**: Colors adapt to light/dark mode automatically
+- **Cross-browser**: Supports both Firefox (standard) and WebKit (Chromium) syntax
+- **Rounded thumb**: `border-radius: 6px` for modern aesthetic
+- **Track border**: 2px border creates visual separation between thumb and track
+- **Hover feedback**: Thumb darkens on hover to indicate interactivity
+
+### Usage
+
+Apply scrollbar styling to elements with `overflow: auto` or `overflow: scroll` that need theme-aware scrollbars, such as:
+- Modal code previews (`.modal-code`)
+- Long dropdown lists
+- Scrollable sidebars
+
 ## Interactive Element Feedback
 
 All interactive elements should provide feedback through multiple channels:
