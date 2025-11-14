@@ -202,38 +202,29 @@ export function setupModalEventListeners() {
         }
 
         // Scroll the YAML content with keyboard
-        // IMPORTANT: This was extremely tricky to solve (took multiple debugging sessions).
-        // The horizontal scrollbar needs to stay at the bottom of the VIEWPORT, not the document.
+        // IMPORTANT: The CSS structure determines which elements to scroll:
+        // - .modal-body has overflow-y: auto - this is the vertical scrollable container
+        // - .modal-code has overflow: auto - this can have horizontal overflow
         //
-        // THE JOURNEY:
-        // 1. Initial attempt: Tried scrolling #modal-code (pre) but it had no horizontal overflow
-        // 2. Debug revealed: Horizontal overflow was on #modal-code-content (code element)
-        // 3. Problem: Code element's scrollbar scrolled out of view vertically (bad UX)
-        // 4. Solution: Restructured CSS to move horizontal overflow to pre element
+        // THE STRUCTURE:
+        // Without flex layout (current):
+        // - .modal-body: Scrolls vertically, grows to show content up to 90vh
+        // - .modal-code: Can scroll horizontally if code is wide
         //
-        // THE CSS FIX:
-        // Changed the <code> element to use:
-        //   display: block; width: fit-content; min-width: 100%;
-        // This allows the code element to expand to its natural width, pushing the horizontal
-        // overflow up to the <pre> element instead of creating it on the <code> element.
+        // With flex layout (previous):
+        // - .modal-code: Scrolls both vertically and horizontally (constrained by flex)
+        // - Issue: Modal height was constrained to less than natural height
         //
-        // FINAL STATE:
-        // - modalCode (pre): H-OVERFLOW: true, V-OVERFLOW: true
-        // - modalCodeContent (code): H-OVERFLOW: false, V-OVERFLOW: false
-        // - Both scrollbars appear on the same element and stay at viewport edges!
-        //
-        // HOW TO DEBUG IF THIS BREAKS:
-        // 1. Add console.log for both elements: scrollWidth, clientWidth, scrollLeft, scrollTop
-        // 2. Scroll with trackpad and see which element's scrollLeft/scrollTop changes
-        // 3. Check which element has scrollWidth > clientWidth (horizontal overflow)
-        // 4. That's the element you need to scroll with keyboard
-        //
-        // Solution: Scroll modalCode (pre element) for BOTH vertical AND horizontal
+        // CURRENT SOLUTION:
+        // - Vertical scrolling: Scroll .modal-body (up/down arrows, PageUp/Down, Home/End)
+        // - Horizontal scrolling: Scroll .modal-code (left/right arrows)
+        // This allows modal to grow naturally while supporting keyboard navigation
+        const modalBody = document.querySelector('#preview-modal .modal-body');
         const modalCode = document.querySelector('#preview-modal #modal-code');
-        if (!modalCode) return;
+        if (!modalBody || !modalCode) return;
 
         const scrollAmount = 40; // pixels per arrow key press
-        const pageScrollAmount = modalCode.clientHeight * 0.9; // 90% of visible height
+        const pageScrollAmount = modalBody.clientHeight * 0.9; // 90% of visible height
 
         let shouldScrollVertical = false;
         let shouldScrollHorizontal = false;
@@ -249,31 +240,31 @@ export function setupModalEventListeners() {
 
             case 'End':
                 e.preventDefault();
-                verticalScrollTo = modalCode.scrollHeight;
+                verticalScrollTo = modalBody.scrollHeight;
                 shouldScrollVertical = true;
                 break;
 
             case 'PageUp':
                 e.preventDefault();
-                verticalScrollTo = Math.max(0, modalCode.scrollTop - pageScrollAmount);
+                verticalScrollTo = Math.max(0, modalBody.scrollTop - pageScrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'PageDown':
                 e.preventDefault();
-                verticalScrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + pageScrollAmount);
+                verticalScrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + pageScrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'ArrowUp':
                 e.preventDefault();
-                verticalScrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
+                verticalScrollTo = Math.max(0, modalBody.scrollTop - scrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'ArrowDown':
                 e.preventDefault();
-                verticalScrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
+                verticalScrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + scrollAmount);
                 shouldScrollVertical = true;
                 break;
 
@@ -296,15 +287,15 @@ export function setupModalEventListeners() {
                 break;
         }
 
-        // Handle vertical scrolling
+        // Handle vertical scrolling on modalBody
         if (shouldScrollVertical && verticalScrollTo !== null) {
-            modalCode.scrollTo({
+            modalBody.scrollTo({
                 top: verticalScrollTo,
                 behavior: e.key.startsWith('Arrow') ? 'auto' : 'smooth'
             });
         }
 
-        // Handle horizontal scrolling
+        // Handle horizontal scrolling on modalCode
         if (shouldScrollHorizontal && horizontalScrollTo !== null) {
             modalCode.scrollTo({
                 left: horizontalScrollTo,
