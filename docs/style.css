@@ -890,8 +890,8 @@ footer a:hover {
 .copy-yaml-button:hover,
 .copy-yaml-button:focus {
     outline: none;
-    background: var(--primary);
-    color: white;
+    background: var(--surface);
+    color: var(--primary);
     border-color: var(--primary);
 }
 

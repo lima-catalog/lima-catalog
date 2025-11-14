@@ -149,28 +149,41 @@ Based on Material Design and Apple Human Interface Guidelines for proper dark mo
 
 **Usage**: Small utility actions (copy, clear, dismiss)
 
+**Consistent Behavior Pattern**:
+
+All utility buttons (copy, clear, close) follow the same interaction pattern for consistency:
+
 **Default State**:
-- Background: `transparent` (or match parent surface)
-- Color: `var(--text)` - neutral, not blue
+- Background: `transparent` (or match parent surface like `var(--surface-elevated)`)
+- Color: `var(--text)` - **neutral gray, NOT blue**
 - Border: Depends on background (see below)
 - Font-size: Small (`0.625rem` - `0.75rem`)
 
-**Hover/Focus State**:
-- Color: `var(--primary)` - blue
-- Border-color: `var(--primary)` - blue
-- Background: Subtle fill if appropriate
+**Hover/Focus State** (ALL buttons use this pattern):
+- Background: `var(--surface)` - subtle fill (NOT solid blue)
+- Color: `var(--primary)` - **blue text**
+- Border-color: `var(--primary)` - **blue border**
+- Outline: `none` (removed to avoid double borders)
+
+**Active/Pressed State**:
+- Transform: `scale(0.95)` - subtle shrink feedback
 
 **Border Selection Based on Background**:
 - **On white/surface**: `1px solid var(--border)` - standard border
 - **On light-gray/elevated**: `1px solid var(--border-elevated)` - stronger, darker border
 - **On dark backgrounds**: May need lighter border for visibility
 
-**Rationale**: Copy buttons should be subtle by default (neutral color) and only become visually prominent when the user interacts with them. Border strength must be adjusted based on background to ensure visibility - a light border on a light background will be nearly invisible.
+**Why This Pattern**:
+- **Neutral by default**: Buttons don't compete for attention until you interact with them
+- **Consistent hover state**: All utility buttons behave identically - blue text + blue border + subtle background
+- **No solid blue backgrounds**: Reserved for primary action buttons only (like "Copy" primary actions)
+- **Border strength matters**: Light borders disappear on light backgrounds; use `--border-elevated` on light-gray
 
 **Examples**:
-- GitHub URL copy button (on light-gray: uses `--border-elevated`)
-- YAML copy button (on modal surface: uses `--border-elevated`)
-- Search clear button (×)
+- ✅ GitHub URL copy button: neutral → blue text + border on hover
+- ✅ YAML copy button: neutral → blue text + border on hover
+- ✅ Close button (×): neutral → blue text + border on hover
+- ❌ Don't use solid blue background for utility buttons (that's for primary actions)
 
 ## Badge & Tag Patterns
 
