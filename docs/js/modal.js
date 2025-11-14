@@ -188,57 +188,113 @@ export function setupModalEventListeners() {
         }
 
         // Scroll the YAML content with keyboard
-        const modalBody = document.querySelector('#preview-modal .modal-body');
-        if (!modalBody) return;
+        // IMPORTANT: This was extremely tricky to solve (took multiple debugging sessions).
+        // The horizontal scrollbar needs to stay at the bottom of the VIEWPORT, not the document.
+        //
+        // THE JOURNEY:
+        // 1. Initial attempt: Tried scrolling #modal-code (pre) but it had no horizontal overflow
+        // 2. Debug revealed: Horizontal overflow was on #modal-code-content (code element)
+        // 3. Problem: Code element's scrollbar scrolled out of view vertically (bad UX)
+        // 4. Solution: Restructured CSS to move horizontal overflow to pre element
+        //
+        // THE CSS FIX:
+        // Changed the <code> element to use:
+        //   display: block; width: fit-content; min-width: 100%;
+        // This allows the code element to expand to its natural width, pushing the horizontal
+        // overflow up to the <pre> element instead of creating it on the <code> element.
+        //
+        // FINAL STATE:
+        // - modalCode (pre): H-OVERFLOW: true, V-OVERFLOW: true
+        // - modalCodeContent (code): H-OVERFLOW: false, V-OVERFLOW: false
+        // - Both scrollbars appear on the same element and stay at viewport edges!
+        //
+        // HOW TO DEBUG IF THIS BREAKS:
+        // 1. Add console.log for both elements: scrollWidth, clientWidth, scrollLeft, scrollTop
+        // 2. Scroll with trackpad and see which element's scrollLeft/scrollTop changes
+        // 3. Check which element has scrollWidth > clientWidth (horizontal overflow)
+        // 4. That's the element you need to scroll with keyboard
+        //
+        // Solution: Scroll modalCode (pre element) for BOTH vertical AND horizontal
+        const modalCode = document.querySelector('#preview-modal #modal-code');
+        if (!modalCode) return;
 
         const scrollAmount = 40; // pixels per arrow key press
-        const pageScrollAmount = modalBody.clientHeight * 0.9; // 90% of visible height
+        const pageScrollAmount = modalCode.clientHeight * 0.9; // 90% of visible height
 
-        let shouldScroll = false;
-        let scrollTo = null;
+        let shouldScrollVertical = false;
+        let shouldScrollHorizontal = false;
+        let verticalScrollTo = null;
+        let horizontalScrollTo = null;
 
         switch(e.key) {
             case 'Home':
                 e.preventDefault();
-                scrollTo = 0;
-                shouldScroll = true;
+                verticalScrollTo = 0;
+                shouldScrollVertical = true;
                 break;
 
             case 'End':
                 e.preventDefault();
-                scrollTo = modalBody.scrollHeight;
-                shouldScroll = true;
+                verticalScrollTo = modalCode.scrollHeight;
+                shouldScrollVertical = true;
                 break;
 
             case 'PageUp':
                 e.preventDefault();
-                scrollTo = Math.max(0, modalBody.scrollTop - pageScrollAmount);
-                shouldScroll = true;
+                verticalScrollTo = Math.max(0, modalCode.scrollTop - pageScrollAmount);
+                shouldScrollVertical = true;
                 break;
 
             case 'PageDown':
                 e.preventDefault();
-                scrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + pageScrollAmount);
-                shouldScroll = true;
+                verticalScrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + pageScrollAmount);
+                shouldScrollVertical = true;
                 break;
 
             case 'ArrowUp':
                 e.preventDefault();
-                scrollTo = Math.max(0, modalBody.scrollTop - scrollAmount);
-                shouldScroll = true;
+                verticalScrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
+                shouldScrollVertical = true;
                 break;
 
             case 'ArrowDown':
                 e.preventDefault();
-                scrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + scrollAmount);
-                shouldScroll = true;
+                verticalScrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
+                shouldScrollVertical = true;
+                break;
+
+            case 'ArrowLeft':
+                // Only scroll if modalCode has horizontal overflow
+                if (modalCode && modalCode.scrollWidth > modalCode.clientWidth) {
+                    e.preventDefault();
+                    horizontalScrollTo = Math.max(0, modalCode.scrollLeft - scrollAmount);
+                    shouldScrollHorizontal = true;
+                }
+                break;
+
+            case 'ArrowRight':
+                // Only scroll if modalCode has horizontal overflow
+                if (modalCode && modalCode.scrollWidth > modalCode.clientWidth) {
+                    e.preventDefault();
+                    horizontalScrollTo = Math.min(modalCode.scrollWidth, modalCode.scrollLeft + scrollAmount);
+                    shouldScrollHorizontal = true;
+                }
                 break;
         }
 
-        if (shouldScroll && scrollTo !== null) {
-            modalBody.scrollTo({
-                top: scrollTo,
+        // Handle vertical scrolling
+        if (shouldScrollVertical && verticalScrollTo !== null) {
+            modalCode.scrollTo({
+                top: verticalScrollTo,
                 behavior: e.key.startsWith('Arrow') ? 'auto' : 'smooth'
+            });
+        }
+
+        // Handle horizontal scrolling
+        if (shouldScrollHorizontal && horizontalScrollTo !== null) {
+            modalCode.scrollTo({
+                left: horizontalScrollTo,
+                behavior: 'auto'
             });
         }
     });
