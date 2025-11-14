@@ -202,29 +202,23 @@ export function setupModalEventListeners() {
         }
 
         // Scroll the YAML content with keyboard
-        // IMPORTANT: The CSS structure determines which elements to scroll:
-        // - .modal-body has overflow-y: auto - this is the vertical scrollable container
-        // - .modal-code has overflow: auto - this can have horizontal overflow
+        // IMPORTANT: The CSS structure uses flex layout to keep scrollbars at viewport bottom:
+        // - .modal-body: flex container with overflow: hidden (not scrollable)
+        // - .modal-code-wrapper: flex item that grows (flex: 1)
+        // - .modal-code: scrollable element (overflow: auto) with flex: 1 1 0
         //
-        // THE STRUCTURE:
-        // Without flex layout (current):
-        // - .modal-body: Scrolls vertically, grows to show content up to 90vh
-        // - .modal-code: Can scroll horizontally if code is wide
+        // This structure ensures:
+        // - .modal-code is constrained by flex and scrolls both vertically and horizontally
+        // - Both scrollbars stay at the bottom of the viewport (not the document)
+        // - Modal-content grows naturally based on content (not always 90vh)
         //
-        // With flex layout (previous):
-        // - .modal-code: Scrolls both vertically and horizontally (constrained by flex)
-        // - Issue: Modal height was constrained to less than natural height
-        //
-        // CURRENT SOLUTION:
-        // - Vertical scrolling: Scroll .modal-body (up/down arrows, PageUp/Down, Home/End)
-        // - Horizontal scrolling: Scroll .modal-code (left/right arrows)
-        // This allows modal to grow naturally while supporting keyboard navigation
-        const modalBody = document.querySelector('#preview-modal .modal-body');
+        // SOLUTION:
+        // - Scroll .modal-code for BOTH vertical and horizontal navigation
         const modalCode = document.querySelector('#preview-modal #modal-code');
-        if (!modalBody || !modalCode) return;
+        if (!modalCode) return;
 
         const scrollAmount = 40; // pixels per arrow key press
-        const pageScrollAmount = modalBody.clientHeight * 0.9; // 90% of visible height
+        const pageScrollAmount = modalCode.clientHeight * 0.9; // 90% of visible height
 
         let shouldScrollVertical = false;
         let shouldScrollHorizontal = false;
@@ -240,37 +234,37 @@ export function setupModalEventListeners() {
 
             case 'End':
                 e.preventDefault();
-                verticalScrollTo = modalBody.scrollHeight;
+                verticalScrollTo = modalCode.scrollHeight;
                 shouldScrollVertical = true;
                 break;
 
             case 'PageUp':
                 e.preventDefault();
-                verticalScrollTo = Math.max(0, modalBody.scrollTop - pageScrollAmount);
+                verticalScrollTo = Math.max(0, modalCode.scrollTop - pageScrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'PageDown':
                 e.preventDefault();
-                verticalScrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + pageScrollAmount);
+                verticalScrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + pageScrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'ArrowUp':
                 e.preventDefault();
-                verticalScrollTo = Math.max(0, modalBody.scrollTop - scrollAmount);
+                verticalScrollTo = Math.max(0, modalCode.scrollTop - scrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'ArrowDown':
                 e.preventDefault();
-                verticalScrollTo = Math.min(modalBody.scrollHeight, modalBody.scrollTop + scrollAmount);
+                verticalScrollTo = Math.min(modalCode.scrollHeight, modalCode.scrollTop + scrollAmount);
                 shouldScrollVertical = true;
                 break;
 
             case 'ArrowLeft':
                 // Only scroll if modalCode has horizontal overflow
-                if (modalCode && modalCode.scrollWidth > modalCode.clientWidth) {
+                if (modalCode.scrollWidth > modalCode.clientWidth) {
                     e.preventDefault();
                     horizontalScrollTo = Math.max(0, modalCode.scrollLeft - scrollAmount);
                     shouldScrollHorizontal = true;
@@ -279,7 +273,7 @@ export function setupModalEventListeners() {
 
             case 'ArrowRight':
                 // Only scroll if modalCode has horizontal overflow
-                if (modalCode && modalCode.scrollWidth > modalCode.clientWidth) {
+                if (modalCode.scrollWidth > modalCode.clientWidth) {
                     e.preventDefault();
                     horizontalScrollTo = Math.min(modalCode.scrollWidth, modalCode.scrollLeft + scrollAmount);
                     shouldScrollHorizontal = true;
@@ -287,15 +281,15 @@ export function setupModalEventListeners() {
                 break;
         }
 
-        // Handle vertical scrolling on modalBody
+        // Handle vertical scrolling
         if (shouldScrollVertical && verticalScrollTo !== null) {
-            modalBody.scrollTo({
+            modalCode.scrollTo({
                 top: verticalScrollTo,
                 behavior: e.key.startsWith('Arrow') ? 'auto' : 'smooth'
             });
         }
 
-        // Handle horizontal scrolling on modalCode
+        // Handle horizontal scrolling
         if (shouldScrollHorizontal && horizontalScrollTo !== null) {
             modalCode.scrollTo({
                 left: horizontalScrollTo,
