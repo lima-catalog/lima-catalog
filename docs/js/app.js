@@ -330,7 +330,7 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dt><kbd>Tab</kbd></dt>
                         <dd>Navigate between elements</dd>
                     </dl>
-                    <p style="font-size: 0.875rem; color: var(--text-light); margin-top: 1rem; font-style: italic;">
+                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
                         Tip: Uppercase shortcuts (Shift+K/C/S/T/O) work even when typing in the search box
                     </p>
                 </div>
