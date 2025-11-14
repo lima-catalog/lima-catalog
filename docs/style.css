@@ -860,6 +860,11 @@ footer a:hover {
 
 .modal-code-wrapper {
     position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .copy-yaml-button {
@@ -919,10 +924,12 @@ footer a:hover {
 
 .modal-body {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 1.5rem;
     min-height: 400px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-loading {
@@ -947,6 +954,8 @@ footer a:hover {
     font-size: 0.8125rem;
     line-height: 1.5;
     overflow: auto;
+    flex: 0 1 auto;
+    max-height: 100%;
     /* Firefox scrollbar styling */
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     scrollbar-width: thin;
