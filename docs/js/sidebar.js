@@ -405,11 +405,19 @@ export function setupSidebarNavigation() {
                     // There's a previous row, let the existing handler manage it
                     return;
                 } else {
-                    // We're on the first row, move to sort dropdown
+                    // We're on the first row of unselected keywords
+                    // Check if there are selected keywords to go to
                     e.preventDefault();
                     e.stopPropagation();
-                    const sortDropdown = document.getElementById('sort');
-                    if (sortDropdown) sortDropdown.focus();
+                    const selectedTags = sidebar.querySelectorAll('.selected-keyword');
+                    if (selectedTags.length > 0) {
+                        // Move to last selected keyword
+                        selectedTags[selectedTags.length - 1].focus();
+                    } else {
+                        // No selected keywords, move to sort dropdown
+                        const sortDropdown = document.getElementById('sort');
+                        if (sortDropdown) sortDropdown.focus();
+                    }
                     return;
                 }
             }
