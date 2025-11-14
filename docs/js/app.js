@@ -228,9 +228,9 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // O/o to focus sort dropdown
+        // S/s to focus sort dropdown
         // Uppercase works even when typing
-        if ((e.key === 'o' && !isTyping) || e.key === 'O') {
+        if ((e.key === 's' && !isTyping) || e.key === 'S') {
             e.preventDefault();
             const sortDropdown = document.getElementById('sort');
             if (sortDropdown) sortDropdown.focus();
@@ -261,8 +261,8 @@ function setupKeyboardShortcuts() {
             // Always prevent uppercase letters from being typed
             e.preventDefault();
 
-            // If it's an assigned shortcut (K, C, T, O), the global handler will handle navigation
-            const assignedShortcuts = ['K', 'C', 'T', 'O'];
+            // If it's an assigned shortcut (K, C, S, T), the global handler will handle navigation
+            const assignedShortcuts = ['K', 'C', 'S', 'T'];
             if (!assignedShortcuts.includes(e.key)) {
                 // For unassigned uppercase letters, give visual feedback
                 searchInput.classList.add('shake');
@@ -316,7 +316,7 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dd>Jump to keywords</dd>
                         <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
                         <dd>Jump to categories</dd>
-                        <dt><kbd>O</kbd> or <kbd>Shift+O</kbd></dt>
+                        <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
                         <dd>Jump to sort dropdown</dd>
                         <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
                         <dd>Jump to templates</dd>
@@ -326,7 +326,7 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dd>Navigate between elements</dd>
                     </dl>
                     <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
-                        Tip: Uppercase shortcuts (Shift+K/C/S/T/O) work even when typing in the search box
+                        Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
                     </p>
                 </div>
                 <div class="keyboard-help-section">
