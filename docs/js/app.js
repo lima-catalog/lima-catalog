@@ -414,6 +414,14 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                 bubbles: true
             });
             document.dispatchEvent(newEvent);
+            return;
+        }
+
+        // Prevent arrow keys and other navigation keys from scrolling the page
+        const navigationKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                               'PageUp', 'PageDown', 'Home', 'End', 'Space'];
+        if (navigationKeys.includes(e.key)) {
+            e.preventDefault();
         }
     });
 
