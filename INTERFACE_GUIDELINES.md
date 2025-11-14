@@ -145,6 +145,33 @@ Based on Material Design and Apple Human Interface Guidelines for proper dark mo
 - GitHub repository links
 - "Clear all" text buttons
 
+### Copy/Utility Buttons
+
+**Usage**: Small utility actions (copy, clear, dismiss)
+
+**Default State**:
+- Background: `transparent` (or match parent surface)
+- Color: `var(--text)` - neutral, not blue
+- Border: Depends on background (see below)
+- Font-size: Small (`0.625rem` - `0.75rem`)
+
+**Hover/Focus State**:
+- Color: `var(--primary)` - blue
+- Border-color: `var(--primary)` - blue
+- Background: Subtle fill if appropriate
+
+**Border Selection Based on Background**:
+- **On white/surface**: `1px solid var(--border)` - standard border
+- **On light-gray/elevated**: `1px solid var(--border-elevated)` - stronger, darker border
+- **On dark backgrounds**: May need lighter border for visibility
+
+**Rationale**: Copy buttons should be subtle by default (neutral color) and only become visually prominent when the user interacts with them. Border strength must be adjusted based on background to ensure visibility - a light border on a light background will be nearly invisible.
+
+**Examples**:
+- GitHub URL copy button (on light-gray: uses `--border-elevated`)
+- YAML copy button (on modal surface: uses `--border-elevated`)
+- Search clear button (×)
+
 ## Badge & Tag Patterns
 
 ### Status Badges (Official/Community)
