@@ -181,8 +181,9 @@ function setupKeyboardShortcuts() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Skip if user is typing in an input/textarea
-        const isTyping = document.activeElement.tagName === 'INPUT' ||
+        // Skip if user is typing in a text input/textarea (but not checkboxes, radio, etc.)
+        const isTyping = (document.activeElement.tagName === 'INPUT' &&
+                         ['text', 'search', 'password', 'email', 'tel', 'url', 'number'].includes(document.activeElement.type)) ||
                         document.activeElement.tagName === 'TEXTAREA' ||
                         document.activeElement.isContentEditable;
 
@@ -204,12 +205,18 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // K/k to focus first keyword
+        // K/k to focus first keyword (selected or unselected)
         // Uppercase works even when typing (e.g., Shift+K from search box)
         if ((e.key === 'k' && !isTyping) || e.key === 'K') {
             e.preventDefault();
+            // Focus first selected keyword if any, otherwise first unselected
+            const firstSelected = document.querySelector('.selected-keyword');
             const firstKeyword = document.querySelector('.keyword-tag');
-            if (firstKeyword) firstKeyword.focus();
+            if (firstSelected) {
+                firstSelected.focus();
+            } else if (firstKeyword) {
+                firstKeyword.focus();
+            }
             return;
         }
 
@@ -222,18 +229,9 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // S/s to focus first selected keyword
+        // S/s to focus sort dropdown
         // Uppercase works even when typing
         if ((e.key === 's' && !isTyping) || e.key === 'S') {
-            e.preventDefault();
-            const firstSelected = document.querySelector('.selected-keyword');
-            if (firstSelected) firstSelected.focus();
-            return;
-        }
-
-        // O/o to focus sort dropdown
-        // Uppercase works even when typing
-        if ((e.key === 'o' && !isTyping) || e.key === 'O') {
             e.preventDefault();
             const sortDropdown = document.getElementById('sort');
             if (sortDropdown) sortDropdown.focus();
@@ -264,8 +262,8 @@ function setupKeyboardShortcuts() {
             // Always prevent uppercase letters from being typed
             e.preventDefault();
 
-            // If it's an assigned shortcut (K, C, S, T, O), the global handler will handle navigation
-            const assignedShortcuts = ['K', 'C', 'S', 'T', 'O'];
+            // If it's an assigned shortcut (K, C, S, T), the global handler will handle navigation
+            const assignedShortcuts = ['K', 'C', 'S', 'T'];
             if (!assignedShortcuts.includes(e.key)) {
                 // For unassigned uppercase letters, give visual feedback
                 searchInput.classList.add('shake');
@@ -317,11 +315,9 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dd>Clear search box</dd>
                         <dt><kbd>K</kbd> or <kbd>Shift+K</kbd></dt>
                         <dd>Jump to keywords</dd>
-                        <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
-                        <dd>Jump to selected keywords</dd>
                         <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
                         <dd>Jump to categories</dd>
-                        <dt><kbd>O</kbd> or <kbd>Shift+O</kbd></dt>
+                        <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
                         <dd>Jump to sort dropdown</dd>
                         <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
                         <dd>Jump to templates</dd>
@@ -331,7 +327,7 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dd>Navigate between elements</dd>
                     </dl>
                     <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
-                        Tip: Uppercase shortcuts (Shift+K/C/S/T/O) work even when typing in the search box
+                        Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
                     </p>
                 </div>
                 <div class="keyboard-help-section">
