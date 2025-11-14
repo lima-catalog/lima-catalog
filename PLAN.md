@@ -241,12 +241,11 @@ Auto-assigns categories based on detected technologies:
   - "?" works everywhere, even in search field (opens keyboard help)
   - Uppercase letters blocked in search field (reserved for shortcuts)
 - **Section jump shortcuts** (single-letter, Gmail-style):
-  - K (or Shift+K) to jump to keywords
-  - S (or Shift+S) to jump to selected keywords
+  - K (or Shift+K) to jump to keywords (selected first, then unselected)
   - C (or Shift+C) to jump to categories
-  - O (or Shift+O) to jump to sort dropdown
+  - S (or Shift+S) to jump to sort dropdown
   - T (or Shift+T) to jump to first template card
-  - Uppercase variants work even when typing in search field
+  - Uppercase variants work even when typing in search field (and on checkboxes)
   - Unassigned uppercase letters trigger shake animation feedback
 - **Unified keyword navigation** (seamless between selected/unselected):
   - ArrowRight from last selected keyword → jumps to first unselected keyword
@@ -283,7 +282,7 @@ Auto-assigns categories based on detected technologies:
   - Discoverable question mark icon (?) in header for easy access
   - Focus trap: TAB stays within modal, cycles between close button and content
   - ESC or "?" to close the help overlay
-  - Shortcuts (K/C/S/T/O/?) close modal and execute action
+  - Shortcuts (K/C/S/T/?) close modal and execute action
   - Smart focus restoration: returns to search if opened from search, otherwise to previous element
   - Lists all available shortcuts organized by category (Navigation & Actions)
   - Documents both lowercase and uppercase (Shift+) shortcut variants

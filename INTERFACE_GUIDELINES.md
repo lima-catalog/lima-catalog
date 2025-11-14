@@ -329,9 +329,28 @@ All interactive elements should provide feedback through multiple channels:
 - **Transition**: `transition: all 0.2s` for smooth feedback
 
 ### Focus Feedback (Required for Accessibility)
+
+**Default approach** (for links, form inputs, interactive text):
 - **Outline**: `outline: 2px solid var(--primary)`
 - **Outline-offset**: `2px` (breathing room)
 - Never use `outline: none` without replacement
+
+**Alternative approach** (for buttons, tags, cards):
+- Apply the same styling as hover state to `:focus` pseudo-class
+- Creates a more integrated, less intrusive visual indicator
+- Example: If hover changes border to blue, focus should do the same
+- Rationale: Thick outline borders can look awkward on styled buttons/cards
+
+**Implementation**:
+```css
+/* Buttons and styled interactive elements */
+.button:hover,
+.button:focus {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+```
 
 ### Active/Pressed Feedback (Optional)
 - **Transform**: `transform: scale(0.95)` - subtle shrink
