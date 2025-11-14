@@ -49,6 +49,10 @@ export function openPreviewModal(template, repo) {
     copyYamlButton.style.display = 'none';
     document.body.style.overflow = 'hidden';
 
+    // Remove ready class to hide modal-content during loading
+    const modalContent = modal.querySelector('.modal-content');
+    modalContent.classList.remove('ready');
+
     // Trap focus within modal for accessibility
     setTimeout(() => {
         releaseFocusTrap = trapFocus(modal.querySelector('.modal-content'));
@@ -111,10 +115,20 @@ async function fetchTemplateContent(template, repo) {
         modalLoading.classList.add('hidden');
         modalCode.classList.remove('hidden');
         copyYamlButton.style.display = 'block';
+
+        // Show modal-content now that content is loaded (fade in)
+        const modal = document.getElementById('preview-modal');
+        const modalContent = modal.querySelector('.modal-content');
+        modalContent.classList.add('ready');
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
         copyYamlButton.style.display = 'none';
+
+        // Show modal-content even with error (fade in)
+        const modal = document.getElementById('preview-modal');
+        const modalContent = modal.querySelector('.modal-content');
+        modalContent.classList.add('ready');
     }
 }
 
