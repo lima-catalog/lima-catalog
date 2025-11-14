@@ -169,6 +169,9 @@ Auto-assigns categories based on detected technologies:
 - Multiple close methods (Escape, click outside, buttons)
 - Instant display with no animation delay
 - Copy button for entire template
+- Keyboard scrolling support:
+  - Vertical: Arrow Up/Down, Page Up/Down, Home/End
+  - Horizontal: Arrow Left/Right (scrolls code element for long lines)
 
 **Lima 2.0 GitHub URL Scheme** ✅
 - Generates shortest valid `github:` URLs

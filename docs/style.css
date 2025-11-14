@@ -848,6 +848,11 @@ footer a:hover {
 
 .modal-code-wrapper {
     position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .copy-yaml-button {
@@ -907,10 +912,12 @@ footer a:hover {
 
 .modal-body {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 1.5rem;
     min-height: 400px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-loading {
@@ -934,7 +941,10 @@ footer a:hover {
     border: none;
     font-size: 0.8125rem;
     line-height: 1.5;
-    overflow-x: auto;
+    overflow: auto;
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
 }
 
 .modal-code.hidden {
@@ -947,6 +957,9 @@ footer a:hover {
     background: var(--surface-code);
     border: 1px solid var(--border);
     border-radius: 0.375rem;
+    box-sizing: border-box;
+    width: fit-content;
+    min-width: 100%;
 }
 
 .modal-footer {
