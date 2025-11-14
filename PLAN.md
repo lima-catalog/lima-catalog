@@ -278,6 +278,7 @@ Auto-assigns categories based on detected technologies:
   - Smart focus restoration: returns to search if opened from search, otherwise to previous element
   - Lists all available shortcuts organized by category (Navigation & Actions)
   - Documents both lowercase and uppercase (Shift+) shortcut variants
+  - Compact 2-column layout on screens ≥600px (all shortcuts visible without scrolling)
 - **Template preview modal focus management**:
   - Focus trap when modal is open for accessibility
   - ESC to close modal and restore focus to the template card that opened it
