@@ -316,3 +316,89 @@ export function updateSidebar(state, onKeywordToggle, onCategoryToggle, options 
     renderKeywordCloud(state.filteredTemplates, state.selectedKeywords, keywordCloudEl, onKeywordToggle, options.focusFirstKeyword);
     renderCategoryList(state.filteredTemplates, state.selectedCategory, categoryListEl, onCategoryToggle);
 }
+
+/**
+ * Get all focusable elements in the sidebar in order
+ * @returns {Array<HTMLElement>} Array of focusable elements
+ */
+function getSidebarFocusableElements() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return [];
+
+    const elements = [];
+
+    // 1. Search input
+    const searchInput = document.getElementById('search');
+    if (searchInput) elements.push(searchInput);
+
+    // 2. Type checkboxes
+    const officialCheckbox = document.getElementById('show-official');
+    const communityCheckbox = document.getElementById('show-community');
+    if (officialCheckbox) elements.push(officialCheckbox);
+    if (communityCheckbox) elements.push(communityCheckbox);
+
+    // 3. Sort dropdown
+    const sortDropdown = document.getElementById('sort');
+    if (sortDropdown) elements.push(sortDropdown);
+
+    // 4. Selected keywords (if any)
+    const selectedKeywords = Array.from(sidebar.querySelectorAll('.selected-keyword'));
+    elements.push(...selectedKeywords);
+
+    // 5. Available keywords in cloud (if any)
+    const keywordTags = Array.from(sidebar.querySelectorAll('.keyword-tag'));
+    elements.push(...keywordTags);
+
+    // 6. Category items
+    const categoryItems = Array.from(sidebar.querySelectorAll('.category-item'));
+    elements.push(...categoryItems);
+
+    return elements;
+}
+
+/**
+ * Setup sidebar-wide keyboard navigation
+ * Allows Arrow Up/Down to move between all focusable elements
+ */
+export function setupSidebarNavigation() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    // Use event delegation on the sidebar with capture phase
+    // This runs before individual element handlers, allowing us to intercept Arrow Up/Down
+    sidebar.addEventListener('keydown', (e) => {
+        // Only handle Arrow Up/Down
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') {
+            return;
+        }
+
+        // Get all focusable elements in order
+        const elements = getSidebarFocusableElements();
+        const currentElement = document.activeElement;
+        const currentIndex = elements.indexOf(currentElement);
+
+        // If current element is not in the sidebar, ignore
+        if (currentIndex === -1) return;
+
+        // Determine next element
+        let nextIndex = -1;
+        if (e.key === 'ArrowDown') {
+            nextIndex = currentIndex + 1;
+            if (nextIndex >= elements.length) {
+                nextIndex = elements.length - 1; // Stay at last element
+            }
+        } else if (e.key === 'ArrowUp') {
+            nextIndex = currentIndex - 1;
+            if (nextIndex < 0) {
+                nextIndex = 0; // Stay at first element
+            }
+        }
+
+        // Focus next element if valid
+        if (nextIndex !== -1 && elements[nextIndex]) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent individual element handlers from running
+            elements[nextIndex].focus();
+        }
+    }, true); // Use capture phase to run before element handlers
+}
