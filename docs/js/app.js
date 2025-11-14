@@ -181,8 +181,9 @@ function setupKeyboardShortcuts() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Skip if user is typing in an input/textarea
-        const isTyping = document.activeElement.tagName === 'INPUT' ||
+        // Skip if user is typing in a text input/textarea (but not checkboxes, radio, etc.)
+        const isTyping = (document.activeElement.tagName === 'INPUT' &&
+                         ['text', 'search', 'password', 'email', 'tel', 'url', 'number'].includes(document.activeElement.type)) ||
                         document.activeElement.tagName === 'TEXTAREA' ||
                         document.activeElement.isContentEditable;
 
