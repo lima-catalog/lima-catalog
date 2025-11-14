@@ -790,6 +790,12 @@ footer a:hover {
     max-height: 90vh;
     display: flex;
     flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.15s ease-in;
+}
+
+.modal-content.ready {
+    opacity: 1;
 }
 
 .modal-header {
