@@ -835,17 +835,20 @@ footer a:hover {
     font-size: 0.625rem;
     font-weight: 500;
     background: transparent;
-    color: var(--primary);
-    border: 1px solid var(--border);
+    color: var(--text);
+    border: 1px solid var(--border-elevated);
     border-radius: 0.25rem;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
 }
 
-.copy-button-inline:hover {
+.copy-button-inline:hover,
+.copy-button-inline:focus {
+    outline: none;
     background: var(--surface);
     border-color: var(--primary);
+    color: var(--primary);
 }
 
 .copy-button-inline:active {
@@ -875,7 +878,7 @@ footer a:hover {
     font-size: 0.75rem;
     font-weight: 500;
     background: var(--surface-elevated);
-    color: var(--primary);
+    color: var(--text);
     border: 1px solid var(--border-elevated);
     border-radius: 0.25rem;
     cursor: pointer;
@@ -884,9 +887,11 @@ footer a:hover {
     z-index: 10;
 }
 
-.copy-yaml-button:hover {
-    background: var(--primary);
-    color: white;
+.copy-yaml-button:hover,
+.copy-yaml-button:focus {
+    outline: none;
+    background: var(--surface);
+    color: var(--primary);
     border-color: var(--primary);
 }
 
@@ -917,7 +922,9 @@ footer a:hover {
     transition: all 0.2s;
 }
 
-.modal-close:hover {
+.modal-close:hover,
+.modal-close:focus {
+    outline: none;
     background: rgba(59, 130, 246, 0.1);
     color: var(--primary);
 }
@@ -1038,7 +1045,9 @@ footer a:hover {
     border: none;
 }
 
-.modal-button.primary:hover {
+.modal-button.primary:hover,
+.modal-button.primary:focus {
+    outline: none;
     background: var(--primary-dark);
 }
 
@@ -1048,7 +1057,9 @@ footer a:hover {
     border: 1px solid var(--border-elevated);
 }
 
-.modal-button.secondary:hover {
+.modal-button.secondary:hover,
+.modal-button.secondary:focus {
+    outline: none;
     background: var(--surface);
     border-color: var(--primary);
     color: var(--primary);

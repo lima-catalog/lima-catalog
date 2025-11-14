@@ -145,6 +145,46 @@ Based on Material Design and Apple Human Interface Guidelines for proper dark mo
 - GitHub repository links
 - "Clear all" text buttons
 
+### Copy/Utility Buttons
+
+**Usage**: Small utility actions (copy, clear, dismiss)
+
+**Consistent Behavior Pattern**:
+
+All utility buttons (copy, clear, close) follow the same interaction pattern for consistency:
+
+**Default State**:
+- Background: `transparent` (or match parent surface like `var(--surface-elevated)`)
+- Color: `var(--text)` - **neutral gray, NOT blue**
+- Border: Depends on background (see below)
+- Font-size: Small (`0.625rem` - `0.75rem`)
+
+**Hover/Focus State** (ALL buttons use this pattern):
+- Background: `var(--surface)` - subtle fill (NOT solid blue)
+- Color: `var(--primary)` - **blue text**
+- Border-color: `var(--primary)` - **blue border**
+- Outline: `none` (removed to avoid double borders)
+
+**Active/Pressed State**:
+- Transform: `scale(0.95)` - subtle shrink feedback
+
+**Border Selection Based on Background**:
+- **On white/surface**: `1px solid var(--border)` - standard border
+- **On light-gray/elevated**: `1px solid var(--border-elevated)` - stronger, darker border
+- **On dark backgrounds**: May need lighter border for visibility
+
+**Why This Pattern**:
+- **Neutral by default**: Buttons don't compete for attention until you interact with them
+- **Consistent hover state**: All utility buttons behave identically - blue text + blue border + subtle background
+- **No solid blue backgrounds**: Reserved for primary action buttons only (like "Copy" primary actions)
+- **Border strength matters**: Light borders disappear on light backgrounds; use `--border-elevated` on light-gray
+
+**Examples**:
+- ✅ GitHub URL copy button: neutral → blue text + border on hover
+- ✅ YAML copy button: neutral → blue text + border on hover
+- ✅ Close button (×): neutral → blue text + border on hover
+- ❌ Don't use solid blue background for utility buttons (that's for primary actions)
+
 ## Badge & Tag Patterns
 
 ### Status Badges (Official/Community)
@@ -329,9 +369,28 @@ All interactive elements should provide feedback through multiple channels:
 - **Transition**: `transition: all 0.2s` for smooth feedback
 
 ### Focus Feedback (Required for Accessibility)
+
+**Default approach** (for links, form inputs, interactive text):
 - **Outline**: `outline: 2px solid var(--primary)`
 - **Outline-offset**: `2px` (breathing room)
 - Never use `outline: none` without replacement
+
+**Alternative approach** (for buttons, tags, cards):
+- Apply the same styling as hover state to `:focus` pseudo-class
+- Creates a more integrated, less intrusive visual indicator
+- Example: If hover changes border to blue, focus should do the same
+- Rationale: Thick outline borders can look awkward on styled buttons/cards
+
+**Implementation**:
+```css
+/* Buttons and styled interactive elements */
+.button:hover,
+.button:focus {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+```
 
 ### Active/Pressed Feedback (Optional)
 - **Transform**: `transform: scale(0.95)` - subtle shrink
