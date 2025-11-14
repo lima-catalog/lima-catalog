@@ -316,3 +316,213 @@ export function updateSidebar(state, onKeywordToggle, onCategoryToggle, options 
     renderKeywordCloud(state.filteredTemplates, state.selectedKeywords, keywordCloudEl, onKeywordToggle, options.focusFirstKeyword);
     renderCategoryList(state.filteredTemplates, state.selectedCategory, categoryListEl, onCategoryToggle);
 }
+
+/**
+ * Get all focusable elements in the sidebar in order
+ * @returns {Array<HTMLElement>} Array of focusable elements
+ */
+function getSidebarFocusableElements() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return [];
+
+    const elements = [];
+
+    // 1. Search input
+    const searchInput = document.getElementById('search');
+    if (searchInput) elements.push(searchInput);
+
+    // 2. Type checkboxes
+    const officialCheckbox = document.getElementById('show-official');
+    const communityCheckbox = document.getElementById('show-community');
+    if (officialCheckbox) elements.push(officialCheckbox);
+    if (communityCheckbox) elements.push(communityCheckbox);
+
+    // 3. Sort dropdown
+    const sortDropdown = document.getElementById('sort');
+    if (sortDropdown) elements.push(sortDropdown);
+
+    // 4. Selected keywords (if any)
+    const selectedKeywords = Array.from(sidebar.querySelectorAll('.selected-keyword'));
+    elements.push(...selectedKeywords);
+
+    // 5. Available keywords in cloud (if any)
+    const keywordTags = Array.from(sidebar.querySelectorAll('.keyword-tag'));
+    elements.push(...keywordTags);
+
+    // 6. Category items
+    const categoryItems = Array.from(sidebar.querySelectorAll('.category-item'));
+    elements.push(...categoryItems);
+
+    return elements;
+}
+
+/**
+ * Setup sidebar-wide keyboard navigation
+ * Allows Arrow Up/Down to move between all focusable elements
+ * Preserves row-based navigation within keywords and categories
+ */
+export function setupSidebarNavigation() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    // Use event delegation on the sidebar with capture phase
+    // This runs before individual element handlers, allowing us to intercept Arrow Up/Down
+    sidebar.addEventListener('keydown', (e) => {
+        // Only handle Arrow Up/Down
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') {
+            return;
+        }
+
+        const currentElement = document.activeElement;
+
+        // If current element is not in the sidebar, ignore
+        if (!sidebar.contains(currentElement)) return;
+
+        // Special handling for keywords - preserve row-based navigation
+        if (currentElement.classList.contains('keyword-tag')) {
+            const keywordTags = Array.from(sidebar.querySelectorAll('.keyword-tag'));
+            const currentIndex = keywordTags.indexOf(currentElement);
+            const currentTop = currentElement.offsetTop;
+
+            if (e.key === 'ArrowDown') {
+                // Check if there's a next row
+                const nextRowTag = keywordTags.find(t => t.offsetTop > currentTop);
+                if (nextRowTag) {
+                    // There's a next row, let the existing handler manage it
+                    return;
+                } else {
+                    // We're on the last row, move to categories
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const firstCategory = sidebar.querySelector('.category-item');
+                    if (firstCategory) firstCategory.focus();
+                    return;
+                }
+            } else if (e.key === 'ArrowUp') {
+                // Check if there's a previous row
+                const tagsAbove = keywordTags.filter(t => t.offsetTop < currentTop);
+                if (tagsAbove.length > 0) {
+                    // There's a previous row, let the existing handler manage it
+                    return;
+                } else {
+                    // We're on the first row of unselected keywords
+                    // Check if there are selected keywords to go to
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const selectedTags = sidebar.querySelectorAll('.selected-keyword');
+                    if (selectedTags.length > 0) {
+                        // Move to last selected keyword
+                        selectedTags[selectedTags.length - 1].focus();
+                    } else {
+                        // No selected keywords, move to sort dropdown
+                        const sortDropdown = document.getElementById('sort');
+                        if (sortDropdown) sortDropdown.focus();
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Special handling for selected keywords - preserve row-based navigation
+        if (currentElement.classList.contains('selected-keyword')) {
+            const selectedTags = Array.from(sidebar.querySelectorAll('.selected-keyword'));
+            const currentTop = currentElement.offsetTop;
+
+            if (e.key === 'ArrowDown') {
+                // Check if there's a next row
+                const nextRowTag = selectedTags.find(t => t.offsetTop > currentTop);
+                if (nextRowTag) {
+                    // There's a next row, let the existing handler manage it
+                    return;
+                } else {
+                    // We're on the last row, move to first keyword in cloud
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const firstKeyword = sidebar.querySelector('.keyword-tag');
+                    if (firstKeyword) {
+                        firstKeyword.focus();
+                    } else {
+                        // No keywords in cloud, move to categories
+                        const firstCategory = sidebar.querySelector('.category-item');
+                        if (firstCategory) firstCategory.focus();
+                    }
+                    return;
+                }
+            } else if (e.key === 'ArrowUp') {
+                // Check if there's a previous row
+                const tagsAbove = selectedTags.filter(t => t.offsetTop < currentTop);
+                if (tagsAbove.length > 0) {
+                    // There's a previous row, let the existing handler manage it
+                    return;
+                } else {
+                    // We're on the first row, move to sort dropdown
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const sortDropdown = document.getElementById('sort');
+                    if (sortDropdown) sortDropdown.focus();
+                    return;
+                }
+            }
+        }
+
+        // Special handling for categories - check boundaries
+        if (currentElement.classList.contains('category-item')) {
+            const categoryItems = Array.from(sidebar.querySelectorAll('.category-item'));
+            const currentIndex = categoryItems.indexOf(currentElement);
+
+            if (e.key === 'ArrowUp' && currentIndex === 0) {
+                // We're at the first category, move to last keyword
+                e.preventDefault();
+                e.stopPropagation();
+                const keywordTags = sidebar.querySelectorAll('.keyword-tag');
+                if (keywordTags.length > 0) {
+                    keywordTags[keywordTags.length - 1].focus();
+                } else {
+                    // No keywords in cloud, check for selected keywords
+                    const selectedTags = sidebar.querySelectorAll('.selected-keyword');
+                    if (selectedTags.length > 0) {
+                        selectedTags[selectedTags.length - 1].focus();
+                    } else {
+                        // No keywords at all, move to sort dropdown
+                        const sortDropdown = document.getElementById('sort');
+                        if (sortDropdown) sortDropdown.focus();
+                    }
+                }
+                return;
+            } else if (e.key === 'ArrowDown' && currentIndex === categoryItems.length - 1) {
+                // We're at the last category, stay here
+                e.preventDefault();
+                return;
+            } else {
+                // Not at boundary, let the existing handler manage it
+                return;
+            }
+        }
+
+        // For other elements (search, checkboxes, dropdown), use sequential navigation
+        const elements = getSidebarFocusableElements();
+        const currentIndex = elements.indexOf(currentElement);
+
+        if (currentIndex === -1) return;
+
+        let nextIndex = -1;
+        if (e.key === 'ArrowDown') {
+            nextIndex = currentIndex + 1;
+            if (nextIndex >= elements.length) {
+                nextIndex = elements.length - 1; // Stay at last element
+            }
+        } else if (e.key === 'ArrowUp') {
+            nextIndex = currentIndex - 1;
+            if (nextIndex < 0) {
+                nextIndex = 0; // Stay at first element
+            }
+        }
+
+        // Focus next element if valid and different
+        if (nextIndex !== -1 && nextIndex !== currentIndex && elements[nextIndex]) {
+            e.preventDefault();
+            e.stopPropagation();
+            elements[nextIndex].focus();
+        }
+    }, true); // Use capture phase to run before element handlers
+}

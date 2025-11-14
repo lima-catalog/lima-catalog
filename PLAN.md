@@ -167,11 +167,13 @@ Auto-assigns categories based on detected technologies:
 - Click any card to preview YAML content
 - Professional syntax highlighting (highlight.js)
 - Multiple close methods (Escape, click outside, buttons)
-- Instant display with no animation delay
+- Smooth fade-in display (prevents content flicker during loading)
+- Natural height expansion (up to 90vh) to show full content
 - Copy button for entire template
 - Keyboard scrolling support:
   - Vertical: Arrow Up/Down, Page Up/Down, Home/End
   - Horizontal: Arrow Left/Right (scrolls code element for long lines)
+- Custom scrollbar styling for dark mode consistency
 
 **Lima 2.0 GitHub URL Scheme** ✅
 - Generates shortest valid `github:` URLs
@@ -252,6 +254,13 @@ Auto-assigns categories based on detected technologies:
   - ArrowUp from first row of unselected → jumps to last row of selected keywords
   - ArrowDown from last row of selected → jumps to first row of unselected keywords
   - Keywords and selected keywords feel like one continuous list
+- **Continuous sidebar navigation** (Arrow Up/Down moves between all groups):
+  - Search input → Official checkbox → Community checkbox → Sort dropdown
+  - Sort dropdown → Selected keywords → Unselected keywords → Categories
+  - Within keywords: preserves row-based navigation (Up/Down by row, Left/Right within row)
+  - Within categories: Up/Down navigates items sequentially
+  - Transitions happen at boundaries (first/last row or item)
+  - Dropdown Arrow Down opens menu via SPACE (no longer opens with Arrow Down)
 - **Row-based arrow key navigation**:
   - Keywords: Left/Right for adjacent tags, Up/Down to jump to first tag on previous/next row
   - Selected keywords: Same row-based navigation, Delete/Backspace to remove

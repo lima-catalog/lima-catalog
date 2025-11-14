@@ -5,7 +5,7 @@
 import { loadAllData } from './data.js';
 import * as State from './state.js';
 import { applyFilters, sortTemplates } from './filters.js';
-import { updateSidebar } from './sidebar.js';
+import { updateSidebar, setupSidebarNavigation } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
 import { openPreviewModal, setupModalEventListeners } from './modal.js';
 import { debounce } from './utils.js';
@@ -477,6 +477,7 @@ async function initialize() {
         setupEventListeners();
         setupModalEventListeners();
         setupKeyboardShortcuts();
+        setupSidebarNavigation();
 
         // Initial render
         filterAndRender();
