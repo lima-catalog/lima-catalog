@@ -89,8 +89,9 @@ header {
 }
 
 .header-text h1 {
-    font-size: 2rem;
-    margin-bottom: 0.25rem;
+    font-size: 1.875rem;
+    margin-bottom: 0.125rem;
+    line-height: 1.2;
 }
 
 .header-text .subtitle {
