@@ -418,16 +418,18 @@ The existing data collection process has scalability issues:
 
 #### Stage 1: Incremental Discovery
 
-**Goal**: Find only templates changed in last 48 hours
+**Goal**: Find only new and recently changed templates
 
 **Approach**:
-- Use GitHub Code Search `pushed:` qualifier for date filtering
+- Find the newest template in our existing data (by `DiscoveredAt` timestamp)
+- Query GitHub for templates pushed since 24 hours before that newest template
 - Query: `minimumLimaVersion extension:yaml pushed:>YYYY-MM-DD`
-- Use 48-hour overlap for safety (account for timezone issues)
-- Store last successful run timestamp
+- This ensures we always refetch the last template and get all new ones
+- No need to track "last check" timestamp separately
+- Built-in sanity check: if we get 0 results, something is likely wrong
 
 **Blocklist Filter**:
-- Maintain blocklist file: `data/blocklist.yaml`
+- Maintain blocklist file: `docs/blocklist.yaml` (application config, not generated data)
 - Two separate filter lists (both regex-based):
   1. **Path patterns** - regex matched against file path within repo (e.g., `.github/workflows/`)
   2. **Repo patterns** - regex matched against full `org/repo/path` (e.g., `^spamorg/`)
