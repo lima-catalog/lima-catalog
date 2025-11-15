@@ -461,6 +461,91 @@ template:
 - Category assignment
 - Name derivation
 
+**Future: Template Meta Field Support**
+
+Lima templates may add a `meta` field for user-defined metadata. Our pipeline will respect these conventions:
+
+**Meta Field Conventions** (future):
+```yaml
+# In template YAML:
+meta:
+  description: "Authoritative description from template author"
+  keywords: ["user", "defined", "keywords"]
+  noindex: true  # Exclude from catalog
+```
+
+**Extraction** (Stage 3 - Analysis):
+- Parse `meta` field if present during YAML parsing
+- Store in templates.jsonl:
+  ```json
+  {
+    "meta_description": "Author's description",
+    "meta_keywords": ["user", "keywords"],
+    "meta_noindex": true
+  }
+  ```
+- Falls back to null/empty if meta fields not present
+
+**Priority Order** (for final output):
+1. `meta.description` (if present) - authoritative
+2. LLM-generated description (if available)
+3. Analysis-based keywords (fallback)
+
+**Keyword Merging**:
+- Combine `meta.keywords` + analysis keywords
+- Remove duplicates
+- Optionally boost meta keywords (they appear first)
+- LLM can augment but not replace meta keywords
+
+**Noindex Handling**:
+- Check `meta.noindex` in Stage 6 (Combine)
+- Skip template in frontend data file if `noindex: true`
+- Preserve in templates.jsonl for record-keeping
+- Don't generate LLM descriptions for noindex templates (save tokens)
+
+**Implementation Notes**:
+- Graceful degradation: Works with or without meta field
+- No breaking changes to existing templates
+- Forward-compatible with Lima upstream changes
+- Meta field takes precedence over all automated systems
+
+**Example Priority**:
+```go
+// In combine stage
+func getDescription(template, llmDesc) string {
+    if template.MetaDescription != "" {
+        return template.MetaDescription  // Authoritative
+    }
+    if llmDesc != nil {
+        return llmDesc.ShortDescription  // LLM-generated
+    }
+    return template.AnalysisKeywords[0]  // Fallback
+}
+
+func getKeywords(template, llmDesc) []string {
+    keywords := template.MetaKeywords  // Start with meta
+    if llmDesc != nil && len(keywords) == 0 {
+        keywords = llmDesc.Keywords  // LLM if no meta
+    }
+    if len(keywords) == 0 {
+        keywords = template.AnalysisKeywords  // Fallback
+    }
+    // Optionally merge meta + analysis for richer data
+    return deduplicate(append(template.MetaKeywords, template.AnalysisKeywords...))
+}
+
+func shouldIndex(template) bool {
+    return !template.MetaNoindex  // Respect author's wishes
+}
+```
+
+**Migration Path**:
+1. Add meta field parsing to YAML parser (no-op if field missing)
+2. Update templates.jsonl schema with meta_* fields
+3. Update LLM stage to skip templates with meta.description
+4. Update combine stage to use priority order
+5. No changes needed to existing templates without meta
+
 #### Stage 4: Metadata Management
 
 **Goal**: Fetch repo/org data efficiently
@@ -519,9 +604,12 @@ fetch_metadata(new_repos + refresh_list)
 - Compute `source_hash` from template + repo + org data (exclude timestamps)
 - Generate description only if:
   1. No description exists, OR
-  2. source_hash doesn't match (data changed), OR
-  3. Template not in path filter blocklist
+  2. source_hash doesn't match (data changed), AND
+  3. Template not in path filter blocklist, AND
+  4. Template does not have `meta.description` (author provided), AND
+  5. Template does not have `meta.noindex: true` (author opted out)
 - Rate limit: Start with 1 description/run (configurable via env var)
+- Skip templates with author-provided metadata to save tokens
 - Use cheapest/fastest LLM (Claude Haiku, GPT-3.5-turbo, etc.)
 - Include template YAML, repo description, topics in prompt
 - Fallback to analysis-based keywords if no LLM description
@@ -566,9 +654,35 @@ LLM_PROVIDER=anthropic  # or openai, etc.
 
 **Logic**:
 - Skip templates in path filter blocklist
-- Prefer LLM descriptions over analysis keywords
+- Skip templates with `meta.noindex: true` (author opted out)
+- Use description priority: meta.description > LLM > analysis
+- Use keyword priority: meta.keywords (merged with analysis) > LLM > analysis
 - Include only templates with valid repo/org data
 - Keep file size minimal (gzip compression helps)
+
+**Priority Example**:
+```go
+// Combine stage logic
+if template.MetaNoindex {
+    continue  // Skip this template entirely
+}
+
+description := template.MetaDescription
+if description == "" && llmDesc != nil {
+    description = llmDesc.ShortDescription
+}
+if description == "" {
+    description = strings.Join(template.Keywords, ", ")
+}
+
+keywords := template.MetaKeywords
+if len(keywords) == 0 && llmDesc != nil {
+    keywords = llmDesc.Keywords
+}
+if len(keywords) == 0 {
+    keywords = template.Keywords
+}
+```
 
 #### Stage 7: Template Cleanup
 
@@ -660,6 +774,9 @@ blocklist:
   "name": "Derived Name",
   "keywords": ["from", "analysis"],
   "categories": ["containers"],
+  "meta_description": null,
+  "meta_keywords": null,
+  "meta_noindex": false,
   "official": false,
   "repo": "owner/repo",
   "org": "owner",
