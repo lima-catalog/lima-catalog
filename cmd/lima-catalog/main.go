@@ -107,9 +107,8 @@ func run() error {
 		fmt.Println("=== Phase 1: Template Discovery ===")
 		fmt.Println()
 
-		// Load blocklist
-		blocklistPath := dataDir + "/blocklist.yaml"
-		blocklist, err := discovery.LoadBlocklist(blocklistPath)
+		// Load blocklist from docs/ (application config, not generated data)
+		blocklist, err := discovery.LoadBlocklist("docs/blocklist.yaml")
 		if err != nil {
 			return fmt.Errorf("failed to load blocklist: %w", err)
 		}
