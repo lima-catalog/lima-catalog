@@ -127,8 +127,13 @@ export function initializeTheme() {
                 // Move to next button (wrap to start)
                 targetIndex = currentIndex === allHeaderButtons.length - 1 ? 0 : currentIndex + 1;
             } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                // Prevent scrolling the page when arrow keys are pressed in header
+                // Transfer focus to first visible template card
                 e.preventDefault();
+                const firstTemplate = document.querySelector('.template-card');
+                if (firstTemplate) {
+                    firstTemplate.focus();
+                }
+                return;
             }
 
             if (targetIndex !== -1) {
