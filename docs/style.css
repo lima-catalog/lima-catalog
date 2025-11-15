@@ -83,9 +83,9 @@ header {
 }
 
 .header-icon {
-    width: 72px;
-    height: 72px;
-    border-radius: 8px;
+    width: 96px;
+    height: 96px;
+    border-radius: 10px;
 }
 
 .header-text h1 {
