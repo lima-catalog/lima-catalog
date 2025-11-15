@@ -1,0 +1,14 @@
+# Blocklist for templates that should be excluded from catalog
+# Both lists use regex patterns for maximum flexibility
+
+# Path patterns (regex) - matched against file path within repo
+# Use this for patterns that apply across all repositories
+paths:
+  - '^\.github/workflows/'                      # GitHub Actions
+  - '/lima\.REJECTED\.yaml$'                    # Rejected templates
+  - '/rancher-desktop/lima/0/lima\.yaml$'       # Rancher Desktop old config
+
+# Repo patterns (regex) - matched against full org/repo/path
+# Provides fine-grained control for specific repos, orgs, or templates
+repos:
+  # Add patterns as needed
