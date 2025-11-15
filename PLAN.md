@@ -220,6 +220,14 @@ Auto-assigns categories based on detected technologies:
 - Improved sidebar scroll positioning (no gap at top)
 - No empty space reserved for keywords when none selected
 
+**Header Design with Icon** ✅
+- Lima catalog logo icon (96×96px) displayed in header
+- Teal/blue-gray color scheme (#5a7a8c) matching icon background
+- Icon aligns with sidebar controls (32px left margin)
+- 30px title font with optimized spacing for visual balance
+- Compact header height (20px top/bottom padding)
+- Icon from original 888×888px PNG, scales crisply at any size
+
 **Dark/Light/Auto Theme Switcher** ✅
 - Segmented control in header with icon buttons (☀️ 🌓 🌙)
 - Three modes: Light, Auto (follows system), Dark (default: Auto)
