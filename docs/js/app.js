@@ -23,18 +23,9 @@ function updateStats() {
 }
 
 /**
- * Update clear button visibility
+ * Update clear keywords button visibility
  */
 function updateClearButtons() {
-    // Clear search button
-    const searchInput = document.getElementById('search');
-    const clearSearchBtn = document.getElementById('clear-search');
-    if (searchInput.value) {
-        clearSearchBtn.style.display = 'block';
-    } else {
-        clearSearchBtn.style.display = 'none';
-    }
-
     // Clear keywords button
     const selectedKeywords = State.getSelectedKeywords();
     const clearKeywordsBtn = document.getElementById('clear-keywords');
@@ -157,16 +148,12 @@ function setupEventListeners() {
     const searchInput = document.getElementById('search');
     searchInput.addEventListener('input', debouncedFilter);
 
-    // Update clear search button visibility on input
-    searchInput.addEventListener('input', updateClearButtons);
-
     // Immediate filtering for checkboxes and dropdown
     document.getElementById('show-official').addEventListener('change', filterAndRender);
     document.getElementById('show-community').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
 
-    // Clear buttons
-    document.getElementById('clear-search').addEventListener('click', clearSearch);
+    // Clear keywords button
     document.getElementById('clear-keywords').addEventListener('click', clearKeywords);
 
     // Keyboard help button
@@ -378,6 +365,38 @@ function setupKeyboardShortcuts() {
         }
     });
 
+    // Home/End/PageUp/PageDown to transfer focus to templates (like other sidebar fields)
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Home') {
+            e.preventDefault();
+            const firstCard = document.querySelector('.template-card');
+            if (firstCard) {
+                firstCard.focus();
+                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            const cards = document.querySelectorAll('.template-card');
+            if (cards.length > 0) {
+                const lastCard = cards[cards.length - 1];
+                lastCard.focus();
+                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
+            }
+        } else if (e.key === 'PageUp') {
+            // Let the page scroll normally
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+        } else if (e.key === 'PageDown') {
+            // Let the page scroll normally
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+        }
+    });
+
     // Prevent uppercase letters in search box (reserved for shortcuts)
     searchInput.addEventListener('keydown', (e) => {
         // Check if it's an uppercase letter
@@ -481,6 +500,7 @@ function showKeyboardHelp(returnFocusToSearch = false) {
     `;
 
     document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden'; // Lock scrolling
 
     // Close on click outside or close button
     const closeBtn = overlay.querySelector('.keyboard-help-close');
@@ -564,6 +584,7 @@ function closeKeyboardHelp(returnFocusToSearch = false) {
     const overlay = document.getElementById('keyboard-help-overlay');
     if (overlay) {
         overlay.remove();
+        document.body.style.overflow = 'auto'; // Unlock scrolling
 
         // Restore focus
         if (shouldRestoreFocus) {

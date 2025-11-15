@@ -204,28 +204,6 @@ header {
     border-color: var(--primary);
 }
 
-.clear-search-btn {
-    position: absolute;
-    right: 0.25rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-light);
-    font-size: 1.25rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    transition: all 0.2s;
-}
-
-.clear-search-btn:hover {
-    color: var(--primary);
-    background: rgba(59, 130, 246, 0.1);
-    border-radius: 0.25rem;
-}
-
 /* Type Checkboxes */
 .type-checkboxes {
     display: flex;
@@ -523,6 +501,7 @@ header {
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid var(--border);
     overflow: hidden;
+    scroll-margin: 0.625rem; /* Half the gap (1.25rem) for better visibility when navigating */
 }
 
 .template-card:hover {
