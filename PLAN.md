@@ -214,9 +214,8 @@ Auto-assigns categories based on detected technologies:
 - Removed top filter bar - all controls consolidated in sidebar
 - Replaced Type dropdown with checkboxes (Official/Community)
 - Moved search, sort, and clear filters to sidebar
-- Contextual clear buttons (× symbol) that appear only when needed
-- Search field clear button (visible when text entered)
-- Keywords clear button (visible when keywords selected)
+- Keywords clear button (× symbol) appears when keywords selected
+- ESC key clears search field (no button needed, simplifies navigation)
 - Smaller, tighter checkbox styling matching category list
 - Improved sidebar scroll positioning (no gap at top)
 - No empty space reserved for keywords when none selected
@@ -238,6 +237,7 @@ Auto-assigns categories based on detected technologies:
   - Auto-focus search box on page load for immediate typing
   - "/" hotkey to focus search (Gmail/GitHub pattern)
   - ESC key to clear search and restore focus to search input
+  - Home/End/PageUp/PageDown transfer focus from search to templates (like other sidebar fields)
   - "?" works everywhere, even in search field (opens keyboard help)
   - Uppercase letters blocked in search field (reserved for shortcuts)
 - **Section jump shortcuts** (single-letter, Gmail-style):
@@ -279,6 +279,7 @@ Auto-assigns categories based on detected technologies:
   - Home: Focus very first template card and scroll to top
   - End: Focus very last template card and scroll to bottom
   - Intelligent viewport detection ensures focus follows scroll position
+  - Template cards have scroll-margin (half the gap) for better visibility when navigating
 - **Row-based arrow key navigation**:
   - Keywords: Left/Right for adjacent tags, Up/Down to jump to first tag on previous/next row
   - Selected keywords: Same row-based navigation, Delete/Backspace to remove
@@ -295,17 +296,18 @@ Auto-assigns categories based on detected technologies:
   - Focus jumps to first keyword in cloud after selecting one
   - Focus jumps to next selected keyword when deselecting (or last if deselected was last)
   - Focus jumps to first unselected keyword only when all selected are removed
-  - Focus returns to search after clearing with ESC or clear button
+  - Focus returns to search after clearing with ESC key
 - **Keyboard help modal**:
   - "?" key works everywhere (even in search field) to show/hide help
   - Discoverable question mark icon (?) in header for easy access
   - Focus trap: TAB stays within modal, cycles between close button and content
+  - Background scroll locked (body overflow hidden) while modal is open
   - ESC or "?" to close the help overlay
   - Shortcuts (K/C/S/T/?) close modal and execute action
   - Smart focus restoration: returns to search if opened from search, otherwise to previous element
-  - Lists all available shortcuts organized by category (Navigation & Actions)
+  - Lists all available shortcuts organized by category (Jump to Section & Navigate & Scroll)
   - Documents both lowercase and uppercase (Shift+) shortcut variants
-  - Compact 2-column layout on screens ≥600px (all shortcuts visible without scrolling)
+  - Balanced 2-column layout (7 items / 12 items, no scrolling needed)
 - **Template preview modal focus management**:
   - Focus trap when modal is open for accessibility
   - ESC to close modal and restore focus to the template card that opened it
