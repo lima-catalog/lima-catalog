@@ -61,6 +61,17 @@ type Organization struct {
 	LastFetched time.Time `json:"last_fetched"` // when we fetched this data
 }
 
+// Blocklist represents filtering rules for excluding templates
+type Blocklist struct {
+	// Paths contains regex patterns matched against file path within repo
+	// Example: "^\.github/workflows/" blocks all GitHub Actions files
+	Paths []string `yaml:"paths"`
+
+	// Repos contains regex patterns matched against full org/repo/path
+	// Example: "^spamorg/" blocks entire org, "^org/repo$" blocks specific repo
+	Repos []string `yaml:"repos"`
+}
+
 // Progress tracks the state of data collection for resumability
 type Progress struct {
 	Phase                string    `json:"phase"`                  // "discovery", "metadata", "complete"

@@ -12,13 +12,15 @@ import (
 
 // Discoverer handles template discovery
 type Discoverer struct {
-	client *github.Client
+	client    *github.Client
+	blocklist *types.Blocklist
 }
 
 // NewDiscoverer creates a new template discoverer
-func NewDiscoverer(client *github.Client) *Discoverer {
+func NewDiscoverer(client *github.Client, blocklist *types.Blocklist) *Discoverer {
 	return &Discoverer{
-		client: client,
+		client:    client,
+		blocklist: blocklist,
 	}
 }
 
@@ -50,6 +52,7 @@ func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
 func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 	var templates []types.Template
 	excludedCount := 0
+	blocklistedCount := 0
 
 	page := 1
 	for {
@@ -93,6 +96,12 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 			}
 			owner, repo := parts[0], parts[1]
 
+			// Check blocklist BEFORE fetching content (saves API calls)
+			if IsBlocklisted(owner, repo, path, d.blocklist) {
+				blocklistedCount++
+				continue
+			}
+
 			// Check if this is actually a Lima template by verifying it has "images:" key
 			if !d.isLimaTemplate(owner, repo, path) {
 				excludedCount++
@@ -125,6 +134,9 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 		time.Sleep(3 * time.Second) // 3 seconds = max 20 requests/minute
 	}
 
+	if blocklistedCount > 0 {
+		fmt.Printf("  Blocklisted %d files (matched blocklist rules)\n", blocklistedCount)
+	}
 	if excludedCount > 0 {
 		fmt.Printf("  Excluded %d files that don't have 'images:' top-level key\n", excludedCount)
 	}
