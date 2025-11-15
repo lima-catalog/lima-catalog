@@ -247,6 +247,12 @@ Auto-assigns categories based on detected technologies:
   - T (or Shift+T) to jump to first template card
   - Uppercase variants work even when typing in search field (and on checkboxes)
   - Unassigned uppercase letters trigger shake animation feedback
+- **Section navigation shortcuts** (Ctrl+Arrow for major sections):
+  - Ctrl+← to move from templates to sidebar (search box)
+  - Ctrl+→ to move from sidebar to first template
+  - Ctrl+↑ to move to header (theme switcher)
+  - Ctrl+↓ to move from header to sidebar (search box)
+  - Enables quick navigation between the three main page areas
 - **Unified keyword navigation** (seamless between selected/unselected):
   - ArrowRight from last selected keyword → jumps to first unselected keyword
   - ArrowLeft from first unselected keyword → jumps to last selected keyword

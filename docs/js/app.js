@@ -205,6 +205,39 @@ function setupKeyboardShortcuts() {
             return;
         }
 
+        // Ctrl+Arrow navigation between major sections
+        // Ctrl+Left: templates → sidebar (search box)
+        if (e.ctrlKey && e.key === 'ArrowLeft') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+            return;
+        }
+
+        // Ctrl+Right: sidebar → first visible template
+        if (e.ctrlKey && e.key === 'ArrowRight') {
+            e.preventDefault();
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+            return;
+        }
+
+        // Ctrl+Up: anywhere → header (theme switcher)
+        if (e.ctrlKey && e.key === 'ArrowUp') {
+            e.preventDefault();
+            const themeButton = document.querySelector('.theme-switcher button');
+            if (themeButton) themeButton.focus();
+            return;
+        }
+
+        // Ctrl+Down: header → sidebar (search box)
+        if (e.ctrlKey && e.key === 'ArrowDown') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+            return;
+        }
+
         // K/k to focus first keyword (selected or unselected)
         // Uppercase works even when typing (e.g., Shift+K from search box)
         if ((e.key === 'k' && !isTyping) || e.key === 'K') {
@@ -325,6 +358,14 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dd>Navigate within sections</dd>
                         <dt><kbd>Tab</kbd></dt>
                         <dd>Navigate between elements</dd>
+                        <dt><kbd>Ctrl+←</kbd></dt>
+                        <dd>Move to sidebar from templates</dd>
+                        <dt><kbd>Ctrl+→</kbd></dt>
+                        <dd>Move to templates from sidebar</dd>
+                        <dt><kbd>Ctrl+↑</kbd></dt>
+                        <dd>Move to header (theme switcher)</dd>
+                        <dt><kbd>Ctrl+↓</kbd></dt>
+                        <dd>Move to sidebar from header</dd>
                     </dl>
                     <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
                         Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
