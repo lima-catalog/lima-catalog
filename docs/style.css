@@ -5,9 +5,9 @@
 }
 
 :root {
-    --primary: #a4d65e;
-    --primary-dark: #86b84a;
-    --primary-light: #b8e076;
+    --primary: #5a7a8c;
+    --primary-dark: #4a6b7c;
+    --primary-light: #6a8a9c;
     --secondary: #64748b;
     --success: #10b981;
     --warning: #f59e0b;
@@ -29,9 +29,9 @@
 
 /* Dark theme */
 [data-theme="dark"] {
-    --primary: #b8e076;
-    --primary-dark: #a4d65e;
-    --primary-light: #c8ed8e;
+    --primary: #6a8a9c;
+    --primary-dark: #5a7a8c;
+    --primary-light: #7a9aac;
     --secondary: #94a3b8;
     --success: #34d399;
     --warning: #fbbf24;
@@ -83,8 +83,8 @@ header {
 }
 
 .header-icon {
-    width: 50px;
-    height: 50px;
+    width: 72px;
+    height: 72px;
     border-radius: 8px;
 }
 
