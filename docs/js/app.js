@@ -174,6 +174,33 @@ function setupEventListeners() {
 }
 
 /**
+ * Get the first visible template card in the viewport
+ * @returns {HTMLElement|null} The first visible template card or null
+ */
+function getFirstVisibleTemplateCard() {
+    const cards = Array.from(document.querySelectorAll('.template-card'));
+    if (cards.length === 0) return null;
+
+    const viewportTop = window.scrollY;
+    const viewportBottom = viewportTop + window.innerHeight;
+
+    // Find first card that's at least partially in viewport
+    for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const cardTop = rect.top + window.scrollY;
+        const cardBottom = cardTop + rect.height;
+
+        // Card is visible if it overlaps with viewport
+        if (cardBottom > viewportTop && cardTop < viewportBottom) {
+            return card;
+        }
+    }
+
+    // Fallback to first card
+    return cards[0];
+}
+
+/**
  * Setup global keyboard shortcuts
  */
 function setupKeyboardShortcuts() {
@@ -203,6 +230,102 @@ function setupKeyboardShortcuts() {
             e.preventDefault();
             showKeyboardHelp(isTypingInSearch);
             return;
+        }
+
+        // Ctrl+Arrow navigation between major sections
+        // Ctrl+Left: templates → sidebar (search box)
+        if (e.ctrlKey && e.key === 'ArrowLeft') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+            return;
+        }
+
+        // Ctrl+Right: sidebar → first visible template
+        if (e.ctrlKey && e.key === 'ArrowRight') {
+            e.preventDefault();
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+            return;
+        }
+
+        // Ctrl+Up: anywhere → header (theme switcher)
+        if (e.ctrlKey && e.key === 'ArrowUp') {
+            e.preventDefault();
+            const themeButton = document.querySelector('.theme-switcher button');
+            if (themeButton) themeButton.focus();
+            return;
+        }
+
+        // Ctrl+Down: header → templates (first template)
+        if (e.ctrlKey && e.key === 'ArrowDown') {
+            e.preventDefault();
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+            return;
+        }
+
+        // Vertical scrolling keys: auto-focus template cards
+        // PageUp: Let page scroll, then focus first visible card
+        if (e.key === 'PageUp' && !isTyping) {
+            // Don't prevent default - let the page scroll normally
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+            return;
+        }
+
+        // PageDown: Let page scroll, then focus first visible card
+        if (e.key === 'PageDown' && !isTyping) {
+            // Don't prevent default - let the page scroll normally
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+            return;
+        }
+
+        // Home: Focus very first template card
+        if (e.key === 'Home' && !isTyping) {
+            e.preventDefault();
+            const firstCard = document.querySelector('.template-card');
+            if (firstCard) {
+                firstCard.focus();
+                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // End: Focus very last template card
+        if (e.key === 'End' && !isTyping) {
+            e.preventDefault();
+            const cards = document.querySelectorAll('.template-card');
+            if (cards.length > 0) {
+                const lastCard = cards[cards.length - 1];
+                lastCard.focus();
+                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // ArrowUp/ArrowDown: Auto-focus templates when scrolling (if not in a focusable element)
+        if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isTyping) {
+            const activeElement = document.activeElement;
+            // Don't auto-focus if we're in the header (theme buttons, help button)
+            const isInHeader = activeElement && (
+                activeElement.closest('.theme-switcher') ||
+                activeElement.id === 'keyboard-help-btn'
+            );
+
+            // Only auto-focus if we're not already in an interactive element or header
+            if (!isInHeader && (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML')) {
+                // Let the scroll happen, then focus first visible card
+                setTimeout(() => {
+                    const visibleCard = getFirstVisibleTemplateCard();
+                    if (visibleCard) visibleCard.focus();
+                }, 100);
+            }
         }
 
         // K/k to focus first keyword (selected or unselected)
@@ -307,36 +430,48 @@ function showKeyboardHelp(returnFocusToSearch = false) {
             </div>
             <div class="keyboard-help-body">
                 <div class="keyboard-help-section">
-                    <h3>Navigation</h3>
+                    <h3>Jump to Section</h3>
                     <dl class="keyboard-shortcuts">
                         <dt><kbd>/</kbd></dt>
-                        <dd>Focus search box</dd>
-                        <dt><kbd>Esc</kbd></dt>
-                        <dd>Clear search box</dd>
+                        <dd>Search box</dd>
                         <dt><kbd>K</kbd> or <kbd>Shift+K</kbd></dt>
-                        <dd>Jump to keywords</dd>
+                        <dd>Keywords</dd>
                         <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
-                        <dd>Jump to categories</dd>
+                        <dd>Categories</dd>
                         <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
-                        <dd>Jump to sort dropdown</dd>
+                        <dd>Sort dropdown</dd>
                         <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
-                        <dd>Jump to templates</dd>
+                        <dd>Templates</dd>
+                        <dt><kbd>Ctrl+↑</kbd></dt>
+                        <dd>Header (theme + help)</dd>
+                    </dl>
+                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
+                        Tip: Uppercase (Shift+K/C/S/T) work while typing
+                    </p>
+                </div>
+                <div class="keyboard-help-section">
+                    <h3>Navigate & Scroll</h3>
+                    <dl class="keyboard-shortcuts">
                         <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
                         <dd>Navigate within sections</dd>
                         <dt><kbd>Tab</kbd></dt>
                         <dd>Navigate between elements</dd>
-                    </dl>
-                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
-                        Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
-                    </p>
-                </div>
-                <div class="keyboard-help-section">
-                    <h3>Actions</h3>
-                    <dl class="keyboard-shortcuts">
+                        <dt><kbd>Ctrl+←</kbd></dt>
+                        <dd>Templates → sidebar</dd>
+                        <dt><kbd>Ctrl+→</kbd></dt>
+                        <dd>Sidebar → templates</dd>
+                        <dt><kbd>Ctrl+↓</kbd></dt>
+                        <dd>Header → templates</dd>
+                        <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt>
+                        <dd>Scroll + focus visible template</dd>
+                        <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
+                        <dd>First / last template</dd>
                         <dt><kbd>Enter</kbd> or <kbd>Space</kbd></dt>
-                        <dd>Select keyword/category/template</dd>
+                        <dd>Select / activate</dd>
                         <dt><kbd>Delete</kbd> or <kbd>Backspace</kbd></dt>
                         <dd>Remove selected keyword</dd>
+                        <dt><kbd>Esc</kbd></dt>
+                        <dd>Clear search</dd>
                         <dt><kbd>?</kbd></dt>
                         <dd>Show/hide this help</dd>
                     </dl>
