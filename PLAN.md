@@ -380,13 +380,473 @@ Refer to that document for all design decisions and UI implementation details.
 - **Rich web interface** with preview and Lima 2.0 URLs
 - **Incremental analysis**: Only re-analyzes changed templates
 
-## Future Enhancements
+## Incremental Update Redesign (Planned)
 
-- **LLM-based descriptions**: Optional AI enhancement for better summaries
+### Current Limitations
+
+The existing data collection process has scalability issues:
+- **Long runtime**: Full scan takes 20+ minutes
+- **Code search limit**: Will break when results exceed 1000 items
+- **Inefficient metadata refresh**: Re-fetches all repo/org data every run
+- **No LLM descriptions**: Missing human-readable summaries
+- **No cleanup**: Deleted templates never removed from database
+
+### Redesign Goals
+
+1. **Incremental discovery**: Only process changed/new templates
+2. **Scalability**: Handle >1000 templates without code search limits
+3. **Efficient metadata**: Refresh only stale data (spread over 20+ days)
+4. **LLM descriptions**: Generate quality summaries for better UX
+5. **Automatic cleanup**: Remove templates that no longer exist
+6. **Path-based filtering**: Skip known false positives before content fetch
+
+### Architecture Overview
+
+**Data Pipeline Stages:**
+
+```
+1. DISCOVER  → Find new/changed templates (incremental code search + path filter)
+2. VALIDATE  → Content-based testing (verify images: key exists)
+3. ANALYZE   → Extract keywords, categories, detect technologies
+4. METADATA  → Fetch repo/org info (new templates + refresh cycle)
+5. DESCRIBE  → Generate LLM descriptions (rate-limited)
+6. COMBINE   → Create frontend data file (only needed fields)
+7. CLEANUP   → Remove deleted templates and orphaned metadata
+```
+
+### Implementation Plan
+
+#### Stage 1: Incremental Discovery
+
+**Goal**: Find only templates changed in last 48 hours
+
+**Approach**:
+- Use GitHub Code Search `pushed:` qualifier for date filtering
+- Query: `minimumLimaVersion extension:yaml pushed:>YYYY-MM-DD`
+- Use 48-hour overlap for safety (account for timezone issues)
+- Store last successful run timestamp
+
+**Path-based Filter**:
+- Maintain blocklist file: `data/path-filters.yaml`
+- Contains regex patterns for paths to skip
+- Examples:
+  - `^\.github/workflows/` - GitHub Actions
+  - `^\.gitlab-ci\.ya?ml$` - GitLab CI
+  - `^kubernetes/` - K8s configs
+  - `/test/` - Test fixtures
+- Check before downloading content (saves API calls)
+- Support comments for documentation
+
+**New Fields**:
+```yaml
+template:
+  first_seen: "2024-01-15T10:30:00Z"    # When first discovered
+  last_updated: "2024-03-20T15:45:00Z"  # When file SHA changed
+  last_analyzed: "2024-03-20T16:00:00Z" # When analysis last ran
+```
+
+#### Stage 2: Content Validation
+
+**No changes** - existing logic works well:
+- Download template content
+- Parse YAML
+- Verify `images:` key exists at top level
+- ~31% false positive rate remains acceptable
+
+#### Stage 3: Template Analysis
+
+**No changes** - existing keyword/category extraction works well:
+- Technology detection
+- Keyword extraction
+- Category assignment
+- Name derivation
+
+#### Stage 4: Metadata Management
+
+**Goal**: Fetch repo/org data efficiently
+
+**New Templates**:
+- Fetch repo metadata for all newly discovered templates
+- Fetch org metadata for any new organizations
+- No rate limit concerns (typically <10 new templates/day)
+
+**Existing Templates** (Refresh Cycle):
+- Track last fetch time for each repo/org
+- Identify entries >30 days old
+- Refresh max 5% of total entries per run
+- Spreads load over ~20 days (100% / 5%)
+- Prevents thundering herd on daily runs
+
+**New Fields**:
+```yaml
+repository:
+  last_fetched: "2024-03-15T12:00:00Z"  # When metadata refreshed
+
+organization:
+  last_fetched: "2024-03-15T12:00:00Z"  # When metadata refreshed
+```
+
+**Algorithm**:
+```
+new_repos = templates_added_today.repos
+refresh_candidates = repos where last_fetched > 30 days ago
+refresh_count = min(len(refresh_candidates), total_repos * 0.05)
+refresh_list = random.sample(refresh_candidates, refresh_count)
+
+fetch_metadata(new_repos + refresh_list)
+```
+
+#### Stage 5: LLM Descriptions
+
+**Goal**: Generate quality descriptions for templates
+
+**New File**: `descriptions.jsonl`
+
+**Schema**:
+```json
+{
+  "template_id": "owner/repo/path/to/template.yaml",
+  "short_description": "Brief one-liner (max 100 chars)",
+  "long_description": "Detailed explanation (max 500 chars)",
+  "keywords": ["keyword1", "keyword2"],
+  "generated_at": "2024-03-20T10:00:00Z",
+  "source_hash": "abc123...",
+  "llm_model": "claude-3-haiku-20240307"
+}
+```
+
+**Generation Logic**:
+- Compute `source_hash` from template + repo + org data (exclude timestamps)
+- Generate description only if:
+  1. No description exists, OR
+  2. source_hash doesn't match (data changed), OR
+  3. Template not in path filter blocklist
+- Rate limit: Start with 1 description/run (configurable via env var)
+- Use cheapest/fastest LLM (Claude Haiku, GPT-3.5-turbo, etc.)
+- Include template YAML, repo description, topics in prompt
+- Fallback to analysis-based keywords if no LLM description
+
+**Environment Variables**:
+```bash
+LLM_API_KEY=<api-key>
+LLM_MODEL=claude-3-haiku-20240307
+LLM_MAX_DESCRIPTIONS_PER_RUN=1  # Start conservative
+LLM_PROVIDER=anthropic  # or openai, etc.
+```
+
+**Error Handling**:
+- Log failures but don't block pipeline
+- Continue with analysis-based data if LLM fails
+- Retry failed descriptions next run
+
+#### Stage 6: Frontend Data Combination
+
+**Goal**: Create optimized file for web interface
+
+**Output**: `templates-combined.jsonl` (already exists)
+
+**Fields** (only include what frontend needs):
+```json
+{
+  "id": "owner/repo/path/template.yaml",
+  "name": "Display Name",
+  "description": "From LLM or analysis",
+  "keywords": ["from", "llm", "or", "analysis"],
+  "categories": ["containers"],
+  "repo": "owner/repo",
+  "org": "owner",
+  "path": "path/template.yaml",
+  "stars": 123,
+  "updated_at": "2024-03-20",
+  "official": true,
+  "url": "https://github.com/...",
+  "raw_url": "https://raw.githubusercontent.com/..."
+}
+```
+
+**Logic**:
+- Skip templates in path filter blocklist
+- Prefer LLM descriptions over analysis keywords
+- Include only templates with valid repo/org data
+- Keep file size minimal (gzip compression helps)
+
+#### Stage 7: Template Cleanup
+
+**Goal**: Remove templates that no longer exist
+
+**Deletion Detection**:
+- Check templates not updated in 14+ days
+- Fetch template URL (HEAD request for efficiency)
+- Mark as failed if 404/403/500 received
+- Retry logic: Check again after 7 days, then 14 days
+- Delete after 3 consecutive failures (total 35 days)
+
+**New Fields**:
+```yaml
+template:
+  last_check_failed: "2024-03-01T00:00:00Z"  # First failure timestamp
+  check_failures: 2                           # Consecutive failure count
+  pending_deletion: false                     # Flagged for removal
+```
+
+**Algorithm**:
+```
+stale_templates = templates where last_updated < 14 days ago
+
+for template in stale_templates:
+    response = HEAD(template.raw_url)
+
+    if response.status >= 400:
+        if not template.last_check_failed:
+            template.last_check_failed = now()
+            template.check_failures = 1
+        else:
+            days_since_failure = (now() - template.last_check_failed).days
+
+            if days_since_failure >= 7 and template.check_failures == 1:
+                template.check_failures = 2
+            elif days_since_failure >= 21 and template.check_failures == 2:
+                template.check_failures = 3
+                template.pending_deletion = true
+    else:
+        # Template exists, clear failure tracking
+        template.last_check_failed = null
+        template.check_failures = 0
+        template.pending_deletion = false
+
+# Remove templates marked for deletion
+templates = [t for t in templates if not t.pending_deletion]
+```
+
+**Orphan Cleanup**:
+```
+# After template deletion, clean up orphaned metadata
+active_repos = set(t.repo for t in templates)
+active_orgs = set(t.org for t in templates)
+
+repos = [r for r in repos if r.id in active_repos]
+orgs = [o for o in orgs if o.id in active_orgs]
+descriptions = [d for d in descriptions if d.template_id in active_templates]
+```
+
+### Data File Schema Updates
+
+**path-filters.yaml** (new):
+```yaml
+# Path patterns to skip (regex)
+# These are known false positives or non-template files
+blocklist:
+  - '^\.github/workflows/'      # GitHub Actions
+  - '^\.gitlab-ci\.ya?ml$'      # GitLab CI
+  - '^kubernetes/'              # K8s configs
+  - '/tests?/'                  # Test directories
+  - '/examples?/'               # Example directories
+  - '^docs?/'                   # Documentation
+  - '^\.circleci/'              # CircleCI
+  # Add more as we discover false positives
+```
+
+**templates.jsonl** (updated):
+```json
+{
+  "id": "owner/repo/path/template.yaml",
+  "file_sha": "abc123...",
+  "first_seen": "2024-01-15T10:30:00Z",
+  "last_updated": "2024-03-20T15:45:00Z",
+  "last_analyzed": "2024-03-20T16:00:00Z",
+  "last_check_failed": null,
+  "check_failures": 0,
+  "pending_deletion": false,
+  "name": "Derived Name",
+  "keywords": ["from", "analysis"],
+  "categories": ["containers"],
+  "official": false,
+  "repo": "owner/repo",
+  "org": "owner",
+  "path": "path/template.yaml",
+  "url": "https://github.com/...",
+  "raw_url": "https://raw.githubusercontent.com/..."
+}
+```
+
+**repos.jsonl** (updated):
+```json
+{
+  "id": "owner/repo",
+  "last_fetched": "2024-03-15T12:00:00Z",
+  "name": "repo",
+  "description": "Repo description",
+  "stars": 123,
+  "updated_at": "2024-03-20",
+  "topics": ["lima", "vm"],
+  "language": "Go"
+}
+```
+
+**orgs.jsonl** (updated):
+```json
+{
+  "id": "owner",
+  "last_fetched": "2024-03-15T12:00:00Z",
+  "name": "Organization Name",
+  "avatar_url": "https://...",
+  "type": "Organization"
+}
+```
+
+**descriptions.jsonl** (new):
+```json
+{
+  "template_id": "owner/repo/path/template.yaml",
+  "short_description": "Brief summary",
+  "long_description": "Detailed explanation",
+  "keywords": ["llm", "generated"],
+  "generated_at": "2024-03-20T10:00:00Z",
+  "source_hash": "abc123...",
+  "llm_model": "claude-3-haiku-20240307"
+}
+```
+
+### Workflow Configuration
+
+**Environment Variables**:
+```bash
+# Required
+GITHUB_TOKEN=<token>
+
+# LLM Configuration (optional, degrades gracefully if missing)
+LLM_API_KEY=<api-key>
+LLM_PROVIDER=anthropic  # anthropic, openai, etc.
+LLM_MODEL=claude-3-haiku-20240307
+LLM_MAX_PER_RUN=1
+
+# Configuration
+DISCOVERY_LOOKBACK_HOURS=48
+METADATA_REFRESH_AGE_DAYS=30
+METADATA_REFRESH_PERCENT=0.05
+DELETION_CHECK_AGE_DAYS=14
+DELETION_RETRY_DAYS=7
+```
+
+**GitHub Actions Steps**:
+```yaml
+steps:
+  - name: Checkout
+  - name: Setup Go
+  - name: Load Last Run Timestamp
+  - name: Discover Templates (incremental)
+  - name: Validate Content
+  - name: Analyze Templates
+  - name: Fetch Metadata (new + refresh cycle)
+  - name: Generate Descriptions (rate-limited)
+  - name: Combine Frontend Data
+  - name: Check Deleted Templates
+  - name: Cleanup Orphans
+  - name: Save Run Timestamp
+  - name: Commit & Push Data
+  - name: Report Statistics
+```
+
+### Observability & Monitoring
+
+**Statistics to Track**:
+- Templates discovered: X
+- Templates validated: Y
+- New templates: Z
+- Repos fetched: A (B new + C refreshed)
+- Orgs fetched: D (E new + F refreshed)
+- Descriptions generated: G
+- Templates deleted: H
+- Orphans cleaned: I repos, J orgs
+- Run duration: MM:SS
+- Errors encountered: K
+
+**Logging**:
+- Log level: INFO for normal ops, DEBUG for troubleshooting
+- Include timestamps and component names
+- Log rate limit warnings
+- Log LLM API failures separately
+
+### Testing Strategy
+
+**Unit Tests**:
+- Path filter regex matching
+- Source hash computation
+- Deletion retry logic
+- Metadata refresh selection
+
+**Integration Tests** (with test data):
+- Run pipeline on small dataset (10-20 templates)
+- Verify all data files updated correctly
+- Check error handling paths
+- Validate data integrity
+
+**Manual Testing**:
+- Trigger workflow with specific test scenarios
+- Verify GitHub Pages displays updated data
+- Check LLM description quality
+- Validate deletion of removed templates
+
+### Rollout Plan
+
+**Phase 1: Path Filters** (Week 1)
+- Add path-filters.yaml
+- Implement filter checking in discovery
+- Test with current dataset
+- Monitor false positive reduction
+
+**Phase 2: Incremental Discovery** (Week 2)
+- Implement date-based code search
+- Add timestamp tracking
+- Test with 48-hour lookback
+- Verify no templates missed
+
+**Phase 3: Metadata Refresh Cycle** (Week 3)
+- Add last_fetched timestamps
+- Implement 5% refresh logic
+- Monitor API rate limits
+- Verify coverage over 20 days
+
+**Phase 4: LLM Descriptions** (Week 4)
+- Add descriptions.jsonl
+- Implement hash-based change detection
+- Start with 1 description/run
+- Monitor quality and costs
+- Gradually increase limit
+
+**Phase 5: Template Cleanup** (Week 5)
+- Add deletion tracking fields
+- Implement check and retry logic
+- Test with known-deleted templates
+- Verify orphan cleanup
+
+**Phase 6: Frontend Integration** (Week 6)
+- Update frontend to use LLM descriptions
+- Add fallback to analysis keywords
+- Test with mixed data (some LLM, some not)
+- Deploy to production
+
+### Success Criteria
+
+- ✅ Runtime reduced from 20min to <5min (incremental updates)
+- ✅ Handles >1000 templates (no code search limit)
+- ✅ Metadata refresh spreads over 20+ days (5% per run)
+- ✅ LLM descriptions generated for active templates (rate-limited)
+- ✅ Deleted templates removed automatically (35-day cycle)
+- ✅ Zero manual intervention required
+- ✅ No data integrity issues
+- ✅ Graceful degradation when LLM unavailable
+
+### Future Enhancements
+
+Beyond this redesign:
 - **Template validation**: YAML structure and Lima compatibility checks
-- **Quality scoring**: Rank by stars, recency, completeness
+- **Quality scoring**: Rank by stars, recency, completeness, description quality
 - **CLI search tool**: Command-line template discovery
 - **Template detail pages**: Dedicated pages with full metadata
+- **Advanced LLM features**: Generate installation instructions, detect use cases
+- **Community feedback**: Allow users to suggest description improvements
+- **A/B testing**: Compare LLM vs analysis-based discovery
 
 ## Technical Details
 
