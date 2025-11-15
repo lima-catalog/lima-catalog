@@ -428,43 +428,48 @@ The existing data collection process has scalability issues:
 
 **Blocklist Filter**:
 - Maintain blocklist file: `data/blocklist.yaml`
-- Two separate filter lists:
-  1. **Path patterns** - regex for file paths (e.g., `.github/workflows/`)
-  2. **Org/repo names** - exact matches (e.g., `someorg/somerepo`)
+- Two separate filter lists (both regex-based):
+  1. **Path patterns** - regex matched against file path within repo (e.g., `.github/workflows/`)
+  2. **Repo patterns** - regex matched against full `org/repo/path` (e.g., `^spamorg/`)
 - Check before downloading content (saves API calls)
 - Support comments for documentation
 
 **Examples**:
 ```yaml
 # Path patterns (regex) - matched against file path within repo
+# Use this for patterns that apply across all repos
 paths:
-  - '^\.github/workflows/'      # GitHub Actions
-  - '^\.gitlab-ci\.ya?ml$'      # GitLab CI
-  - '^kubernetes/'              # K8s configs
-  - '/tests?/'                  # Test directories
-  - '/examples?/'               # Example directories
-  - '^docs?/'                   # Documentation
-  - '^\.circleci/'              # CircleCI
+  - '^\.github/workflows/'      # GitHub Actions (any repo)
+  - '^\.gitlab-ci\.ya?ml$'      # GitLab CI (any repo)
+  - '^kubernetes/'              # K8s configs (any repo)
+  - '/tests?/'                  # Test directories (any repo)
+  - '/examples?/'               # Example directories (any repo)
+  - '^docs?/'                   # Documentation (any repo)
+  - '^\.circleci/'              # CircleCI (any repo)
 
-# Org/repo names (exact match) - matched against owner/repo
+# Repo patterns (regex) - matched against full org/repo/path
+# Provides fine-grained control: block entire repos, orgs, or specific templates
 repos:
-  - 'spamorg/repo1'             # Specific repo to exclude
-  - 'spamorg/repo2'             # Another spam repo
-  # Add orgs/repos that should be excluded entirely
+  - '^spamorg/'                           # Block entire org
+  - '^someorg/spam-repo$'                 # Block specific repo
+  - '^someorg/repo/bad-template\.yaml$'  # Block specific template
+  - '^someorg/repo/subdir/'              # Block directory in specific repo
+  # Add more as needed
 ```
 
 **Filter Logic**:
 ```go
 func isBlocklisted(owner, repo, path string, blocklist Blocklist) bool {
-    // Check org/repo exact match first (faster)
-    repoID := owner + "/" + repo
-    for _, blocked := range blocklist.Repos {
-        if repoID == blocked {
+    fullPath := owner + "/" + repo + "/" + path
+
+    // Check repo patterns (matches against full org/repo/path)
+    for _, pattern := range blocklist.Repos {
+        if matched, _ := regexp.MatchString(pattern, fullPath); matched {
             return true
         }
     }
 
-    // Check path patterns (regex)
+    // Check path patterns (matches against path within repo)
     for _, pattern := range blocklist.Paths {
         if matched, _ := regexp.MatchString(pattern, path); matched {
             return true
@@ -810,10 +815,10 @@ descriptions = [d for d in descriptions if d.template_id in active_templates]
 **blocklist.yaml** (new):
 ```yaml
 # Blocklist for templates that should be excluded from catalog
-# Two types of filters: path patterns (regex) and org/repo names (exact match)
+# Both lists use regex patterns for maximum flexibility
 
 # Path patterns (regex) - matched against file path within repo
-# These are known false positives or non-template files
+# Use this for patterns that apply across all repositories
 paths:
   - '^\.github/workflows/'      # GitHub Actions
   - '^\.gitlab-ci\.ya?ml$'      # GitLab CI
@@ -824,10 +829,13 @@ paths:
   - '^\.circleci/'              # CircleCI
   # Add more as we discover false positives
 
-# Org/repo names (exact match) - matched against owner/repo
-# Use this to block entire repositories or organizations
+# Repo patterns (regex) - matched against full org/repo/path
+# Provides fine-grained control for specific repos, orgs, or templates
 repos:
-  - 'spamorg/repo1'             # Example: specific repo to exclude
+  - '^spamorg/'                           # Block entire org
+  - '^someorg/spam-repo$'                 # Block specific repo
+  - '^someorg/repo/bad-template\.yaml$'  # Block specific template
+  - '^someorg/repo/subdir/'              # Block directory in specific repo
   # Add more as needed
 ```
 
