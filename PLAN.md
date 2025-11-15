@@ -498,10 +498,16 @@ meta:
 - LLM can augment but not replace meta keywords
 
 **Noindex Handling**:
-- Check `meta.noindex` in Stage 6 (Combine)
-- Skip template in frontend data file if `noindex: true`
-- Preserve in templates.jsonl for record-keeping
-- Don't generate LLM descriptions for noindex templates (save tokens)
+- Treat `meta.noindex: true` exactly like path filter blocklist at ALL stages
+- **Stage 5 (LLM)**: Skip LLM generation (save tokens)
+- **Stage 6 (Combine)**: Exclude from frontend data file entirely
+- **Stage 7 (Cleanup)**: Keep in templates.jsonl for now (deletion is future work)
+- **Transition handling**: If author adds noindex later:
+  - Next analysis detects it and sets meta_noindex: true
+  - Template immediately excluded from frontend on next run
+  - Remains in database until deletion feature implemented
+  - Eventually becomes candidate for deletion (future enhancement)
+- Important: noindex can be added/removed at any time, so check on every run
 
 **Implementation Notes**:
 - Graceful degradation: Works with or without meta field
@@ -535,7 +541,19 @@ func getKeywords(template, llmDesc) []string {
 }
 
 func shouldIndex(template) bool {
-    return !template.MetaNoindex  // Respect author's wishes
+    // Treat meta.noindex exactly like blocklist
+    return !template.MetaNoindex
+}
+
+func shouldGenerateLLM(template) bool {
+    // Skip LLM if: blocklisted, noindex, or already has meta.description
+    if template.MetaNoindex {
+        return false  // Treat like blocklist
+    }
+    if template.MetaDescription != "" {
+        return false  // Author provided
+    }
+    return true
 }
 ```
 
@@ -654,11 +672,11 @@ LLM_PROVIDER=anthropic  # or openai, etc.
 
 **Logic**:
 - Skip templates in path filter blocklist
-- Skip templates with `meta.noindex: true` (author opted out)
+- Skip templates with `meta.noindex: true` (treat exactly like blocklist)
 - Use description priority: meta.description > LLM > analysis
 - Use keyword priority: meta.keywords (merged with analysis) > LLM > analysis
 - Include only templates with valid repo/org data
-- Keep file size minimal (gzip compression helps)
+- Keep file size minimal (path filtering and data reduction should be sufficient)
 
 **Priority Example**:
 ```go
@@ -694,6 +712,12 @@ if len(keywords) == 0 {
 - Mark as failed if 404/403/500 received
 - Retry logic: Check again after 7 days, then 14 days
 - Delete after 3 consecutive failures (total 35 days)
+
+**Note on meta.noindex templates**:
+- Templates with `meta.noindex: true` are kept in database for now
+- They are excluded from frontend (like blocklist) but not deleted
+- Future enhancement: Treat long-standing noindex templates as deletion candidates
+- This allows authors to toggle noindex without losing historical data immediately
 
 **New Fields**:
 ```yaml
