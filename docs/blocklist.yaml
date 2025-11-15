@@ -11,6 +11,8 @@ paths:
   - '(^|/)examples?/'           # Example directories (example/ or examples/)
   - '^docs?/'                   # Documentation (doc/ or docs/)
   - '^\.circleci/'              # CircleCI
+  - '/lima\.REJECTED\.yaml$'    # Rejected templates
+  - '/rancher-desktop/lima/0/lima\.yaml$'  # Rancher Desktop old config
 
 # Repo patterns (regex) - matched against full org/repo/path
 # Provides fine-grained control for specific repos, orgs, or templates
