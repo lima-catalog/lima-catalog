@@ -259,6 +259,10 @@ Auto-assigns categories based on detected technologies:
   - ArrowUp from first row of unselected → jumps to last row of selected keywords
   - ArrowDown from last row of selected → jumps to first row of unselected keywords
   - Keywords and selected keywords feel like one continuous list
+- **Header navigation** (Arrow Left/Right between theme buttons):
+  - ArrowLeft/Right to navigate between theme switcher buttons (Light ☀️ / Auto 🌓 / Dark 🌙)
+  - Navigation wraps (left from first → last, right from last → first)
+  - Provides quick keyboard access to theme switching
 - **Continuous sidebar navigation** (Arrow Up/Down moves between all groups):
   - Search input → Official checkbox → Community checkbox → Sort dropdown
   - Sort dropdown → Selected keywords → Unselected keywords → Categories
