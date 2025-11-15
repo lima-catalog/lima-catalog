@@ -260,9 +260,10 @@ Auto-assigns categories based on detected technologies:
   - ArrowUp from first row of unselected → jumps to last row of selected keywords
   - ArrowDown from last row of selected → jumps to first row of unselected keywords
   - Keywords and selected keywords feel like one continuous list
-- **Header navigation** (Arrow Left/Right between all header buttons):
+- **Header navigation** (Arrow keys between header buttons and templates):
   - ArrowLeft/Right to navigate between: Light ☀️ / Auto 🌓 / Dark 🌙 / Help ?
   - Navigation wraps (left from first → last, right from last → first)
+  - ArrowUp/Down transfers focus to first template card (leaves header)
   - Includes keyboard help button (?) in header navigation flow
   - Provides quick keyboard access to theme switching and help
 - **Continuous sidebar navigation** (Arrow Up/Down moves between all groups):
@@ -273,8 +274,8 @@ Auto-assigns categories based on detected technologies:
   - Transitions happen at boundaries (first/last row or item)
   - Dropdown Arrow Down opens menu via SPACE (no longer opens with Arrow Down)
 - **Viewport-aware template navigation**:
-  - ArrowUp/ArrowDown: Auto-focus first visible template when scrolling from body/html
-  - PageUp/PageDown: Focus first visible template card in current viewport
+  - ArrowUp/ArrowDown: Auto-focus first visible template when scrolling from body/html (not when in header)
+  - PageUp/PageDown: Scroll page normally, then focus first visible template card in viewport
   - Home: Focus very first template card and scroll to top
   - End: Focus very last template card and scroll to bottom
   - Intelligent viewport detection ensures focus follows scroll position
