@@ -266,25 +266,23 @@ function setupKeyboardShortcuts() {
         }
 
         // Vertical scrolling keys: auto-focus template cards
-        // PageUp: Focus first visible card in viewport
+        // PageUp: Let page scroll, then focus first visible card
         if (e.key === 'PageUp' && !isTyping) {
-            e.preventDefault();
-            const visibleCard = getFirstVisibleTemplateCard();
-            if (visibleCard) {
-                visibleCard.focus();
-                visibleCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
+            // Don't prevent default - let the page scroll normally
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
             return;
         }
 
-        // PageDown: Focus first visible card in viewport
+        // PageDown: Let page scroll, then focus first visible card
         if (e.key === 'PageDown' && !isTyping) {
-            e.preventDefault();
-            const visibleCard = getFirstVisibleTemplateCard();
-            if (visibleCard) {
-                visibleCard.focus();
-                visibleCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
+            // Don't prevent default - let the page scroll normally
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
             return;
         }
 
@@ -314,8 +312,14 @@ function setupKeyboardShortcuts() {
         // ArrowUp/ArrowDown: Auto-focus templates when scrolling (if not in a focusable element)
         if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isTyping) {
             const activeElement = document.activeElement;
-            // Only auto-focus if we're not already in an interactive element
-            if (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML') {
+            // Don't auto-focus if we're in the header (theme buttons, help button)
+            const isInHeader = activeElement && (
+                activeElement.closest('.theme-switcher') ||
+                activeElement.id === 'keyboard-help-btn'
+            );
+
+            // Only auto-focus if we're not already in an interactive element or header
+            if (!isInHeader && (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML')) {
                 // Let the scroll happen, then focus first visible card
                 setTimeout(() => {
                     const visibleCard = getFirstVisibleTemplateCard();
@@ -426,52 +430,48 @@ function showKeyboardHelp(returnFocusToSearch = false) {
             </div>
             <div class="keyboard-help-body">
                 <div class="keyboard-help-section">
-                    <h3>Navigation</h3>
+                    <h3>Jump to Section</h3>
                     <dl class="keyboard-shortcuts">
                         <dt><kbd>/</kbd></dt>
-                        <dd>Focus search box</dd>
-                        <dt><kbd>Esc</kbd></dt>
-                        <dd>Clear search box</dd>
+                        <dd>Search box</dd>
                         <dt><kbd>K</kbd> or <kbd>Shift+K</kbd></dt>
-                        <dd>Jump to keywords</dd>
+                        <dd>Keywords</dd>
                         <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
-                        <dd>Jump to categories</dd>
+                        <dd>Categories</dd>
                         <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
-                        <dd>Jump to sort dropdown</dd>
+                        <dd>Sort dropdown</dd>
                         <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
-                        <dd>Jump to templates</dd>
-                        <dt><kbd>↑</kbd> <kbd>↓</kbd></dt>
-                        <dd>Navigate within sections / auto-focus templates</dd>
-                        <dt><kbd>←</kbd> <kbd>→</kbd></dt>
-                        <dd>Navigate within sections</dd>
-                        <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt>
-                        <dd>Focus first visible template in viewport</dd>
-                        <dt><kbd>Home</kbd></dt>
-                        <dd>Focus first template</dd>
-                        <dt><kbd>End</kbd></dt>
-                        <dd>Focus last template</dd>
-                        <dt><kbd>Tab</kbd></dt>
-                        <dd>Navigate between elements</dd>
-                        <dt><kbd>Ctrl+←</kbd></dt>
-                        <dd>Move to sidebar from templates</dd>
-                        <dt><kbd>Ctrl+→</kbd></dt>
-                        <dd>Move to templates from sidebar</dd>
+                        <dd>Templates</dd>
                         <dt><kbd>Ctrl+↑</kbd></dt>
-                        <dd>Move to header (theme + help)</dd>
-                        <dt><kbd>Ctrl+↓</kbd></dt>
-                        <dd>Move to templates from header</dd>
+                        <dd>Header (theme + help)</dd>
                     </dl>
                     <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
-                        Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box
+                        Tip: Uppercase (Shift+K/C/S/T) work while typing
                     </p>
                 </div>
                 <div class="keyboard-help-section">
-                    <h3>Actions</h3>
+                    <h3>Navigate & Scroll</h3>
                     <dl class="keyboard-shortcuts">
+                        <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
+                        <dd>Navigate within sections</dd>
+                        <dt><kbd>Tab</kbd></dt>
+                        <dd>Navigate between elements</dd>
+                        <dt><kbd>Ctrl+←</kbd></dt>
+                        <dd>Templates → sidebar</dd>
+                        <dt><kbd>Ctrl+→</kbd></dt>
+                        <dd>Sidebar → templates</dd>
+                        <dt><kbd>Ctrl+↓</kbd></dt>
+                        <dd>Header → templates</dd>
+                        <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt>
+                        <dd>Scroll + focus visible template</dd>
+                        <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
+                        <dd>First / last template</dd>
                         <dt><kbd>Enter</kbd> or <kbd>Space</kbd></dt>
-                        <dd>Select keyword/category/template</dd>
+                        <dd>Select / activate</dd>
                         <dt><kbd>Delete</kbd> or <kbd>Backspace</kbd></dt>
                         <dd>Remove selected keyword</dd>
+                        <dt><kbd>Esc</kbd></dt>
+                        <dd>Clear search</dd>
                         <dt><kbd>?</kbd></dt>
                         <dd>Show/hide this help</dd>
                     </dl>
