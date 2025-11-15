@@ -62,14 +62,14 @@ body {
 header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: 1.5rem 0;
+    padding: 1.25rem 0;
     box-shadow: var(--shadow-lg);
 }
 
 .header-content {
     max-width: 1600px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0 1.5rem 0 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
