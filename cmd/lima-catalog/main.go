@@ -107,7 +107,14 @@ func run() error {
 		fmt.Println("=== Phase 1: Template Discovery ===")
 		fmt.Println()
 
-		discoverer := discovery.NewDiscoverer(client)
+		// Load blocklist from docs/ (application config, not generated data)
+		blocklist, err := discovery.LoadBlocklist("docs/blocklist.yaml")
+		if err != nil {
+			return fmt.Errorf("failed to load blocklist: %w", err)
+		}
+		fmt.Printf("Loaded blocklist: %d path patterns, %d repo patterns\n", len(blocklist.Paths), len(blocklist.Repos))
+
+		discoverer := discovery.NewDiscoverer(client, blocklist)
 
 		discoveredTemplates, err := discoverer.DiscoverAll()
 		if err != nil {

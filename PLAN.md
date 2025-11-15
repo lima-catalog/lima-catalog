@@ -418,24 +418,69 @@ The existing data collection process has scalability issues:
 
 #### Stage 1: Incremental Discovery
 
-**Goal**: Find only templates changed in last 48 hours
+**Goal**: Find only new and recently changed templates
 
 **Approach**:
-- Use GitHub Code Search `pushed:` qualifier for date filtering
+- Find the newest template in our existing data (by `DiscoveredAt` timestamp)
+- Query GitHub for templates pushed since 24 hours before that newest template
 - Query: `minimumLimaVersion extension:yaml pushed:>YYYY-MM-DD`
-- Use 48-hour overlap for safety (account for timezone issues)
-- Store last successful run timestamp
+- This ensures we always refetch the last template and get all new ones
+- No need to track "last check" timestamp separately
+- Built-in sanity check: if we get 0 results, something is likely wrong
 
-**Path-based Filter**:
-- Maintain blocklist file: `data/path-filters.yaml`
-- Contains regex patterns for paths to skip
-- Examples:
-  - `^\.github/workflows/` - GitHub Actions
-  - `^\.gitlab-ci\.ya?ml$` - GitLab CI
-  - `^kubernetes/` - K8s configs
-  - `/test/` - Test fixtures
+**Blocklist Filter**:
+- Maintain blocklist file: `docs/blocklist.yaml` (application config, not generated data)
+- Two separate filter lists (both regex-based):
+  1. **Path patterns** - regex matched against file path within repo (e.g., `.github/workflows/`)
+  2. **Repo patterns** - regex matched against full `org/repo/path` (e.g., `^spamorg/`)
 - Check before downloading content (saves API calls)
 - Support comments for documentation
+
+**Examples**:
+```yaml
+# Path patterns (regex) - matched against file path within repo
+# Use this for patterns that apply across all repos
+paths:
+  - '^\.github/workflows/'      # GitHub Actions (any repo)
+  - '^\.gitlab-ci\.ya?ml$'      # GitLab CI (any repo)
+  - '^kubernetes/'              # K8s configs (any repo)
+  - '/tests?/'                  # Test directories (any repo)
+  - '/examples?/'               # Example directories (any repo)
+  - '^docs?/'                   # Documentation (any repo)
+  - '^\.circleci/'              # CircleCI (any repo)
+
+# Repo patterns (regex) - matched against full org/repo/path
+# Provides fine-grained control: block entire repos, orgs, or specific templates
+repos:
+  - '^spamorg/'                           # Block entire org
+  - '^someorg/spam-repo$'                 # Block specific repo
+  - '^someorg/repo/bad-template\.yaml$'  # Block specific template
+  - '^someorg/repo/subdir/'              # Block directory in specific repo
+  # Add more as needed
+```
+
+**Filter Logic**:
+```go
+func isBlocklisted(owner, repo, path string, blocklist Blocklist) bool {
+    fullPath := owner + "/" + repo + "/" + path
+
+    // Check repo patterns (matches against full org/repo/path)
+    for _, pattern := range blocklist.Repos {
+        if matched, _ := regexp.MatchString(pattern, fullPath); matched {
+            return true
+        }
+    }
+
+    // Check path patterns (matches against path within repo)
+    for _, pattern := range blocklist.Paths {
+        if matched, _ := regexp.MatchString(pattern, path); matched {
+            return true
+        }
+    }
+
+    return false
+}
+```
 
 **New Fields**:
 ```yaml
@@ -769,11 +814,14 @@ descriptions = [d for d in descriptions if d.template_id in active_templates]
 
 ### Data File Schema Updates
 
-**path-filters.yaml** (new):
+**blocklist.yaml** (new):
 ```yaml
-# Path patterns to skip (regex)
-# These are known false positives or non-template files
-blocklist:
+# Blocklist for templates that should be excluded from catalog
+# Both lists use regex patterns for maximum flexibility
+
+# Path patterns (regex) - matched against file path within repo
+# Use this for patterns that apply across all repositories
+paths:
   - '^\.github/workflows/'      # GitHub Actions
   - '^\.gitlab-ci\.ya?ml$'      # GitLab CI
   - '^kubernetes/'              # K8s configs
@@ -782,6 +830,15 @@ blocklist:
   - '^docs?/'                   # Documentation
   - '^\.circleci/'              # CircleCI
   # Add more as we discover false positives
+
+# Repo patterns (regex) - matched against full org/repo/path
+# Provides fine-grained control for specific repos, orgs, or templates
+repos:
+  - '^spamorg/'                           # Block entire org
+  - '^someorg/spam-repo$'                 # Block specific repo
+  - '^someorg/repo/bad-template\.yaml$'  # Block specific template
+  - '^someorg/repo/subdir/'              # Block directory in specific repo
+  # Add more as needed
 ```
 
 **templates.jsonl** (updated):
@@ -998,44 +1055,125 @@ steps:
 
 ### Testing Strategy
 
-**Unit Tests**:
-- Path filter regex matching
+**Local Development & Testing**:
+
+The pipeline should be fully testable locally without deploying to GitHub Actions. This requires:
+
+1. **Command-line interface**:
+   ```bash
+   # Run full pipeline
+   go run ./cmd/lima-catalog --github-token=$GITHUB_TOKEN
+
+   # Run specific stages
+   go run ./cmd/lima-catalog discover --since=48h
+   go run ./cmd/lima-catalog analyze
+   go run ./cmd/lima-catalog metadata --refresh-percent=0.05
+   go run ./cmd/lima-catalog describe --max=1
+   go run ./cmd/lima-catalog combine
+   go run ./cmd/lima-catalog cleanup
+
+   # Test mode (smaller dataset, verbose output)
+   go run ./cmd/lima-catalog --test-mode --limit=10
+   ```
+
+2. **GitHub Token Configuration**:
+   - Use personal access token (PAT) for local testing
+   - Same token works for both Code Search and REST API
+   - Required scopes: `public_repo` (read-only)
+   - Configure via environment variable or command flag:
+     ```bash
+     export GITHUB_TOKEN=ghp_xxxxx
+     # or
+     go run ./cmd/lima-catalog --github-token=ghp_xxxxx
+     ```
+
+3. **Test Data**:
+   - Small test dataset (10-20 templates) for quick iteration
+   - Fixture data in `testdata/` directory for unit tests
+   - Mock HTTP responses for unit tests (no real API calls)
+
+4. **Incremental Testing**:
+   - Each pipeline stage should be independently testable
+   - Output intermediate data to verify correctness
+   - Verbose logging mode for debugging
+   - Dry-run mode (no file writes, just show what would change)
+
+**Unit Tests** (no network calls):
+- Blocklist filter matching (path patterns and repo names)
 - Source hash computation
 - Deletion retry logic
 - Metadata refresh selection
+- Date parsing and timestamp handling
+- Template YAML parsing
+- Data file sorting algorithms
 
-**Integration Tests** (with test data):
-- Run pipeline on small dataset (10-20 templates)
-- Verify all data files updated correctly
-- Check error handling paths
-- Validate data integrity
+**Integration Tests** (with real GitHub API):
+- Use test GitHub token
+- Run discovery on small query (limit=10)
+- Verify blocklist filtering works
+- Test incremental discovery (48-hour window)
+- Validate data file formats
+- Check error handling (rate limits, network failures)
+- Run full pipeline on test dataset
+
+**Continuous Integration**:
+- Unit tests run on every PR (no token needed)
+- Integration tests run with secrets in GitHub Actions
+- Test mode runs quickly (<2 minutes)
+- Full pipeline tested in staging before production
 
 **Manual Testing**:
-- Trigger workflow with specific test scenarios
-- Verify GitHub Pages displays updated data
+- Run locally before deploying to GitHub Actions
+- Verify incremental updates work correctly
 - Check LLM description quality
 - Validate deletion of removed templates
+- Test edge cases (network failures, invalid YAML, etc.)
+
+**Example Test Workflow**:
+```bash
+# 1. Unit tests (fast, no network)
+go test ./...
+
+# 2. Integration test (small dataset)
+export GITHUB_TOKEN=ghp_xxxxx
+go run ./cmd/lima-catalog --test-mode --limit=10 --verbose
+
+# 3. Dry-run on real data
+go run ./cmd/lima-catalog --dry-run --verbose
+
+# 4. Real run (after verification)
+go run ./cmd/lima-catalog
+
+# 5. Verify output
+cat data/templates.jsonl | wc -l
+cat data/repos.jsonl | wc -l
+```
 
 ### Rollout Plan
 
-**Phase 1: Data File Sorting & Path Filters** (Week 1)
+**Phase 1: Data File Sorting & Blocklist** (Week 1)
 - **Sort existing data files** (one-time large diff)
   - Sort templates by org/repo/path
   - Sort repos by org/name
   - Sort orgs by id
   - Commit as: "Sort data files for human readability"
-- **Add path-filters.yaml**
-  - Initial blocklist patterns
+- **Add blocklist.yaml**
+  - Initial path patterns (workflows, CI configs, tests, docs)
+  - Initial repo blocklist (if any known spam repos)
   - Implement filter checking in discovery
-- Test with current dataset
+  - Unit tests for filter matching
+- Test locally with small dataset
 - Monitor false positive reduction
 - Verify sorted files improve browsability
 
 **Phase 2: Incremental Discovery** (Week 2)
 - Implement date-based code search
 - Add timestamp tracking
-- Test with 48-hour lookback
+- Implement CLI for local testing
+- Test locally with 48-hour lookback
+- Integration tests with real GitHub API
 - Verify no templates missed
+- Test dry-run mode
 
 **Phase 3: Metadata Refresh Cycle** (Week 3)
 - Add last_fetched timestamps
