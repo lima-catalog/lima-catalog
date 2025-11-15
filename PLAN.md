@@ -707,6 +707,93 @@ blocklist:
 }
 ```
 
+### Data File Sorting
+
+**Goal**: Maintain stable, human-readable file ordering
+
+**Rationale**:
+- **Human browsing**: Grouped by org/repo makes files easier to navigate
+- **Stable diffs**: New templates from existing repos appear near related templates
+- **Pattern detection**: Issues and trends easier to spot when related entries are adjacent
+- **Minimal overhead**: Sorting 700-1000 items is negligible (<1ms)
+
+**Sort Orders**:
+
+**templates.jsonl**:
+- Primary: `org` (alphabetical)
+- Secondary: `repo` (alphabetical)
+- Tertiary: `path` (alphabetical)
+- Example order:
+  ```
+  acme-corp/backend/lima.yaml
+  acme-corp/frontend/lima.yaml
+  acme-corp/tools/dev.yaml
+  beta-org/app/template.yaml
+  ```
+
+**repos.jsonl**:
+- Primary: `org` (alphabetical)
+- Secondary: `repo` (alphabetical)
+- Groups repos by organization
+
+**orgs.jsonl**:
+- Single key: `id` (alphabetical)
+
+**descriptions.jsonl**:
+- Match `templates.jsonl` order: `template_id` (alphabetical by org/repo/path)
+- Ensures descriptions align with templates for easier cross-reference
+
+**Implementation**:
+```go
+// Sort templates by org, repo, path
+sort.Slice(templates, func(i, j int) bool {
+    if templates[i].Org != templates[j].Org {
+        return templates[i].Org < templates[j].Org
+    }
+    if templates[i].Repo != templates[j].Repo {
+        return templates[i].Repo < templates[j].Repo
+    }
+    return templates[i].Path < templates[j].Path
+})
+
+// Sort repos by org, name
+sort.Slice(repos, func(i, j int) bool {
+    if repos[i].Org != repos[j].Org {
+        return repos[i].Org < repos[j].Org
+    }
+    return repos[i].Name < repos[j].Name
+})
+
+// Sort orgs by id
+sort.Slice(orgs, func(i, j int) bool {
+    return orgs[i].ID < orgs[j].ID
+})
+
+// Sort descriptions by template_id
+sort.Slice(descriptions, func(i, j int) bool {
+    return descriptions[i].TemplateID < descriptions[j].TemplateID
+})
+```
+
+**Migration Impact**:
+- Initial sort will create one large diff (entire file reordered)
+- Subsequent updates will have minimal, localized diffs
+- Consider separate commit: "Sort data files for human readability"
+- Future changes will be much cleaner
+
+**Benefits for Git**:
+```diff
+# Before sorting (templates scattered):
++ owner1/repo-a/template.yaml
++ owner2/repo-b/template.yaml
++ owner1/repo-c/template.yaml   # Same owner, far apart
+
+# After sorting (templates grouped):
++ owner1/repo-a/template.yaml
++ owner1/repo-c/template.yaml   # Same owner, adjacent
++ owner2/repo-b/template.yaml
+```
+
 ### Workflow Configuration
 
 **Environment Variables**:
@@ -742,6 +829,7 @@ steps:
   - name: Combine Frontend Data
   - name: Check Deleted Templates
   - name: Cleanup Orphans
+  - name: Sort Data Files (by org/repo/path)
   - name: Save Run Timestamp
   - name: Commit & Push Data
   - name: Report Statistics
@@ -789,11 +877,18 @@ steps:
 
 ### Rollout Plan
 
-**Phase 1: Path Filters** (Week 1)
-- Add path-filters.yaml
-- Implement filter checking in discovery
+**Phase 1: Data File Sorting & Path Filters** (Week 1)
+- **Sort existing data files** (one-time large diff)
+  - Sort templates by org/repo/path
+  - Sort repos by org/name
+  - Sort orgs by id
+  - Commit as: "Sort data files for human readability"
+- **Add path-filters.yaml**
+  - Initial blocklist patterns
+  - Implement filter checking in discovery
 - Test with current dataset
 - Monitor false positive reduction
+- Verify sorted files improve browsability
 
 **Phase 2: Incremental Discovery** (Week 2)
 - Implement date-based code search
