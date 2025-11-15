@@ -174,6 +174,33 @@ function setupEventListeners() {
 }
 
 /**
+ * Get the first visible template card in the viewport
+ * @returns {HTMLElement|null} The first visible template card or null
+ */
+function getFirstVisibleTemplateCard() {
+    const cards = Array.from(document.querySelectorAll('.template-card'));
+    if (cards.length === 0) return null;
+
+    const viewportTop = window.scrollY;
+    const viewportBottom = viewportTop + window.innerHeight;
+
+    // Find first card that's at least partially in viewport
+    for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const cardTop = rect.top + window.scrollY;
+        const cardBottom = cardTop + rect.height;
+
+        // Card is visible if it overlaps with viewport
+        if (cardBottom > viewportTop && cardTop < viewportBottom) {
+            return card;
+        }
+    }
+
+    // Fallback to first card
+    return cards[0];
+}
+
+/**
  * Setup global keyboard shortcuts
  */
 function setupKeyboardShortcuts() {
@@ -230,12 +257,71 @@ function setupKeyboardShortcuts() {
             return;
         }
 
-        // Ctrl+Down: header → sidebar (search box)
+        // Ctrl+Down: header → templates (first template)
         if (e.ctrlKey && e.key === 'ArrowDown') {
             e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
             return;
+        }
+
+        // Vertical scrolling keys: auto-focus template cards
+        // PageUp: Focus first visible card in viewport
+        if (e.key === 'PageUp' && !isTyping) {
+            e.preventDefault();
+            const visibleCard = getFirstVisibleTemplateCard();
+            if (visibleCard) {
+                visibleCard.focus();
+                visibleCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // PageDown: Focus first visible card in viewport
+        if (e.key === 'PageDown' && !isTyping) {
+            e.preventDefault();
+            const visibleCard = getFirstVisibleTemplateCard();
+            if (visibleCard) {
+                visibleCard.focus();
+                visibleCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // Home: Focus very first template card
+        if (e.key === 'Home' && !isTyping) {
+            e.preventDefault();
+            const firstCard = document.querySelector('.template-card');
+            if (firstCard) {
+                firstCard.focus();
+                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // End: Focus very last template card
+        if (e.key === 'End' && !isTyping) {
+            e.preventDefault();
+            const cards = document.querySelectorAll('.template-card');
+            if (cards.length > 0) {
+                const lastCard = cards[cards.length - 1];
+                lastCard.focus();
+                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
+            }
+            return;
+        }
+
+        // ArrowUp/ArrowDown: Auto-focus templates when scrolling (if not in a focusable element)
+        if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isTyping) {
+            const activeElement = document.activeElement;
+            // Only auto-focus if we're not already in an interactive element
+            if (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML') {
+                // Let the scroll happen, then focus first visible card
+                setTimeout(() => {
+                    const visibleCard = getFirstVisibleTemplateCard();
+                    if (visibleCard) visibleCard.focus();
+                }, 100);
+            }
         }
 
         // K/k to focus first keyword (selected or unselected)
@@ -354,8 +440,16 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dd>Jump to sort dropdown</dd>
                         <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
                         <dd>Jump to templates</dd>
-                        <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
+                        <dt><kbd>↑</kbd> <kbd>↓</kbd></dt>
+                        <dd>Navigate within sections / auto-focus templates</dd>
+                        <dt><kbd>←</kbd> <kbd>→</kbd></dt>
                         <dd>Navigate within sections</dd>
+                        <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt>
+                        <dd>Focus first visible template in viewport</dd>
+                        <dt><kbd>Home</kbd></dt>
+                        <dd>Focus first template</dd>
+                        <dt><kbd>End</kbd></dt>
+                        <dd>Focus last template</dd>
                         <dt><kbd>Tab</kbd></dt>
                         <dd>Navigate between elements</dd>
                         <dt><kbd>Ctrl+←</kbd></dt>
@@ -363,9 +457,9 @@ function showKeyboardHelp(returnFocusToSearch = false) {
                         <dt><kbd>Ctrl+→</kbd></dt>
                         <dd>Move to templates from sidebar</dd>
                         <dt><kbd>Ctrl+↑</kbd></dt>
-                        <dd>Move to header (theme switcher)</dd>
+                        <dd>Move to header (theme + help)</dd>
                         <dt><kbd>Ctrl+↓</kbd></dt>
-                        <dd>Move to sidebar from header</dd>
+                        <dd>Move to templates from header</dd>
                     </dl>
                     <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
                         Tip: Uppercase shortcuts (Shift+K/C/S/T) work even when typing in the search box

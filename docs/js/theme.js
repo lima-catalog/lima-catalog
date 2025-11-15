@@ -102,29 +102,34 @@ export function initializeTheme() {
 
     // Setup button click handlers
     const themeButtons = Array.from(document.querySelectorAll('.theme-option'));
+    const helpButton = document.getElementById('keyboard-help-btn');
+    const allHeaderButtons = [...themeButtons, helpButton]; // Include help button in navigation
+
     themeButtons.forEach(button => {
         button.addEventListener('click', () => {
             const theme = button.dataset.theme;
             setTheme(theme);
         });
+    });
 
-        // Arrow key navigation between theme buttons
+    // Arrow key navigation between all header buttons (theme + help)
+    allHeaderButtons.forEach(button => {
         button.addEventListener('keydown', (e) => {
-            const currentIndex = themeButtons.indexOf(button);
+            const currentIndex = allHeaderButtons.indexOf(button);
             let targetIndex = -1;
 
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 // Move to previous button (wrap to end)
-                targetIndex = currentIndex === 0 ? themeButtons.length - 1 : currentIndex - 1;
+                targetIndex = currentIndex === 0 ? allHeaderButtons.length - 1 : currentIndex - 1;
             } else if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 // Move to next button (wrap to start)
-                targetIndex = currentIndex === themeButtons.length - 1 ? 0 : currentIndex + 1;
+                targetIndex = currentIndex === allHeaderButtons.length - 1 ? 0 : currentIndex + 1;
             }
 
             if (targetIndex !== -1) {
-                themeButtons[targetIndex].focus();
+                allHeaderButtons[targetIndex].focus();
             }
         });
     });

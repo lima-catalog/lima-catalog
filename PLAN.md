@@ -250,8 +250,9 @@ Auto-assigns categories based on detected technologies:
 - **Section navigation shortcuts** (Ctrl+Arrow for major sections):
   - Ctrl+← to move from templates to sidebar (search box)
   - Ctrl+→ to move from sidebar to first template
-  - Ctrl+↑ to move to header (theme switcher)
-  - Ctrl+↓ to move from header to sidebar (search box)
+  - Ctrl+↑ to move to header (theme switcher + help button)
+  - Ctrl+↓ to move from header to templates (first template)
+  - Use `/` shortcut to jump directly to search box from anywhere
   - Enables quick navigation between the three main page areas
 - **Unified keyword navigation** (seamless between selected/unselected):
   - ArrowRight from last selected keyword → jumps to first unselected keyword
@@ -259,10 +260,11 @@ Auto-assigns categories based on detected technologies:
   - ArrowUp from first row of unselected → jumps to last row of selected keywords
   - ArrowDown from last row of selected → jumps to first row of unselected keywords
   - Keywords and selected keywords feel like one continuous list
-- **Header navigation** (Arrow Left/Right between theme buttons):
-  - ArrowLeft/Right to navigate between theme switcher buttons (Light ☀️ / Auto 🌓 / Dark 🌙)
+- **Header navigation** (Arrow Left/Right between all header buttons):
+  - ArrowLeft/Right to navigate between: Light ☀️ / Auto 🌓 / Dark 🌙 / Help ?
   - Navigation wraps (left from first → last, right from last → first)
-  - Provides quick keyboard access to theme switching
+  - Includes keyboard help button (?) in header navigation flow
+  - Provides quick keyboard access to theme switching and help
 - **Continuous sidebar navigation** (Arrow Up/Down moves between all groups):
   - Search input → Official checkbox → Community checkbox → Sort dropdown
   - Sort dropdown → Selected keywords → Unselected keywords → Categories
@@ -270,6 +272,12 @@ Auto-assigns categories based on detected technologies:
   - Within categories: Up/Down navigates items sequentially
   - Transitions happen at boundaries (first/last row or item)
   - Dropdown Arrow Down opens menu via SPACE (no longer opens with Arrow Down)
+- **Viewport-aware template navigation**:
+  - ArrowUp/ArrowDown: Auto-focus first visible template when scrolling from body/html
+  - PageUp/PageDown: Focus first visible template card in current viewport
+  - Home: Focus very first template card and scroll to top
+  - End: Focus very last template card and scroll to bottom
+  - Intelligent viewport detection ensures focus follows scroll position
 - **Row-based arrow key navigation**:
   - Keywords: Left/Right for adjacent tags, Up/Down to jump to first tag on previous/next row
   - Selected keywords: Same row-based navigation, Delete/Backspace to remove
