@@ -79,7 +79,7 @@ header {
 .header-title {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 2rem;
 }
 
 .header-icon {
@@ -89,7 +89,7 @@ header {
 }
 
 .header-text h1 {
-    font-size: 1.75rem;
+    font-size: 2rem;
     margin-bottom: 0.25rem;
 }
 
