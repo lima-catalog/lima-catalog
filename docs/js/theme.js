@@ -126,6 +126,9 @@ export function initializeTheme() {
                 e.preventDefault();
                 // Move to next button (wrap to start)
                 targetIndex = currentIndex === allHeaderButtons.length - 1 ? 0 : currentIndex + 1;
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                // Prevent scrolling the page when arrow keys are pressed in header
+                e.preventDefault();
             }
 
             if (targetIndex !== -1) {
