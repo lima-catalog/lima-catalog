@@ -23,18 +23,9 @@ function updateStats() {
 }
 
 /**
- * Update clear button visibility
+ * Update clear keywords button visibility
  */
 function updateClearButtons() {
-    // Clear search button
-    const searchInput = document.getElementById('search');
-    const clearSearchBtn = document.getElementById('clear-search');
-    if (searchInput.value) {
-        clearSearchBtn.style.display = 'block';
-    } else {
-        clearSearchBtn.style.display = 'none';
-    }
-
     // Clear keywords button
     const selectedKeywords = State.getSelectedKeywords();
     const clearKeywordsBtn = document.getElementById('clear-keywords');
@@ -157,16 +148,12 @@ function setupEventListeners() {
     const searchInput = document.getElementById('search');
     searchInput.addEventListener('input', debouncedFilter);
 
-    // Update clear search button visibility on input
-    searchInput.addEventListener('input', updateClearButtons);
-
     // Immediate filtering for checkboxes and dropdown
     document.getElementById('show-official').addEventListener('change', filterAndRender);
     document.getElementById('show-community').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
 
-    // Clear buttons
-    document.getElementById('clear-search').addEventListener('click', clearSearch);
+    // Clear keywords button
     document.getElementById('clear-keywords').addEventListener('click', clearKeywords);
 
     // Keyboard help button
