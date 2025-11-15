@@ -523,6 +523,7 @@ header {
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid var(--border);
     overflow: hidden;
+    scroll-margin: 0.625rem; /* Half the gap (1.25rem) for better visibility when navigating */
 }
 
 .template-card:hover {
