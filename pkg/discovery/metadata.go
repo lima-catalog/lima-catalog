@@ -1,8 +1,9 @@
 package discovery
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -123,8 +124,14 @@ func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.R
 	}
 
 	// Sort stale repos by LastFetched (oldest first)
-	sort.Slice(staleCandidates, func(i, j int) bool {
-		return staleCandidates[i].LastFetched.Before(staleCandidates[j].LastFetched)
+	slices.SortFunc(staleCandidates, func(a, b types.Repository) int {
+		if a.LastFetched.Before(b.LastFetched) {
+			return -1
+		}
+		if b.LastFetched.Before(a.LastFetched) {
+			return 1
+		}
+		return 0
 	})
 
 	// Select up to 5% of stale repos (prioritize oldest)
@@ -182,8 +189,14 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 	}
 
 	// Sort stale orgs by LastFetched (oldest first)
-	sort.Slice(staleCandidates, func(i, j int) bool {
-		return staleCandidates[i].LastFetched.Before(staleCandidates[j].LastFetched)
+	slices.SortFunc(staleCandidates, func(a, b types.Organization) int {
+		if a.LastFetched.Before(b.LastFetched) {
+			return -1
+		}
+		if b.LastFetched.Before(a.LastFetched) {
+			return 1
+		}
+		return 0
 	})
 
 	// Select up to 5% of stale orgs (prioritize oldest)
@@ -346,15 +359,15 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 	fmt.Printf("Collected metadata for %d organizations\n\n", len(organizations))
 
 	// Sort for stable output
-	sort.Slice(repositories, func(i, j int) bool {
-		if repositories[i].Owner != repositories[j].Owner {
-			return repositories[i].Owner < repositories[j].Owner
-		}
-		return repositories[i].Name < repositories[j].Name
+	slices.SortFunc(repositories, func(a, b types.Repository) int {
+		return cmp.Or(
+			cmp.Compare(a.Owner, b.Owner),
+			cmp.Compare(a.Name, b.Name),
+		)
 	})
 
-	sort.Slice(organizations, func(i, j int) bool {
-		return organizations[i].ID < organizations[j].ID
+	slices.SortFunc(organizations, func(a, b types.Organization) int {
+		return cmp.Compare(a.ID, b.ID)
 	})
 
 	return repositories, organizations, nil

@@ -1,10 +1,11 @@
 package combiner
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -111,14 +112,12 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 	}
 
 	// Sort combined templates by org/repo/path for stable output
-	sort.Slice(combined, func(i, j int) bool {
-		if combined[i].Org != combined[j].Org {
-			return combined[i].Org < combined[j].Org
-		}
-		if combined[i].Repo != combined[j].Repo {
-			return combined[i].Repo < combined[j].Repo
-		}
-		return combined[i].Path < combined[j].Path
+	slices.SortFunc(combined, func(a, b CombinedTemplate) int {
+		return cmp.Or(
+			cmp.Compare(a.Org, b.Org),
+			cmp.Compare(a.Repo, b.Repo),
+			cmp.Compare(a.Path, b.Path),
+		)
 	})
 
 	// Write to file
