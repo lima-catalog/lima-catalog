@@ -183,7 +183,18 @@ export function createTemplateCard(template, onCardClick) {
             // Move down by one row (columnCount cards)
             const nextCard = cards[currentIndex + columnCount];
             if (nextCard) {
-                nextCard.focus();
+                // Check if we need to scroll
+                const rect = nextCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const viewportBottom = window.scrollY + window.innerHeight;
+
+                // If card is below viewport or partially visible at bottom
+                if (rect.bottom > window.innerHeight - 20) {
+                    const offset = 20; // Space for border and focus outline
+                    window.scrollTo({ top: cardTop - offset, behavior: 'smooth' });
+                }
+
+                nextCard.focus({ preventScroll: true });
             } else {
                 // At bottom row - scroll to bottom to show footer
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
@@ -202,7 +213,17 @@ export function createTemplateCard(template, onCardClick) {
             // Move up by one row (columnCount cards)
             const prevCard = cards[currentIndex - columnCount];
             if (prevCard) {
-                prevCard.focus();
+                // Check if we need to scroll
+                const rect = prevCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+
+                // If card is above viewport or partially visible at top
+                if (rect.top < 20) {
+                    const offset = 20; // Space for border and focus outline
+                    window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
+                }
+
+                prevCard.focus({ preventScroll: true });
             } else {
                 // At top row - scroll to top to show header
                 window.scrollTo({ top: 0, behavior: 'smooth' });
