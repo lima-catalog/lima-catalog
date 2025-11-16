@@ -358,11 +358,13 @@ const KEYBOARD_SHORTCUTS = {
             // If we're at the top, scroll to show header
             if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                targetCard.focus();
             } else {
-                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                targetCard.focus();
+                // Scroll so target card is at the very top of viewport
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
+            targetCard.focus();
         }
     },
     'PageDown': {
@@ -415,11 +417,13 @@ const KEYBOARD_SHORTCUTS = {
             // If we're at or near the last row, scroll to show footer
             if (targetIndex >= cards.length - columnCount) {
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-                targetCard.focus();
             } else {
-                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                targetCard.focus();
+                // Scroll so target card is at the very top of viewport
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
+            targetCard.focus();
         }
     },
     'Home': {
@@ -687,11 +691,13 @@ function setupKeyboardShortcuts() {
             const targetIndex = cards.indexOf(targetCard);
             if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                targetCard.focus();
             } else {
-                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                targetCard.focus();
+                // Scroll so target card is at the very top of viewport
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
+            targetCard.focus();
         } else if (e.key === 'PageDown') {
             e.preventDefault();
             const cards = Array.from(document.querySelectorAll('.template-card'));
@@ -735,11 +741,13 @@ function setupKeyboardShortcuts() {
             const targetIndex = cards.indexOf(targetCard);
             if (targetIndex >= cards.length - columnCount) {
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-                targetCard.focus();
             } else {
-                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                targetCard.focus();
+                // Scroll so target card is at the very top of viewport
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
+            targetCard.focus();
         }
     });
 
