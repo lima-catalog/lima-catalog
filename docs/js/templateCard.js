@@ -92,8 +92,8 @@ export function createTemplateCard(template, onCardClick) {
                 <h3 class="template-name">${escapeHtml(displayName)}</h3>
                 <div class="template-id">${escapeHtml(template.path)}</div>
             </div>
-            <span class="template-badge ${template.is_official ? 'official' : 'community'}">
-                ${template.is_official ? 'Official' : 'Community'}
+            <span class="template-badge ${template.official ? 'official' : 'community'}">
+                ${template.official ? 'Official' : 'Community'}
             </span>
         </div>
 

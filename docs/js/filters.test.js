@@ -13,7 +13,7 @@ const sampleTemplates = [
         repo: 'lima-vm/lima',
         category: 'containers',
         keywords: ['alpine', 'linux', 'docker'],
-        is_official: true,
+        official: true,
         stars: 100,
         updated_at: '2024-01-15'
     },
@@ -23,7 +23,7 @@ const sampleTemplates = [
         repo: 'lima-vm/lima',
         category: 'development',
         keywords: ['ubuntu', 'linux'],
-        is_official: true,
+        official: true,
         stars: 100,
         updated_at: '2024-01-20'
     },
@@ -33,7 +33,7 @@ const sampleTemplates = [
         repo: 'user/repo',
         category: 'containers',
         keywords: ['docker', 'k8s'],
-        is_official: false,
+        official: false,
         stars: 50,
         updated_at: '2024-01-10'
     }
@@ -139,13 +139,13 @@ runner.test('applyFilters: filters by multiple keywords (AND logic)', () => {
 runner.test('applyFilters: filters by type (official)', () => {
     const result = applyFilters(sampleTemplates, { typeFilter: 'official' });
     assert.equal(result.length, 2);
-    assert.ok(result.every(t => t.is_official));
+    assert.ok(result.every(t => t.official));
 });
 
 runner.test('applyFilters: filters by type (community)', () => {
     const result = applyFilters(sampleTemplates, { typeFilter: 'community' });
     assert.equal(result.length, 1);
-    assert.equal(result[0].is_official, false);
+    assert.equal(result[0].official, false);
 });
 
 runner.test('applyFilters: combines multiple filters', () => {

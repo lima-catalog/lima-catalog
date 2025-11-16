@@ -82,8 +82,8 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
         }
 
         // Type filter
-        if (typeFilter === 'official' && !template.is_official) return false;
-        if (typeFilter === 'community' && template.is_official) return false;
+        if (typeFilter === 'official' && !template.official) return false;
+        if (typeFilter === 'community' && template.official) return false;
 
         return true;
     });
