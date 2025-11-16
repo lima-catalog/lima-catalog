@@ -566,12 +566,12 @@ header {
 }
 
 .template-badge.official {
-    background: var(--primary-light);
-    color: white;
+    background: #A8DF65;
+    color: #2d4a5a;
 }
 
 .template-badge.community {
-    background: var(--secondary);
+    background: #64748b;
     color: white;
 }
 
