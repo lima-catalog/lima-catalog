@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/types"
@@ -36,6 +37,10 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 		discoveredMap[t.ID] = t
 	}
 
+	// In incremental mode, templates not in discoveredMap are UNCHANGED (not removed)
+	// We preserve all existing templates by default, then update with discovered changes
+	preservedTemplates := make(map[string]bool)
+
 	// Find new and updated templates
 	for id, newTemplate := range discoveredMap {
 		if oldTemplate, exists := existingMap[id]; exists {
@@ -47,24 +52,34 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 				result.UpdatedTemplates = append(result.UpdatedTemplates, newTemplate)
 				result.AllTemplates = append(result.AllTemplates, newTemplate)
 			} else {
-				// Template unchanged, just update last checked time
+				// Template unchanged but re-discovered, update last checked time
 				oldTemplate.LastChecked = time.Now()
 				result.UnchangedCount++
 				result.AllTemplates = append(result.AllTemplates, oldTemplate)
 			}
+			preservedTemplates[id] = true
 		} else {
 			// New template
 			result.NewTemplates = append(result.NewTemplates, newTemplate)
 			result.AllTemplates = append(result.AllTemplates, newTemplate)
+			preservedTemplates[id] = true
 		}
 	}
 
-	// Find removed templates (don't add to AllTemplates)
-	for id := range existingMap {
-		if _, exists := discoveredMap[id]; !exists {
-			result.RemovedTemplates = append(result.RemovedTemplates, id)
+	// Preserve existing templates that weren't in discoveredMap
+	// In incremental mode, absence from discoveredMap means "not checked", not "removed"
+	// (Template deletion detection is Stage 7, not implemented yet)
+	for id, oldTemplate := range existingMap {
+		if !preservedTemplates[id] {
+			// Template wasn't checked this run - preserve it unchanged
+			oldTemplate.LastChecked = time.Now() // Update last checked time
+			result.UnchangedCount++
+			result.AllTemplates = append(result.AllTemplates, oldTemplate)
 		}
 	}
+
+	// Note: RemovedTemplates is currently unused
+	// Template deletion detection will be implemented in Stage 7
 
 	return result
 }
@@ -89,6 +104,14 @@ func MergeRepositories(existing, collected []types.Repository) []types.Repositor
 		result = append(result, r)
 	}
 
+	// Sort by owner (org), then name for stable output
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Owner != result[j].Owner {
+			return result[i].Owner < result[j].Owner
+		}
+		return result[i].Name < result[j].Name
+	})
+
 	return result
 }
 
@@ -111,6 +134,11 @@ func MergeOrganizations(existing, collected []types.Organization) []types.Organi
 	for _, o := range orgMap {
 		result = append(result, o)
 	}
+
+	// Sort by ID (login) for stable output
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].ID < result[j].ID
+	})
 
 	return result
 }
