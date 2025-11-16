@@ -408,6 +408,13 @@ function setupKeyboardShortcuts() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        // Skip if modal is open - let modal handle its own keyboard navigation
+        const modal = document.getElementById('preview-modal');
+        const isModalOpen = modal && modal.style.display !== 'none';
+        if (isModalOpen) {
+            return;
+        }
+
         // Skip if user is typing in a text input/textarea (but not checkboxes, radio, etc.)
         const isTyping = (document.activeElement.tagName === 'INPUT' &&
                          ['text', 'search', 'password', 'email', 'tel', 'url', 'number'].includes(document.activeElement.type)) ||
