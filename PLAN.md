@@ -416,81 +416,45 @@ The existing data collection process has scalability issues:
 
 ### Implementation Plan
 
-#### Stage 1: Incremental Discovery
+#### Stage 1: Incremental Discovery ✅ COMPLETE
 
-**Goal**: Find only new and recently changed templates
+**Status**: Implemented and merged
 
-**Approach**:
-- Find the newest template in our existing data (by `DiscoveredAt` timestamp)
-- Query GitHub for templates pushed since 24 hours before that newest template
-- Query: `minimumLimaVersion extension:yaml pushed:>YYYY-MM-DD`
-- This ensures we always refetch the last template and get all new ones
-- No need to track "last check" timestamp separately
-- Built-in sanity check: if we get 0 results, something is likely wrong
+**What was completed**:
+- ✅ Timestamp-based incremental discovery (finds newest template, searches 24h before)
+- ✅ Regex-based blocklist system (path and repo patterns)
+- ✅ GitHub Code Search with `pushed:>DATE` qualifier
+- ✅ Automatic fallback to full discovery when no existing data
+- ✅ Comprehensive unit tests (17 test cases)
+- ✅ Integration test suite
+- ✅ Makefile for easy testing
 
-**Blocklist Filter**:
-- Maintain blocklist file: `config/blocklist.yaml`
-- Two separate filter lists (both regex-based):
-  1. **Path patterns** - regex matched against file path within repo (e.g., `.github/workflows/`)
-  2. **Repo patterns** - regex matched against full `org/repo/path` (e.g., `^spamorg/`)
-- Check before downloading content (saves API calls)
-- Support comments for documentation
+**Implementation details**:
+- `config/blocklist.yaml` - Regex patterns for filtering
+- `pkg/discovery/blocklist.go` - Filtering logic
+- `pkg/discovery/discovery.go` - Incremental discovery with sinceDate parameter
+- `FindNewestTemplateTimestamp()` - Helper to find baseline
+- Sanity check warns if incremental search returns 0 results
 
-**Current Patterns**:
-```yaml
-# Path patterns (regex) - matched against file path within repo
-paths:
-  - '^\.github/workflows/'                      # GitHub Actions
-  - '/lima\.REJECTED\.yaml$'                    # Rejected templates
-  - '/rancher-desktop/lima/0/lima\.yaml$'       # Rancher Desktop old config
+---
 
-# Repo patterns (regex) - matched against full org/repo/path
-repos:
-  # Add patterns as needed
-```
+#### Stage 2: Content Validation ✅ COMPLETE
 
-**Filter Logic**:
-```go
-func isBlocklisted(owner, repo, path string, blocklist Blocklist) bool {
-    fullPath := owner + "/" + repo + "/" + path
+**Status**: Already implemented in Phase 1
 
-    // Check repo patterns (matches against full org/repo/path)
-    for _, pattern := range blocklist.Repos {
-        if matched, _ := regexp.MatchString(pattern, fullPath); matched {
-            return true
-        }
-    }
-
-    // Check path patterns (matches against path within repo)
-    for _, pattern := range blocklist.Paths {
-        if matched, _ := regexp.MatchString(pattern, path); matched {
-            return true
-        }
-    }
-
-    return false
-}
-```
-
-**New Fields**:
-```yaml
-template:
-  first_seen: "2024-01-15T10:30:00Z"    # When first discovered
-  last_updated: "2024-03-20T15:45:00Z"  # When file SHA changed
-  last_analyzed: "2024-03-20T16:00:00Z" # When analysis last ran
-```
-
-#### Stage 2: Content Validation
-
-**No changes** - existing logic works well:
+Existing logic works well:
 - Download template content
 - Parse YAML
 - Verify `images:` key exists at top level
 - ~31% false positive rate remains acceptable
 
-#### Stage 3: Template Analysis
+---
 
-**No changes** - existing keyword/category extraction works well:
+#### Stage 3: Template Analysis ✅ COMPLETE
+
+**Status**: Already implemented in Phase 2
+
+Existing keyword/category extraction works well:
 - Technology detection
 - Keyword extraction
 - Category assignment
@@ -599,7 +563,28 @@ func shouldGenerateLLM(template) bool {
 4. Update combine stage to use priority order
 5. No changes needed to existing templates without meta
 
-#### Stage 4: Metadata Management
+---
+
+#### Stage 4: Metadata Management ✅ COMPLETE
+
+**Status**: Implemented
+
+**What was completed**:
+- ✅ Intelligent refresh cycle (new templates + 5% of stale entries)
+- ✅ LastFetched tracking (already in Repository/Organization types)
+- ✅ SelectReposToRefresh() and SelectOrgsToRefresh() helpers
+- ✅ CollectMetadataIncremental() for efficient refreshes
+- ✅ Integrated with main.go incremental mode
+- ✅ Comprehensive unit tests (9 test cases, all passing)
+
+**Implementation details**:
+- `pkg/discovery/metadata.go` - Refresh selection logic
+- `pkg/discovery/metadata_test.go` - Unit tests
+- Spreads refresh load over ~20 days (100% / 5%)
+- Uses random sampling for even distribution
+- Prevents thundering herd problem
+
+**Original Plan:**
 
 **Goal**: Fetch repo/org data efficiently
 

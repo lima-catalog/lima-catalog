@@ -98,6 +98,7 @@ func run() error {
 
 	// Phase 1: Discovery
 	var templates []types.Template
+	var discoveredTemplates []types.Template
 
 	// In incremental mode, always check for new/updated templates
 	// In non-incremental mode, only run if phase is "discovery"
@@ -143,7 +144,7 @@ func run() error {
 			}
 		}
 
-		discoveredTemplates, err := discoverer.DiscoverAll(sinceDate)
+		discoveredTemplates, err = discoverer.DiscoverAll(sinceDate)
 		if err != nil {
 			return fmt.Errorf("discovery failed: %w", err)
 		}
@@ -218,36 +219,35 @@ func run() error {
 
 		collector := discovery.NewMetadataCollector(client)
 
-		newRepositories, newOrganizations, err := collector.CollectAllMetadata(templates)
-		if err != nil {
-			return fmt.Errorf("metadata collection failed: %w", err)
-		}
-
-		// If incremental mode, merge with existing data
 		var repositories []types.Repository
 		var organizations []types.Organization
 
 		if incremental {
+			// Load existing metadata
 			existingRepos, err := store.LoadRepositories()
 			if err != nil {
 				fmt.Printf("Warning: failed to load existing repos: %v\n", err)
-				repositories = newRepositories
-			} else {
-				repositories = discovery.MergeRepositories(existingRepos, newRepositories)
-				fmt.Printf("Merged repository data: %d total\n", len(repositories))
+				existingRepos = []types.Repository{}
 			}
 
 			existingOrgs, err := store.LoadOrganizations()
 			if err != nil {
 				fmt.Printf("Warning: failed to load existing orgs: %v\n", err)
-				organizations = newOrganizations
-			} else {
-				organizations = discovery.MergeOrganizations(existingOrgs, newOrganizations)
-				fmt.Printf("Merged organization data: %d total\n", len(organizations))
+				existingOrgs = []types.Organization{}
+			}
+
+			// Use incremental metadata collection
+			// Only fetches metadata for new templates + refreshes 5% of stale (>30 days) entries
+			repositories, organizations, err = collector.CollectMetadataIncremental(discoveredTemplates, existingRepos, existingOrgs)
+			if err != nil {
+				return fmt.Errorf("incremental metadata collection failed: %w", err)
 			}
 		} else {
-			repositories = newRepositories
-			organizations = newOrganizations
+			// Use full metadata collection
+			repositories, organizations, err = collector.CollectAllMetadata(templates)
+			if err != nil {
+				return fmt.Errorf("metadata collection failed: %w", err)
+			}
 		}
 
 		// Save repositories
