@@ -334,28 +334,46 @@ const KEYBOARD_SHORTCUTS = {
             const currentColumn = currentIndex % columnCount;
 
             const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
 
-            // Find the first card in the same column that's partially clipped at top
-            let targetCard = null;
-            for (let i = currentIndex - columnCount; i >= 0; i -= columnCount) {
+            // Find the first card in this column that's at or near the top of viewport
+            let firstVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
                 const card = cards[i];
                 const rect = card.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
 
-                // If this card is above or at viewport top, it's our target
-                if (cardTop < viewportTop + 10) {
-                    targetCard = card;
+                // Is this card visible?
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    firstVisibleInColumn = card;
                     break;
                 }
             }
 
-            // If no partially clipped card found, use first card in this column
-            if (!targetCard) {
-                targetCard = cards[currentColumn] || cards[0];
+            if (!firstVisibleInColumn) return;
+
+            const firstVisibleIndex = cards.indexOf(firstVisibleInColumn);
+            const firstVisibleRect = firstVisibleInColumn.getBoundingClientRect();
+            const firstVisibleTop = firstVisibleRect.top + window.scrollY;
+
+            // Check if first visible card in column is partially clipped at top
+            const isClipped = firstVisibleTop < viewportTop + 10;
+
+            let targetCard;
+            if (isClipped && firstVisibleIndex >= columnCount) {
+                // Use the clipped card
+                targetCard = firstVisibleInColumn;
+            } else {
+                // Move up by one viewport worth of rows
+                const rowsPerPage = getRowsPerViewport();
+                const cardsToMove = columnCount * rowsPerPage;
+                const targetIndex = Math.max(currentColumn, firstVisibleIndex - cardsToMove);
+                targetCard = cards[targetIndex];
             }
 
             const targetIndex = cards.indexOf(targetCard);
-            // If we're at the top, scroll to show header
+            // If we're at the top row, scroll to show header
             if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
@@ -384,34 +402,50 @@ const KEYBOARD_SHORTCUTS = {
             const columnCount = getGridColumnCount();
             const currentColumn = currentIndex % columnCount;
 
-            const viewportBottom = window.scrollY + window.innerHeight;
+            const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
 
-            // Find the first card in the same column that's partially clipped at bottom
-            let targetCard = null;
-            for (let i = currentIndex + columnCount; i < cards.length; i += columnCount) {
+            // Find the LAST card in this column that's currently visible
+            let lastVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
                 const card = cards[i];
                 const rect = card.getBoundingClientRect();
-                const cardBottom = rect.top + window.scrollY + rect.height;
+                const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
 
-                // If this card extends beyond viewport bottom, it's our target
-                if (cardBottom > viewportBottom - 10) {
-                    targetCard = card;
+                // Is this card visible?
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    lastVisibleInColumn = card;
+                    // Keep going to find the LAST visible card
+                } else if (cardTop >= viewportBottom) {
+                    // We've gone past the viewport
                     break;
                 }
             }
 
-            // If no partially clipped card found, use last card in this column
-            if (!targetCard) {
-                // Find last card in the same column
-                for (let i = cards.length - 1; i >= 0; i--) {
-                    if (i % columnCount === currentColumn) {
-                        targetCard = cards[i];
-                        break;
-                    }
+            if (!lastVisibleInColumn) return;
+
+            const lastVisibleIndex = cards.indexOf(lastVisibleInColumn);
+            const lastVisibleRect = lastVisibleInColumn.getBoundingClientRect();
+            const lastVisibleBottom = lastVisibleRect.top + window.scrollY + lastVisibleRect.height;
+
+            // Check if last visible card in column is partially clipped at bottom
+            const isClipped = lastVisibleBottom > viewportBottom - 10;
+
+            let targetCard;
+            if (isClipped) {
+                // Use the clipped card as target
+                targetCard = lastVisibleInColumn;
+            } else {
+                // All visible cards are fully visible, move to next card in column
+                const nextIndex = lastVisibleIndex + columnCount;
+                if (nextIndex < cards.length && nextIndex % columnCount === currentColumn) {
+                    targetCard = cards[nextIndex];
+                } else {
+                    // No more cards below, use last card in column
+                    targetCard = lastVisibleInColumn;
                 }
             }
-
-            if (!targetCard) return;
 
             const targetIndex = cards.indexOf(targetCard);
             // If we're at or near the last row, scroll to show footer
@@ -661,7 +695,6 @@ function setupKeyboardShortcuts() {
             const cards = Array.from(document.querySelectorAll('.template-card'));
             if (cards.length === 0) return;
 
-            // From search box, use first visible card as starting point
             const currentCard = getFirstVisibleTemplateCard();
             if (!currentCard) return;
 
@@ -670,29 +703,44 @@ function setupKeyboardShortcuts() {
             const currentColumn = currentIndex % columnCount;
 
             const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
 
-            // Find the first card in the same column that's partially clipped at top
-            let targetCard = null;
-            for (let i = currentIndex - columnCount; i >= 0; i -= columnCount) {
+            // Find the first card in this column that's at or near the top of viewport
+            let firstVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
                 const card = cards[i];
                 const rect = card.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
 
-                if (cardTop < viewportTop + 10) {
-                    targetCard = card;
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    firstVisibleInColumn = card;
                     break;
                 }
             }
 
-            if (!targetCard) {
-                targetCard = cards[currentColumn] || cards[0];
+            if (!firstVisibleInColumn) return;
+
+            const firstVisibleIndex = cards.indexOf(firstVisibleInColumn);
+            const firstVisibleRect = firstVisibleInColumn.getBoundingClientRect();
+            const firstVisibleTop = firstVisibleRect.top + window.scrollY;
+
+            const isClipped = firstVisibleTop < viewportTop + 10;
+
+            let targetCard;
+            if (isClipped && firstVisibleIndex >= columnCount) {
+                targetCard = firstVisibleInColumn;
+            } else {
+                const rowsPerPage = getRowsPerViewport();
+                const cardsToMove = columnCount * rowsPerPage;
+                const targetIndex = Math.max(currentColumn, firstVisibleIndex - cardsToMove);
+                targetCard = cards[targetIndex];
             }
 
             const targetIndex = cards.indexOf(targetCard);
             if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                // Scroll so target card is at the very top of viewport
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
@@ -703,7 +751,6 @@ function setupKeyboardShortcuts() {
             const cards = Array.from(document.querySelectorAll('.template-card'));
             if (cards.length === 0) return;
 
-            // From search box, use first visible card as starting point
             const currentCard = getFirstVisibleTemplateCard();
             if (!currentCard) return;
 
@@ -711,38 +758,48 @@ function setupKeyboardShortcuts() {
             const columnCount = getGridColumnCount();
             const currentColumn = currentIndex % columnCount;
 
-            const viewportBottom = window.scrollY + window.innerHeight;
+            const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
 
-            // Find the first card in the same column that's partially clipped at bottom
-            let targetCard = null;
-            for (let i = currentIndex + columnCount; i < cards.length; i += columnCount) {
+            // Find the LAST card in this column that's currently visible
+            let lastVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
                 const card = cards[i];
                 const rect = card.getBoundingClientRect();
-                const cardBottom = rect.top + window.scrollY + rect.height;
+                const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
 
-                if (cardBottom > viewportBottom - 10) {
-                    targetCard = card;
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    lastVisibleInColumn = card;
+                } else if (cardTop >= viewportBottom) {
                     break;
                 }
             }
 
-            if (!targetCard) {
-                // Find last card in the same column
-                for (let i = cards.length - 1; i >= 0; i--) {
-                    if (i % columnCount === currentColumn) {
-                        targetCard = cards[i];
-                        break;
-                    }
+            if (!lastVisibleInColumn) return;
+
+            const lastVisibleIndex = cards.indexOf(lastVisibleInColumn);
+            const lastVisibleRect = lastVisibleInColumn.getBoundingClientRect();
+            const lastVisibleBottom = lastVisibleRect.top + window.scrollY + lastVisibleRect.height;
+
+            const isClipped = lastVisibleBottom > viewportBottom - 10;
+
+            let targetCard;
+            if (isClipped) {
+                targetCard = lastVisibleInColumn;
+            } else {
+                const nextIndex = lastVisibleIndex + columnCount;
+                if (nextIndex < cards.length && nextIndex % columnCount === currentColumn) {
+                    targetCard = cards[nextIndex];
+                } else {
+                    targetCard = lastVisibleInColumn;
                 }
             }
-
-            if (!targetCard) return;
 
             const targetIndex = cards.indexOf(targetCard);
             if (targetIndex >= cards.length - columnCount) {
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
             } else {
-                // Scroll so target card is at the very top of viewport
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
