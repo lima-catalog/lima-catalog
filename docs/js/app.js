@@ -386,7 +386,7 @@ const KEYBOARD_SHORTCUTS = {
                 // Scroll so target card is at the top of viewport with small offset for border/focus
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                const offset = 10; // Space for border and focus outline
+                const offset = 20; // Space for border and focus outline
                 window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
@@ -468,7 +468,7 @@ const KEYBOARD_SHORTCUTS = {
                 // Scroll so target card is at the top of viewport with small offset for border/focus
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                const offset = 10; // Space for border and focus outline
+                const offset = 20; // Space for border and focus outline
                 window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
@@ -763,7 +763,7 @@ function setupKeyboardShortcuts() {
             } else {
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                const offset = 10; // Space for border and focus outline
+                const offset = 20; // Space for border and focus outline
                 window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
@@ -829,7 +829,7 @@ function setupKeyboardShortcuts() {
             } else {
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                const offset = 10; // Space for border and focus outline
+                const offset = 20; // Space for border and focus outline
                 window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
