@@ -24,6 +24,18 @@ func NewDiscoverer(client *github.Client, blocklist *types.Blocklist) *Discovere
 	}
 }
 
+// FindNewestTemplateTimestamp finds the newest DiscoveredAt timestamp from existing templates
+// Returns zero time if no templates exist
+func FindNewestTemplateTimestamp(templates []types.Template) time.Time {
+	var newest time.Time
+	for _, t := range templates {
+		if t.DiscoveredAt.After(newest) {
+			newest = t.DiscoveredAt
+		}
+	}
+	return newest
+}
+
 // isLimaTemplate checks if a file is a valid Lima template by checking for the required "images:" top-level key
 func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
 	content, err := d.client.GetRepositoryContent(owner, repo, path)
@@ -144,14 +156,21 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 	return templates, nil
 }
 
-// DiscoverCommunityTemplates searches GitHub for community Lima templates
-func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
+// DiscoverCommunityTemplates discovers community templates
+// If sinceDate is provided (non-zero), only searches for templates pushed since that date
+func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Template, error) {
 	// Use a map to deduplicate templates found by multiple queries
 	templateMap := make(map[string]types.Template)
 
+	// Build date qualifier if in incremental mode
+	dateQualifier := ""
+	if !sinceDate.IsZero() {
+		dateQualifier = fmt.Sprintf(" pushed:>%s", sinceDate.Format("2006-01-02"))
+	}
+
 	// Query 1: Search for files with minimumLimaVersion (original query)
 	// Use simpler syntax - search for .yaml files only (most common)
-	query1 := "minimumLimaVersion extension:yaml -repo:lima-vm/lima"
+	query1 := "minimumLimaVersion extension:yaml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("Query 1: %s\n", query1)
 	templates1, err := d.searchWithQuery(query1)
 	if err != nil {
@@ -168,7 +187,7 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	time.Sleep(5 * time.Second)
 
 	// Also search for .yml extension
-	query1b := "minimumLimaVersion extension:yml -repo:lima-vm/lima"
+	query1b := "minimumLimaVersion extension:yml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("\nQuery 1b: %s\n", query1b)
 	templates1b, err := d.searchWithQuery(query1b)
 	if err != nil {
@@ -190,7 +209,7 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	time.Sleep(5 * time.Second)
 
 	// Query 2: Search for files with images: and provision: fields (supplementary query)
-	query2 := "images: provision: extension:yaml -repo:lima-vm/lima"
+	query2 := "images: provision: extension:yaml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("\nQuery 2: %s\n", query2)
 	templates2, err := d.searchWithQuery(query2)
 	if err != nil {
@@ -213,7 +232,7 @@ func (d *Discoverer) DiscoverCommunityTemplates() ([]types.Template, error) {
 	time.Sleep(5 * time.Second)
 
 	// Also search for .yml extension
-	query2b := "images: provision: extension:yml -repo:lima-vm/lima"
+	query2b := "images: provision: extension:yml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("\nQuery 2b: %s\n", query2b)
 	templates2b, err := d.searchWithQuery(query2b)
 	if err != nil {
@@ -286,20 +305,24 @@ func (d *Discoverer) DiscoverOfficialTemplates() ([]types.Template, error) {
 	return templates, nil
 }
 
-// DiscoverAll discovers both community and official templates
-func (d *Discoverer) DiscoverAll() ([]types.Template, error) {
+// DiscoverAll discovers all templates (community + official)
+// If sinceDate is provided (non-zero), only discovers templates pushed since that date
+func (d *Discoverer) DiscoverAll(sinceDate time.Time) ([]types.Template, error) {
 	var allTemplates []types.Template
 
 	// Discover community templates
 	fmt.Println("=== Discovering Community Templates ===")
-	communityTemplates, err := d.DiscoverCommunityTemplates()
+	if !sinceDate.IsZero() {
+		fmt.Printf("Incremental mode: searching for templates pushed since %s\n", sinceDate.Format("2006-01-02"))
+	}
+	communityTemplates, err := d.DiscoverCommunityTemplates(sinceDate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover community templates: %w", err)
 	}
 	fmt.Printf("Discovered %d community templates\n\n", len(communityTemplates))
 	allTemplates = append(allTemplates, communityTemplates...)
 
-	// Discover official templates
+	// Discover official templates (always enumerate all - they don't change often)
 	fmt.Println("=== Discovering Official Templates ===")
 	officialTemplates, err := d.DiscoverOfficialTemplates()
 	if err != nil {

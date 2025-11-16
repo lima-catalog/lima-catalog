@@ -116,26 +116,51 @@ func run() error {
 
 		discoverer := discovery.NewDiscoverer(client, blocklist)
 
-		discoveredTemplates, err := discoverer.DiscoverAll()
+		// Determine search date for incremental mode
+		var sinceDate time.Time
+		var existingTemplates []types.Template
+		if incremental {
+			// Load existing templates to find newest timestamp
+			var err error
+			existingTemplates, err = store.LoadTemplates()
+			if err != nil {
+				fmt.Printf("Warning: failed to load existing templates: %v\n", err)
+				fmt.Println("Continuing with full discovery (no incremental filtering)...")
+				fmt.Println()
+			} else {
+				fmt.Printf("Loaded %d existing templates for incremental update\n", len(existingTemplates))
+
+				// Find newest template and search 24 hours before it
+				newestTimestamp := discovery.FindNewestTemplateTimestamp(existingTemplates)
+				if !newestTimestamp.IsZero() {
+					sinceDate = newestTimestamp.Add(-24 * time.Hour)
+					fmt.Printf("Newest template discovered at: %s\n", newestTimestamp.Format(time.RFC3339))
+					fmt.Printf("Searching for templates pushed since: %s (24h overlap)\n\n", sinceDate.Format(time.RFC3339))
+				} else {
+					fmt.Println("No existing templates found - running full discovery")
+					fmt.Println()
+				}
+			}
+		}
+
+		discoveredTemplates, err := discoverer.DiscoverAll(sinceDate)
 		if err != nil {
 			return fmt.Errorf("discovery failed: %w", err)
 		}
 
-		// If incremental mode, load existing templates and merge
-		if incremental {
-			existingTemplates, err := store.LoadTemplates()
-			if err != nil {
-				fmt.Printf("Warning: failed to load existing templates: %v\n", err)
-				fmt.Println("Continuing with full collection...")
-				templates = discoveredTemplates
-			} else {
-				fmt.Printf("Loaded %d existing templates for incremental update\n", len(existingTemplates))
-				updateResult := discovery.MergeTemplates(existingTemplates, discoveredTemplates)
-				discovery.PrintUpdateSummary(updateResult)
+		// Sanity check for incremental mode
+		if incremental && !sinceDate.IsZero() && len(discoveredTemplates) == 0 {
+			fmt.Println("\nWARNING: Incremental search returned 0 templates - this may indicate a problem!")
+			fmt.Println("Expected to find at least the newest template from previous run.")
+		}
 
-				// Use all templates (new + updated + unchanged)
-				templates = updateResult.AllTemplates
-			}
+		// If incremental mode, merge with existing templates
+		if incremental && len(existingTemplates) > 0 {
+			updateResult := discovery.MergeTemplates(existingTemplates, discoveredTemplates)
+			discovery.PrintUpdateSummary(updateResult)
+
+			// Use all templates (new + updated + unchanged)
+			templates = updateResult.AllTemplates
 		} else {
 			templates = discoveredTemplates
 		}
