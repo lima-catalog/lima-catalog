@@ -619,7 +619,51 @@ refresh_list = random.sample(refresh_candidates, refresh_count)
 fetch_metadata(new_repos + refresh_list)
 ```
 
-#### Stage 5: LLM Descriptions
+#### Stage 5: Frontend Data Combination
+
+**Goal**: Create optimized file for web interface
+
+**Output**: `templates-combined.jsonl` (already exists)
+
+**Fields** (only include what frontend needs):
+```json
+{
+  "id": "owner/repo/path/template.yaml",
+  "name": "Display Name",
+  "description": "From analysis (LLM in Stage 6)",
+  "keywords": ["from", "analysis"],
+  "categories": ["containers"],
+  "repo": "owner/repo",
+  "org": "owner",
+  "path": "path/template.yaml",
+  "stars": 123,
+  "updated_at": "2024-03-20",
+  "official": true,
+  "url": "https://github.com/...",
+  "raw_url": "https://raw.githubusercontent.com/..."
+}
+```
+
+**Logic**:
+- Skip templates in path filter blocklist
+- Skip templates with `meta.noindex: true` (treat exactly like blocklist)
+- For now, use analysis-based keywords and description (LLM enhancement comes in Stage 6)
+- Include only templates with valid repo/org data
+- Keep file size minimal (path filtering and data reduction should be sufficient)
+
+**Implementation**:
+```go
+// Combine stage logic
+if template.MetaNoindex {
+    continue  // Skip this template entirely
+}
+
+// For now, use analysis-based data (Stage 6 will add LLM support)
+description := strings.Join(template.Keywords[:min(3, len(template.Keywords))], ", ")
+keywords := template.Keywords
+```
+
+#### Stage 6: LLM Descriptions
 
 **Goal**: Generate quality descriptions for templates
 
@@ -665,42 +709,9 @@ LLM_PROVIDER=anthropic  # or openai, etc.
 - Continue with analysis-based data if LLM fails
 - Retry failed descriptions next run
 
-#### Stage 6: Frontend Data Combination
-
-**Goal**: Create optimized file for web interface
-
-**Output**: `templates-combined.jsonl` (already exists)
-
-**Fields** (only include what frontend needs):
-```json
-{
-  "id": "owner/repo/path/template.yaml",
-  "name": "Display Name",
-  "description": "From LLM or analysis",
-  "keywords": ["from", "llm", "or", "analysis"],
-  "categories": ["containers"],
-  "repo": "owner/repo",
-  "org": "owner",
-  "path": "path/template.yaml",
-  "stars": 123,
-  "updated_at": "2024-03-20",
-  "official": true,
-  "url": "https://github.com/...",
-  "raw_url": "https://raw.githubusercontent.com/..."
-}
-```
-
-**Logic**:
-- Skip templates in path filter blocklist
-- Skip templates with `meta.noindex: true` (treat exactly like blocklist)
-- Use description priority: meta.description > LLM > analysis
-- Use keyword priority: meta.keywords (merged with analysis) > LLM > analysis
-- Include only templates with valid repo/org data
-- Keep file size minimal (path filtering and data reduction should be sufficient)
-
-**Priority Example**:
+**Priority After Stage 6** (update to Stage 5 combine logic):
 ```go
-// Combine stage logic
+// Updated combine stage logic after LLM implementation
 if template.MetaNoindex {
     continue  // Skip this template entirely
 }
