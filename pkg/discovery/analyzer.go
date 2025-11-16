@@ -166,8 +166,9 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 	for i := range templates {
 		template := &templates[i]
 
-		// Skip if already analyzed and SHA hasn't changed
-		if template.AnalyzedAt.After(template.LastChecked) {
+		// Skip if already analyzed and content hasn't changed since analysis
+		// LastUpdated tracks when content (SHA) changed, so if we analyzed after last update, skip
+		if !template.LastUpdated.IsZero() && template.AnalyzedAt.After(template.LastUpdated) {
 			analyzed = append(analyzed, *template)
 			continue
 		}

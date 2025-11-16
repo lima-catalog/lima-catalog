@@ -46,20 +46,24 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 		if oldTemplate, exists := existingMap[id]; exists {
 			// Check if template changed (different SHA)
 			if oldTemplate.SHA != newTemplate.SHA {
-				// Template was updated
+				// Template was updated (SHA changed)
 				newTemplate.DiscoveredAt = oldTemplate.DiscoveredAt // Preserve original discovery time
-				newTemplate.LastChecked = time.Now()
+				newTemplate.LastChecked = time.Now()                 // We checked it
+				newTemplate.LastUpdated = time.Now()                 // Content changed
 				result.UpdatedTemplates = append(result.UpdatedTemplates, newTemplate)
 				result.AllTemplates = append(result.AllTemplates, newTemplate)
 			} else {
-				// Template unchanged but re-discovered, update last checked time
-				oldTemplate.LastChecked = time.Now()
+				// Template unchanged (same SHA) but we checked it
+				oldTemplate.LastChecked = time.Now() // We checked it
+				// Don't update LastUpdated - content didn't change
 				result.UnchangedCount++
 				result.AllTemplates = append(result.AllTemplates, oldTemplate)
 			}
 			preservedTemplates[id] = true
 		} else {
 			// New template
+			newTemplate.LastChecked = time.Now() // First check
+			newTemplate.LastUpdated = time.Now() // New content
 			result.NewTemplates = append(result.NewTemplates, newTemplate)
 			result.AllTemplates = append(result.AllTemplates, newTemplate)
 			preservedTemplates[id] = true
@@ -71,8 +75,7 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 	// (Template deletion detection is Stage 7, not implemented yet)
 	for id, oldTemplate := range existingMap {
 		if !preservedTemplates[id] {
-			// Template wasn't checked this run - preserve it unchanged
-			oldTemplate.LastChecked = time.Now() // Update last checked time
+			// Template wasn't checked this run - preserve unchanged, don't update LastChecked
 			result.UnchangedCount++
 			result.AllTemplates = append(result.AllTemplates, oldTemplate)
 		}
