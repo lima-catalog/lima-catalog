@@ -240,6 +240,13 @@ header {
     accent-color: var(--primary);
 }
 
+.checkbox-label input[type="checkbox"]:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 3px;
+    box-shadow: 0 0 0 3px rgba(90, 122, 140, 0.2);
+}
+
 .checkbox-label:hover {
     color: var(--primary);
 }
@@ -375,7 +382,7 @@ header {
 }
 
 .selected-keyword:focus {
-    outline: 2px solid white;
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
