@@ -13,6 +13,9 @@ func TestIsBlocklisted(t *testing.T) {
 			`^\.gitlab-ci\.ya?ml$`,
 			`(^|/)tests?/`,  // Match /test/ or /tests/ or starting with test/ or tests/
 			`^kubernetes/`,
+			`(^|/)lima\.REJECTED\.yaml$`,           // Rejected templates
+			`/rancher-desktop/lima/0/lima\.yaml$`,  // Rancher Desktop old config (never at root)
+			`/rancher-desktop/lima/_config/0\.yaml$`,  // Rancher Desktop newer config (never at root)
 		},
 		Repos: []string{
 			`^spamorg/`,
@@ -78,6 +81,38 @@ func TestIsBlocklisted(t *testing.T) {
 			path:     "kubernetes/config.yaml",
 			expected: true,
 			reason:   "should block kubernetes/ directory",
+		},
+		{
+			name:     "Rejected template at root",
+			owner:    "m11o",
+			repo:     "lima-stamps",
+			path:     "lima.REJECTED.yaml",
+			expected: true,
+			reason:   "should block lima.REJECTED.yaml at root",
+		},
+		{
+			name:     "Rejected template in subdirectory",
+			owner:    "someorg",
+			repo:     "somerepo",
+			path:     "subdir/lima.REJECTED.yaml",
+			expected: true,
+			reason:   "should block lima.REJECTED.yaml in subdirectory",
+		},
+		{
+			name:     "Rancher Desktop old config",
+			owner:    "someorg",
+			repo:     "somerepo",
+			path:     "rancher-desktop/lima/0/lima.yaml",
+			expected: true,
+			reason:   "should block rancher-desktop old config",
+		},
+		{
+			name:     "Rancher Desktop newer config",
+			owner:    "someorg",
+			repo:     "somerepo",
+			path:     "rancher-desktop/lima/_config/0.yaml",
+			expected: true,
+			reason:   "should block rancher-desktop newer config",
 		},
 		{
 			name:     "Valid template",
