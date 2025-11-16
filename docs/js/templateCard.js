@@ -183,17 +183,11 @@ export function createTemplateCard(template, onCardClick) {
             // Move down by one row (columnCount cards)
             const nextCard = cards[currentIndex + columnCount];
             if (nextCard) {
-                // Check if we need to scroll
+                // Scroll so next card is at TOP of viewport (to see rows below)
                 const rect = nextCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                const viewportBottom = window.scrollY + window.innerHeight;
-
-                // If card is below viewport or partially visible at bottom
-                if (rect.bottom > window.innerHeight - 20) {
-                    const offset = 20; // Space for border and focus outline
-                    window.scrollTo({ top: cardTop - offset, behavior: 'smooth' });
-                }
-
+                const offset = 20; // Space for border and focus outline
+                window.scrollTo({ top: cardTop - offset, behavior: 'smooth' });
                 nextCard.focus({ preventScroll: true });
             } else {
                 // At bottom row - scroll to bottom to show footer
@@ -213,16 +207,14 @@ export function createTemplateCard(template, onCardClick) {
             // Move up by one row (columnCount cards)
             const prevCard = cards[currentIndex - columnCount];
             if (prevCard) {
-                // Check if we need to scroll
+                // Scroll so prev card is at BOTTOM of viewport (to see rows above)
                 const rect = prevCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-
-                // If card is above viewport or partially visible at top
-                if (rect.top < 20) {
-                    const offset = 20; // Space for border and focus outline
-                    window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
-                }
-
+                const cardHeight = rect.height;
+                const offset = 20; // Space for border and focus outline at bottom
+                // Position card so its bottom is at (viewport bottom - offset)
+                const targetScrollY = cardTop + cardHeight - window.innerHeight + offset;
+                window.scrollTo({ top: Math.max(0, targetScrollY), behavior: 'smooth' });
                 prevCard.focus({ preventScroll: true });
             } else {
                 // At top row - scroll to top to show header
