@@ -82,8 +82,8 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
         }
 
         // Type filter
-        if (typeFilter === 'official' && !template.is_official) return false;
-        if (typeFilter === 'community' && template.is_official) return false;
+        if (typeFilter === 'official' && !template.official) return false;
+        if (typeFilter === 'community' && template.official) return false;
 
         return true;
     });
@@ -93,20 +93,17 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
  * Sort templates by specified criteria
  * @param {Array} templates - Templates to sort
  * @param {string} sortBy - Sort criteria ('name', 'stars', 'updated')
- * @param {Map} repositories - Repository data map
  * @returns {Array} Sorted templates (mutates original array)
  */
-export function sortTemplates(templates, sortBy, repositories) {
+export function sortTemplates(templates, sortBy) {
     return templates.sort((a, b) => {
         switch (sortBy) {
             case 'name':
                 return (a.name || a.path).localeCompare(b.name || b.path);
             case 'stars':
-                const repoA = repositories.get(a.repo);
-                const repoB = repositories.get(b.repo);
-                return (repoB?.stars || 0) - (repoA?.stars || 0);
+                return (b.stars || 0) - (a.stars || 0);
             case 'updated':
-                return new Date(b.last_checked) - new Date(a.last_checked);
+                return new Date(b.updated_at) - new Date(a.updated_at);
             default:
                 return 0;
         }

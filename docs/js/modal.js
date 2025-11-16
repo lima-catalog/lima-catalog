@@ -14,9 +14,8 @@ let previouslyFocusedElement = null;
 /**
  * Open preview modal for a template
  * @param {Object} template - Template object
- * @param {Object} repo - Repository object
  */
-export function openPreviewModal(template, repo) {
+export function openPreviewModal(template) {
     currentTemplate = template;
 
     // Store the currently focused element to restore later
@@ -38,7 +37,7 @@ export function openPreviewModal(template, repo) {
     modalGithubScheme.textContent = githubSchemeURL;
 
     // Use default branch URL for display
-    const displayURL = getDefaultBranchURL(template, repo);
+    const displayURL = getDefaultBranchURL(template);
     modalGithubLink.href = displayURL;
     modalGithubLink.textContent = displayURL;
 
@@ -59,7 +58,7 @@ export function openPreviewModal(template, repo) {
     }, 100);
 
     // Fetch and display template content
-    fetchTemplateContent(template, repo);
+    fetchTemplateContent(template);
 }
 
 /**
@@ -87,18 +86,16 @@ export function closePreviewModal() {
 /**
  * Fetch and display template content
  * @param {Object} template - Template object
- * @param {Object} repo - Repository object
  */
-async function fetchTemplateContent(template, repo) {
+async function fetchTemplateContent(template) {
     const modalLoading = document.getElementById('modal-loading');
     const modalCode = document.getElementById('modal-code');
     const modalCodeContent = document.getElementById('modal-code-content');
     const copyYamlButton = document.getElementById('copy-yaml');
 
     try {
-        // Use default branch URL for fetching latest content
-        const url = getDefaultBranchURL(template, repo);
-        const rawURL = getRawContentURL(url);
+        // Use raw_url for fetching content (already has default branch)
+        const rawURL = template.raw_url;
 
         const response = await fetch(rawURL);
         if (!response.ok) {

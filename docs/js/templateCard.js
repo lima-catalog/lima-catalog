@@ -73,11 +73,10 @@ export function deriveDisplayName(template) {
 /**
  * Create template card DOM element
  * @param {Object} template - Template object
- * @param {Object} repo - Repository object
  * @param {Function} onCardClick - Click handler for card
  * @returns {HTMLElement} Card element
  */
-export function createTemplateCard(template, repo, onCardClick) {
+export function createTemplateCard(template, onCardClick) {
     const card = document.createElement('div');
     card.className = 'template-card';
     card.setAttribute('tabindex', '0');
@@ -85,7 +84,7 @@ export function createTemplateCard(template, repo, onCardClick) {
     card.setAttribute('aria-label', `Template: ${deriveDisplayName(template)}`);
 
     const displayName = deriveDisplayName(template);
-    const description = template.short_description || (repo?.description || 'No description available');
+    const description = template.description || 'No description available';
 
     card.innerHTML = `
         <div class="template-header">
@@ -93,8 +92,8 @@ export function createTemplateCard(template, repo, onCardClick) {
                 <h3 class="template-name">${escapeHtml(displayName)}</h3>
                 <div class="template-id">${escapeHtml(template.path)}</div>
             </div>
-            <span class="template-badge ${template.is_official ? 'official' : 'community'}">
-                ${template.is_official ? 'Official' : 'Community'}
+            <span class="template-badge ${template.official ? 'official' : 'community'}">
+                ${template.official ? 'Official' : 'Community'}
             </span>
         </div>
 
@@ -129,9 +128,9 @@ export function createTemplateCard(template, repo, onCardClick) {
                class="template-repo">
                 📁 ${escapeHtml(template.repo)}
             </a>
-            ${repo && repo.stars > 0 ? `
+            ${template.stars > 0 ? `
                 <span class="template-stars">
-                    ⭐ ${repo.stars}
+                    ⭐ ${template.stars}
                 </span>
             ` : ''}
         </div>
@@ -207,11 +206,10 @@ export function createTemplateCard(template, repo, onCardClick) {
 /**
  * Render templates to grid
  * @param {Array} templates - Templates to render
- * @param {Map} repositories - Repository data
  * @param {HTMLElement} gridElement - Grid container element
  * @param {Function} onCardClick - Click handler for cards
  */
-export function renderTemplateGrid(templates, repositories, gridElement, onCardClick) {
+export function renderTemplateGrid(templates, gridElement, onCardClick) {
     gridElement.innerHTML = '';
 
     if (templates.length === 0) {
@@ -220,8 +218,7 @@ export function renderTemplateGrid(templates, repositories, gridElement, onCardC
     }
 
     templates.forEach(template => {
-        const repo = repositories.get(template.repo);
-        const card = createTemplateCard(template, repo, onCardClick);
+        const card = createTemplateCard(template, onCardClick);
         gridElement.appendChild(card);
     });
 }

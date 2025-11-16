@@ -18,44 +18,24 @@ export function parseJsonLines(text) {
 }
 
 /**
- * Load templates data from GitHub
- * @returns {Promise<Array>} Array of template objects
+ * Load combined catalog data from GitHub
+ * This file contains templates with all necessary repo/org data pre-joined
+ * @returns {Promise<Array>} Array of template objects with embedded metadata
  */
-export async function loadTemplates() {
-    const response = await fetch(`${DATA_BASE_URL}/templates.jsonl`);
+export async function loadCatalog() {
+    const response = await fetch(`${DATA_BASE_URL}/catalog.jsonl`);
     if (!response.ok) {
-        throw new Error(`Failed to load templates: HTTP ${response.status}`);
+        throw new Error(`Failed to load catalog: HTTP ${response.status}`);
     }
     const text = await response.text();
     return parseJsonLines(text);
 }
 
 /**
- * Load repositories data from GitHub
- * @returns {Promise<Map>} Map of repo ID to repo object
- */
-export async function loadRepositories() {
-    const response = await fetch(`${DATA_BASE_URL}/repos.jsonl`);
-    if (!response.ok) {
-        throw new Error(`Failed to load repositories: HTTP ${response.status}`);
-    }
-    const text = await response.text();
-    const repos = parseJsonLines(text);
-
-    const repoMap = new Map();
-    repos.forEach(repo => repoMap.set(repo.id, repo));
-    return repoMap;
-}
-
-/**
- * Load all data (templates and repositories)
- * @returns {Promise<Object>} Object with templates and repositories
+ * Load all data (templates with embedded repo/org metadata)
+ * @returns {Promise<Object>} Object with templates array
  */
 export async function loadAllData() {
-    const [templates, repositories] = await Promise.all([
-        loadTemplates(),
-        loadRepositories()
-    ]);
-
-    return { templates, repositories };
+    const templates = await loadCatalog();
+    return { templates };
 }

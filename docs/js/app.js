@@ -41,7 +41,6 @@ function updateClearButtons() {
  */
 function filterAndRender(options = {}) {
     const templates = State.getTemplates();
-    const repositories = State.getRepositories();
     const selectedKeywords = State.getSelectedKeywords();
     const selectedCategory = State.getSelectedCategory();
 
@@ -69,7 +68,7 @@ function filterAndRender(options = {}) {
     });
 
     // Sort templates
-    filtered = sortTemplates(filtered, sortBy, repositories);
+    filtered = sortTemplates(filtered, sortBy);
 
     // Update state
     State.setFilteredTemplates(filtered);
@@ -85,7 +84,7 @@ function filterAndRender(options = {}) {
 
     // Render templates
     const gridElement = document.getElementById('templates-grid');
-    renderTemplateGrid(filtered, repositories, gridElement, handleTemplateClick);
+    renderTemplateGrid(filtered, gridElement, handleTemplateClick);
 }
 
 /**
@@ -115,9 +114,7 @@ function handleCategoryToggle(category) {
  * Handle template card click
  */
 function handleTemplateClick(template) {
-    const repositories = State.getRepositories();
-    const repo = repositories.get(template.repo);
-    openPreviewModal(template, repo);
+    openPreviewModal(template);
 }
 
 /**
@@ -615,11 +612,10 @@ async function initialize() {
         loading.textContent = 'Loading templates...';
 
         // Load data
-        const { templates, repositories } = await loadAllData();
+        const { templates } = await loadAllData();
 
         // Update state
         State.setTemplates(templates);
-        State.setRepositories(repositories);
         State.setFilteredTemplates([...templates]);
 
         // Hide loading

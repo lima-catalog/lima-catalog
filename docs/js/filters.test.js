@@ -13,8 +13,9 @@ const sampleTemplates = [
         repo: 'lima-vm/lima',
         category: 'containers',
         keywords: ['alpine', 'linux', 'docker'],
-        is_official: true,
-        last_checked: '2024-01-15'
+        official: true,
+        stars: 100,
+        updated_at: '2024-01-15'
     },
     {
         name: 'ubuntu',
@@ -22,8 +23,9 @@ const sampleTemplates = [
         repo: 'lima-vm/lima',
         category: 'development',
         keywords: ['ubuntu', 'linux'],
-        is_official: true,
-        last_checked: '2024-01-20'
+        official: true,
+        stars: 100,
+        updated_at: '2024-01-20'
     },
     {
         name: 'custom',
@@ -31,8 +33,9 @@ const sampleTemplates = [
         repo: 'user/repo',
         category: 'containers',
         keywords: ['docker', 'k8s'],
-        is_official: false,
-        last_checked: '2024-01-10'
+        official: false,
+        stars: 50,
+        updated_at: '2024-01-10'
     }
 ];
 
@@ -136,13 +139,13 @@ runner.test('applyFilters: filters by multiple keywords (AND logic)', () => {
 runner.test('applyFilters: filters by type (official)', () => {
     const result = applyFilters(sampleTemplates, { typeFilter: 'official' });
     assert.equal(result.length, 2);
-    assert.ok(result.every(t => t.is_official));
+    assert.ok(result.every(t => t.official));
 });
 
 runner.test('applyFilters: filters by type (community)', () => {
     const result = applyFilters(sampleTemplates, { typeFilter: 'community' });
     assert.equal(result.length, 1);
-    assert.equal(result[0].is_official, false);
+    assert.equal(result[0].official, false);
 });
 
 runner.test('applyFilters: combines multiple filters', () => {
@@ -162,7 +165,7 @@ runner.test('applyFilters: returns all templates with empty filters', () => {
 // Test sortTemplates
 runner.test('sortTemplates: sorts by name', () => {
     const templates = [...sampleTemplates];
-    const result = sortTemplates(templates, 'name', new Map());
+    const result = sortTemplates(templates, 'name');
     assert.equal(result[0].name, 'alpine');
     assert.equal(result[1].name, 'custom');
     assert.equal(result[2].name, 'ubuntu');
@@ -170,28 +173,24 @@ runner.test('sortTemplates: sorts by name', () => {
 
 runner.test('sortTemplates: sorts by stars', () => {
     const templates = [...sampleTemplates];
-    const repositories = new Map([
-        ['lima-vm/lima', { stars: 100 }],
-        ['user/repo', { stars: 50 }]
-    ]);
-    const result = sortTemplates(templates, 'stars', repositories);
-    // First two should be from lima-vm/lima (100 stars)
-    assert.equal(result[0].repo, 'lima-vm/lima');
-    assert.equal(result[1].repo, 'lima-vm/lima');
-    assert.equal(result[2].repo, 'user/repo');
+    const result = sortTemplates(templates, 'stars');
+    // First two should have 100 stars (alpine, ubuntu)
+    assert.equal(result[0].stars, 100);
+    assert.equal(result[1].stars, 100);
+    assert.equal(result[2].stars, 50);
 });
 
 runner.test('sortTemplates: sorts by updated date', () => {
     const templates = [...sampleTemplates];
-    const result = sortTemplates(templates, 'updated', new Map());
+    const result = sortTemplates(templates, 'updated');
     assert.equal(result[0].name, 'ubuntu'); // 2024-01-20
     assert.equal(result[1].name, 'alpine'); // 2024-01-15
     assert.equal(result[2].name, 'custom'); // 2024-01-10
 });
 
-runner.test('sortTemplates: handles missing repository data', () => {
+runner.test('sortTemplates: handles missing stars data', () => {
     const templates = [...sampleTemplates];
-    const result = sortTemplates(templates, 'stars', new Map());
+    const result = sortTemplates(templates, 'stars');
     // Should not throw error
     assert.equal(result.length, 3);
 });
