@@ -74,7 +74,7 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
                 // Find the first tag on the next row (offsetTop > currentTop)
                 const nextRowTag = tags.find(t => t.offsetTop > currentTop);
                 if (nextRowTag) nextRowTag.focus();
-            } else if (e.key === 'ArrowUp') {
+            } else if (e.key === 'ArrowUp' && !e.ctrlKey) {
                 e.preventDefault();
                 const tags = Array.from(cloudElement.querySelectorAll('.keyword-tag'));
                 const currentTop = tag.offsetTop;
@@ -201,7 +201,7 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
                     const firstUnselected = document.querySelector('.keyword-tag');
                     if (firstUnselected) firstUnselected.focus();
                 }
-            } else if (e.key === 'ArrowUp') {
+            } else if (e.key === 'ArrowUp' && !e.ctrlKey) {
                 e.preventDefault();
                 const tags = Array.from(containerElement.querySelectorAll('.selected-keyword'));
                 const currentTop = tag.offsetTop;
@@ -368,8 +368,12 @@ export function setupSidebarNavigation() {
     // Use event delegation on the sidebar with capture phase
     // This runs before individual element handlers, allowing us to intercept Arrow Up/Down
     sidebar.addEventListener('keydown', (e) => {
-        // Only handle Arrow Up/Down
+        // Only handle Arrow Up/Down without modifier keys
+        // Let Ctrl+Up/Down be handled by global navigation
         if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') {
+            return;
+        }
+        if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) {
             return;
         }
 
