@@ -357,13 +357,13 @@ func run() error {
 	// Create combiner
 	dataCombiner := combiner.NewCombiner(blocklist)
 
-	// Generate combined data file
-	combinedPath := filepath.Join(dataDir, "templates-combined.jsonl")
-	if err := dataCombiner.CombineData(combineTemplates, combineRepos, combineOrgs, combinedPath); err != nil {
+	// Generate catalog file for frontend
+	catalogPath := filepath.Join(dataDir, "catalog.jsonl")
+	if err := dataCombiner.CombineData(combineTemplates, combineRepos, combineOrgs, catalogPath); err != nil {
 		return fmt.Errorf("failed to combine data: %w", err)
 	}
 
-	fmt.Printf("✓ Created templates-combined.jsonl\n")
+	fmt.Printf("✓ Created catalog.jsonl\n")
 	fmt.Println()
 
 	// Final summary
@@ -381,7 +381,7 @@ func run() error {
 	fmt.Printf("  - templates.jsonl\n")
 	fmt.Printf("  - repos.jsonl\n")
 	fmt.Printf("  - orgs.jsonl\n")
-	fmt.Printf("  - templates-combined.jsonl (frontend data)\n")
+	fmt.Printf("  - catalog.jsonl (frontend data)\n")
 	fmt.Printf("  - progress.json\n")
 	fmt.Println()
 

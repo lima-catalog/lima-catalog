@@ -120,6 +120,48 @@ fi
 
 echo ""
 echo "======================================================================"
+echo "Test 4: Frontend Data Generation (catalog.jsonl)"
+echo "======================================================================"
+echo ""
+
+# Check that catalog.jsonl was created
+if [ -f "$DATA_DIR/catalog.jsonl" ]; then
+    echo "✅ catalog.jsonl created"
+else
+    echo "❌ catalog.jsonl not found"
+    exit 1
+fi
+
+# Check catalog.jsonl has valid JSON Lines format
+CATALOG_COUNT=$(grep -c "^{" $DATA_DIR/catalog.jsonl 2>/dev/null || echo "0")
+echo "✅ catalog.jsonl contains $CATALOG_COUNT entries"
+
+if [ "$CATALOG_COUNT" -lt 1 ]; then
+    echo "❌ catalog.jsonl is empty or invalid"
+    exit 1
+fi
+
+# Verify first entry has required fields
+FIRST_ENTRY=$(head -1 $DATA_DIR/catalog.jsonl)
+if echo "$FIRST_ENTRY" | jq -e '.id and .name and .description and .keywords and .repo and .org and .url and .raw_url' > /dev/null 2>&1; then
+    echo "✅ catalog.jsonl has all required fields"
+else
+    echo "❌ catalog.jsonl missing required fields"
+    echo "First entry: $FIRST_ENTRY"
+    exit 1
+fi
+
+# Verify catalog entries are sorted (spot check first few)
+FIRST_ORG=$(head -1 $DATA_DIR/catalog.jsonl | jq -r '.org')
+SECOND_ORG=$(head -2 $DATA_DIR/catalog.jsonl | tail -1 | jq -r '.org')
+if [[ "$FIRST_ORG" < "$SECOND_ORG" ]] || [[ "$FIRST_ORG" == "$SECOND_ORG" ]]; then
+    echo "✅ catalog.jsonl appears to be sorted by org"
+else
+    echo "⚠️  catalog.jsonl may not be sorted correctly (org1: $FIRST_ORG, org2: $SECOND_ORG)"
+fi
+
+echo ""
+echo "======================================================================"
 echo "Test Summary"
 echo "======================================================================"
 echo ""
@@ -127,5 +169,6 @@ echo "✅ Full discovery: $ORIGINAL_COUNT templates"
 echo "✅ Incremental mode: working correctly"
 echo "✅ Timestamp-based filtering: implemented"
 echo "✅ Blocklist filtering: active"
+echo "✅ Frontend catalog: $CATALOG_COUNT entries generated"
 echo ""
 echo "All integration tests passed! 🎉"

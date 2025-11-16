@@ -636,14 +636,14 @@ fetch_metadata(new_repos + refresh_list)
 **Implementation details**:
 - `pkg/combiner/combiner.go` - Data combination logic
 - `pkg/combiner/combiner_test.go` - Unit tests
-- Generates `templates-combined.jsonl` in data directory
+- Generates `catalog.jsonl` in data directory
 - Uses description priority: short_description > first 3 keywords
 - Uses name priority: display_name > name > path
 - Constructs raw GitHub URLs from default branch
 
 **Goal**: Create optimized file for web interface
 
-**Output**: `templates-combined.jsonl`
+**Output**: `catalog.jsonl`
 
 **Fields** (only include what frontend needs):
 ```json
