@@ -429,34 +429,24 @@ The existing data collection process has scalability issues:
 - Built-in sanity check: if we get 0 results, something is likely wrong
 
 **Blocklist Filter**:
-- Maintain blocklist file: `docs/blocklist.yaml` (application config, not generated data)
+- Maintain blocklist file: `config/blocklist.yaml`
 - Two separate filter lists (both regex-based):
   1. **Path patterns** - regex matched against file path within repo (e.g., `.github/workflows/`)
   2. **Repo patterns** - regex matched against full `org/repo/path` (e.g., `^spamorg/`)
 - Check before downloading content (saves API calls)
 - Support comments for documentation
 
-**Examples**:
+**Current Patterns**:
 ```yaml
 # Path patterns (regex) - matched against file path within repo
-# Use this for patterns that apply across all repos
 paths:
-  - '^\.github/workflows/'      # GitHub Actions (any repo)
-  - '^\.gitlab-ci\.ya?ml$'      # GitLab CI (any repo)
-  - '^kubernetes/'              # K8s configs (any repo)
-  - '/tests?/'                  # Test directories (any repo)
-  - '/examples?/'               # Example directories (any repo)
-  - '^docs?/'                   # Documentation (any repo)
-  - '^\.circleci/'              # CircleCI (any repo)
+  - '^\.github/workflows/'                      # GitHub Actions
+  - '/lima\.REJECTED\.yaml$'                    # Rejected templates
+  - '/rancher-desktop/lima/0/lima\.yaml$'       # Rancher Desktop old config
 
 # Repo patterns (regex) - matched against full org/repo/path
-# Provides fine-grained control: block entire repos, orgs, or specific templates
 repos:
-  - '^spamorg/'                           # Block entire org
-  - '^someorg/spam-repo$'                 # Block specific repo
-  - '^someorg/repo/bad-template\.yaml$'  # Block specific template
-  - '^someorg/repo/subdir/'              # Block directory in specific repo
-  # Add more as needed
+  # Add patterns as needed
 ```
 
 **Filter Logic**:
