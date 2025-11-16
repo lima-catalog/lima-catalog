@@ -46,14 +46,12 @@ git rebase origin/main
 **⚠️ CRITICAL: ALL tests must pass before creating a PR:**
 
 ```bash
-npm test
+make test
 ```
 
-**This will run 67+ unit tests covering:**
-- URL helper functions
-- Data parsing (JSONL)
-- Filter logic
-- Template card formatting
+**This will run all tests (Go + JavaScript):**
+- Go backend tests (blocklist, metadata, combiner, etc.)
+- JavaScript frontend tests (76+ unit tests covering URL helpers, data parsing, filters, etc.)
 
 **All tests must pass (exit code 0). If any tests fail, fix them before proceeding.**
 
@@ -150,7 +148,7 @@ npm test
 
 3. Run tests locally before committing:
    ```bash
-   npm test
+   make test
    ```
 
 4. All tests must pass before creating a PR
