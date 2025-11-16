@@ -152,10 +152,11 @@ func run() error {
 			return fmt.Errorf("discovery failed: %w", err)
 		}
 
-		// Sanity check for incremental mode
+		// Note: Finding 0 templates in incremental mode is normal if no repositories have been updated
+		// The pushed:>DATE query only finds repositories that were pushed after that date
 		if incremental && !sinceDate.IsZero() && len(discoveredTemplates) == 0 {
-			fmt.Println("\nWARNING: Incremental search returned 0 templates - this may indicate a problem!")
-			fmt.Println("Expected to find at least the newest template from previous run.")
+			fmt.Println("\nNote: Incremental search found 0 new/updated templates")
+			fmt.Println("This is normal if no repositories containing templates have been updated since the search date.")
 		}
 
 		// If incremental mode, merge with existing templates
