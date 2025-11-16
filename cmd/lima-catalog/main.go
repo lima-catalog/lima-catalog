@@ -101,6 +101,7 @@ func run() error {
 	// Phase 1: Discovery
 	var templates []types.Template
 	var discoveredTemplates []types.Template
+	var updateResult discovery.UpdateResult // Store update result for metadata collection
 
 	// In incremental mode, always check for new/updated templates
 	// In non-incremental mode, only run if phase is "discovery"
@@ -146,7 +147,7 @@ func run() error {
 			}
 		}
 
-		discoveredTemplates, err = discoverer.DiscoverAll(sinceDate)
+		discoveredTemplates, err = discoverer.DiscoverAll(sinceDate, existingTemplates)
 		if err != nil {
 			return fmt.Errorf("discovery failed: %w", err)
 		}
@@ -159,13 +160,16 @@ func run() error {
 
 		// If incremental mode, merge with existing templates
 		if incremental && len(existingTemplates) > 0 {
-			updateResult := discovery.MergeTemplates(existingTemplates, discoveredTemplates)
+			updateResult = discovery.MergeTemplates(existingTemplates, discoveredTemplates)
 			discovery.PrintUpdateSummary(updateResult)
 
 			// Use all templates (new + updated + unchanged)
 			templates = updateResult.AllTemplates
 		} else {
+			// Non-incremental mode: all templates are "new"
 			templates = discoveredTemplates
+			// Populate updateResult for consistency (so metadata collection logic works the same)
+			updateResult.NewTemplates = discoveredTemplates
 		}
 
 		// Save templates
@@ -239,8 +243,10 @@ func run() error {
 			}
 
 			// Use incremental metadata collection
-			// Only fetches metadata for new templates + refreshes 5% of stale (>30 days) entries
-			repositories, organizations, err = collector.CollectMetadataIncremental(discoveredTemplates, existingRepos, existingOrgs)
+			// Only fetch metadata for NEW templates (not all discovered, which may include unchanged official templates)
+			// Also refreshes 5% of stale (>30 days) entries
+			newTemplates := append(updateResult.NewTemplates, updateResult.UpdatedTemplates...)
+			repositories, organizations, err = collector.CollectMetadataIncremental(newTemplates, existingRepos, existingOrgs)
 			if err != nil {
 				return fmt.Errorf("incremental metadata collection failed: %w", err)
 			}

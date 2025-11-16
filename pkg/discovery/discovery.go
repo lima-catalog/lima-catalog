@@ -262,16 +262,51 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 }
 
 // DiscoverOfficialTemplates fetches templates from lima-vm/lima repository
-func (d *Discoverer) DiscoverOfficialTemplates() ([]types.Template, error) {
+// DiscoverOfficialTemplates discovers official templates from lima-vm/lima
+// If sinceDate is provided and existingTemplates is not empty, only returns templates that are new or changed
+func (d *Discoverer) DiscoverOfficialTemplates(sinceDate time.Time, existingTemplates []types.Template) ([]types.Template, error) {
 	var templates []types.Template
 
-	fmt.Println("Fetching official templates from lima-vm/lima...")
+	// If incremental mode, check if lima-vm/lima repo was updated since sinceDate
+	if !sinceDate.IsZero() && len(existingTemplates) > 0 {
+		fmt.Println("Checking if lima-vm/lima repository was updated...")
+
+		// Get lima-vm/lima repo info to check last push time
+		repo, err := d.client.GetRepository("lima-vm", "lima")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get lima-vm/lima repository info: %w", err)
+		}
+
+		lastPush := repo.GetPushedAt().Time
+		if !lastPush.After(sinceDate) {
+			fmt.Printf("lima-vm/lima not updated since %s (last push: %s)\n",
+				sinceDate.Format("2006-01-02"), lastPush.Format("2006-01-02"))
+			fmt.Println("Skipping official template enumeration (no changes)")
+			return templates, nil
+		}
+
+		fmt.Printf("lima-vm/lima was updated at %s (checking for template changes)\n", lastPush.Format("2006-01-02"))
+	} else {
+		fmt.Println("Fetching official templates from lima-vm/lima...")
+	}
 
 	// List contents of the templates directory
 	contents, err := d.client.ListRepositoryContents("lima-vm", "lima", "templates")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list templates directory: %w", err)
 	}
+
+	// Create map of existing templates for SHA comparison
+	existingMap := make(map[string]types.Template)
+	for _, t := range existingTemplates {
+		if t.IsOfficial {
+			existingMap[t.ID] = t
+		}
+	}
+
+	newCount := 0
+	changedCount := 0
+	unchangedCount := 0
 
 	for _, item := range contents {
 		// Only include YAML files
@@ -285,8 +320,10 @@ func (d *Discoverer) DiscoverOfficialTemplates() ([]types.Template, error) {
 			continue
 		}
 
+		templateID := fmt.Sprintf("lima-vm/lima/%s", item.GetPath())
+
 		template := types.Template{
-			ID:           fmt.Sprintf("lima-vm/lima/%s", item.GetPath()),
+			ID:           templateID,
 			Repo:         "lima-vm/lima",
 			Path:         item.GetPath(),
 			SHA:          item.GetSHA(),
@@ -297,17 +334,42 @@ func (d *Discoverer) DiscoverOfficialTemplates() ([]types.Template, error) {
 			IsOfficial:   true,
 		}
 
+		// In incremental mode, only include new or changed templates
+		if !sinceDate.IsZero() && len(existingTemplates) > 0 {
+			if existing, found := existingMap[templateID]; found {
+				if existing.SHA == template.SHA {
+					// Unchanged - skip
+					unchangedCount++
+					continue
+				} else {
+					// Changed SHA - include it
+					template.DiscoveredAt = existing.DiscoveredAt // Preserve original discovery time
+					changedCount++
+				}
+			} else {
+				// New template
+				newCount++
+			}
+		}
+
 		templates = append(templates, template)
 	}
 
-	fmt.Printf("Found %d official templates\n", len(templates))
+	// Print summary based on mode
+	if !sinceDate.IsZero() && len(existingTemplates) > 0 {
+		fmt.Printf("Found %d new, %d changed, %d unchanged official templates\n",
+			newCount, changedCount, unchangedCount)
+	} else {
+		fmt.Printf("Found %d official templates\n", len(templates))
+	}
 
 	return templates, nil
 }
 
 // DiscoverAll discovers all templates (community + official)
 // If sinceDate is provided (non-zero), only discovers templates pushed since that date
-func (d *Discoverer) DiscoverAll(sinceDate time.Time) ([]types.Template, error) {
+// If existingTemplates is provided, uses incremental mode (only returns new/changed templates)
+func (d *Discoverer) DiscoverAll(sinceDate time.Time, existingTemplates []types.Template) ([]types.Template, error) {
 	var allTemplates []types.Template
 
 	// Discover community templates
@@ -322,9 +384,9 @@ func (d *Discoverer) DiscoverAll(sinceDate time.Time) ([]types.Template, error) 
 	fmt.Printf("Discovered %d community templates\n\n", len(communityTemplates))
 	allTemplates = append(allTemplates, communityTemplates...)
 
-	// Discover official templates (always enumerate all - they don't change often)
+	// Discover official templates (with incremental mode if sinceDate provided)
 	fmt.Println("=== Discovering Official Templates ===")
-	officialTemplates, err := d.DiscoverOfficialTemplates()
+	officialTemplates, err := d.DiscoverOfficialTemplates(sinceDate, existingTemplates)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover official templates: %w", err)
 	}
