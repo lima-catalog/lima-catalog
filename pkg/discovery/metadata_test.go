@@ -81,6 +81,22 @@ func TestSelectReposToRefresh(t *testing.T) {
 			expectedMax:   1,
 			checkContains: []string{"owner1/repo1"},
 		},
+		{
+			name:         "Oldest repos selected first, not random",
+			newTemplates: []types.Template{},
+			existingRepos: []types.Repository{
+				{ID: "owner1/repo1", LastFetched: now.Add(-100 * 24 * time.Hour)}, // Oldest (100 days)
+				{ID: "owner2/repo2", LastFetched: now.Add(-80 * 24 * time.Hour)},  // 2nd oldest
+				{ID: "owner3/repo3", LastFetched: now.Add(-60 * 24 * time.Hour)},  // 3rd oldest
+				{ID: "owner4/repo4", LastFetched: now.Add(-40 * 24 * time.Hour)},  // 4th oldest
+				{ID: "owner5/repo5", LastFetched: now.Add(-35 * 24 * time.Hour)},  // Newest of stale
+				{ID: "owner6/repo6", LastFetched: now.Add(-10 * 24 * time.Hour)},  // Fresh (not stale)
+			},
+			expectedMin: 1, // 5% of 6 = 0.3, rounds to 1
+			expectedMax: 1,
+			checkContains: []string{"owner1/repo1"}, // Should select the oldest one
+			checkNotContain: []string{"owner5/repo5", "owner6/repo6"}, // Should not select newer ones
+		},
 	}
 
 	for _, tt := range tests {
@@ -165,6 +181,21 @@ func TestSelectOrgsToRefresh(t *testing.T) {
 			expectedMin:  1,
 			expectedMax:  1,
 			checkContains: []string{"owner1"},
+		},
+		{
+			name:         "Oldest orgs selected first, not random",
+			newTemplates: []types.Template{},
+			existingOrgs: []types.Organization{
+				{ID: "owner1", LastFetched: now.Add(-90 * 24 * time.Hour)},  // Oldest
+				{ID: "owner2", LastFetched: now.Add(-70 * 24 * time.Hour)},  // 2nd oldest
+				{ID: "owner3", LastFetched: now.Add(-50 * 24 * time.Hour)},  // 3rd oldest
+				{ID: "owner4", LastFetched: now.Add(-35 * 24 * time.Hour)},  // Newest of stale
+				{ID: "owner5", LastFetched: now.Add(-10 * 24 * time.Hour)},  // Fresh
+			},
+			expectedMin: 1, // 5% of 5 = 0.25, rounds to 1
+			expectedMax: 1,
+			checkContains: []string{"owner1"}, // Should select the oldest one
+			checkNotContain: []string{"owner4", "owner5"}, // Should not select newer ones
 		},
 	}
 

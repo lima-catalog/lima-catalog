@@ -2,7 +2,7 @@ package discovery
 
 import (
 	"fmt"
-	"math/rand"
+	"sort"
 	"strings"
 	"time"
 
@@ -106,14 +106,11 @@ func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.R
 		newRepoSet[t.Repo] = true
 	}
 
-	// Find stale repos (>30 days old)
+	// Find stale repos (>30 days old) and sort by age (oldest first)
 	const staleThreshold = 30 * 24 * time.Hour
-	var staleCandidates []string
-	existingRepoMap := make(map[string]types.Repository)
+	var staleCandidates []types.Repository
 
 	for _, repo := range existingRepos {
-		existingRepoMap[repo.ID] = repo
-
 		// Skip if this repo is already in new templates
 		if newRepoSet[repo.ID] {
 			continue
@@ -121,25 +118,29 @@ func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.R
 
 		// Check if stale
 		if time.Since(repo.LastFetched) > staleThreshold {
-			staleCandidates = append(staleCandidates, repo.ID)
+			staleCandidates = append(staleCandidates, repo)
 		}
 	}
 
-	// Select up to 5% of stale repos
+	// Sort stale repos by LastFetched (oldest first)
+	sort.Slice(staleCandidates, func(i, j int) bool {
+		return staleCandidates[i].LastFetched.Before(staleCandidates[j].LastFetched)
+	})
+
+	// Select up to 5% of stale repos (prioritize oldest)
 	maxRefresh := len(existingRepos) / 20 // 5%
 	if maxRefresh < 1 {
 		maxRefresh = 1
 	}
 
 	var staleToRefresh []string
-	if len(staleCandidates) <= maxRefresh {
-		staleToRefresh = staleCandidates
-	} else {
-		// Randomly sample to spread load evenly
-		rand.Shuffle(len(staleCandidates), func(i, j int) {
-			staleCandidates[i], staleCandidates[j] = staleCandidates[j], staleCandidates[i]
-		})
-		staleToRefresh = staleCandidates[:maxRefresh]
+	refreshCount := maxRefresh
+	if len(staleCandidates) < maxRefresh {
+		refreshCount = len(staleCandidates)
+	}
+
+	for i := 0; i < refreshCount; i++ {
+		staleToRefresh = append(staleToRefresh, staleCandidates[i].ID)
 	}
 
 	// Combine new repos + stale repos
@@ -164,14 +165,11 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 		}
 	}
 
-	// Find stale orgs (>30 days old)
+	// Find stale orgs (>30 days old) and sort by age (oldest first)
 	const staleThreshold = 30 * 24 * time.Hour
-	var staleCandidates []string
-	existingOrgMap := make(map[string]types.Organization)
+	var staleCandidates []types.Organization
 
 	for _, org := range existingOrgs {
-		existingOrgMap[org.ID] = org
-
 		// Skip if this org is already in new templates
 		if newOrgSet[org.ID] {
 			continue
@@ -179,25 +177,29 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 
 		// Check if stale
 		if time.Since(org.LastFetched) > staleThreshold {
-			staleCandidates = append(staleCandidates, org.ID)
+			staleCandidates = append(staleCandidates, org)
 		}
 	}
 
-	// Select up to 5% of stale orgs
+	// Sort stale orgs by LastFetched (oldest first)
+	sort.Slice(staleCandidates, func(i, j int) bool {
+		return staleCandidates[i].LastFetched.Before(staleCandidates[j].LastFetched)
+	})
+
+	// Select up to 5% of stale orgs (prioritize oldest)
 	maxRefresh := len(existingOrgs) / 20 // 5%
 	if maxRefresh < 1 {
 		maxRefresh = 1
 	}
 
 	var staleToRefresh []string
-	if len(staleCandidates) <= maxRefresh {
-		staleToRefresh = staleCandidates
-	} else {
-		// Randomly sample to spread load evenly
-		rand.Shuffle(len(staleCandidates), func(i, j int) {
-			staleCandidates[i], staleCandidates[j] = staleCandidates[j], staleCandidates[i]
-		})
-		staleToRefresh = staleCandidates[:maxRefresh]
+	refreshCount := maxRefresh
+	if len(staleCandidates) < maxRefresh {
+		refreshCount = len(staleCandidates)
+	}
+
+	for i := 0; i < refreshCount; i++ {
+		staleToRefresh = append(staleToRefresh, staleCandidates[i].ID)
 	}
 
 	// Combine new orgs + stale orgs
