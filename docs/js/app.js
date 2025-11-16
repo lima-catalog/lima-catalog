@@ -324,33 +324,39 @@ const KEYBOARD_SHORTCUTS = {
             const cards = Array.from(document.querySelectorAll('.template-card'));
             if (cards.length === 0) return;
 
-            const firstVisible = getFirstVisibleTemplateCard();
-            if (!firstVisible) return;
+            // Get current card (focused or first visible)
+            const currentCard = cards.includes(document.activeElement) ?
+                document.activeElement : getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
 
             const viewportTop = window.scrollY;
-            const firstRect = firstVisible.getBoundingClientRect();
-            const firstCardTop = firstRect.top + window.scrollY;
 
-            // Check if first visible card is partially cut off at top
-            const isPartiallyVisible = firstCardTop < viewportTop;
+            // Find the first card in the same column that's partially clipped at top
+            let targetCard = null;
+            for (let i = currentIndex - columnCount; i >= 0; i -= columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
 
-            let targetCard;
-            if (isPartiallyVisible) {
-                // The partially visible card becomes the target
-                targetCard = firstVisible;
-            } else {
-                // Move up by approximately one viewport of cards
-                const currentIndex = cards.indexOf(firstVisible);
-                const columnCount = getGridColumnCount();
-                const rowsPerPage = getRowsPerViewport();
-                const cardsPerPage = columnCount * rowsPerPage;
-                const targetIndex = Math.max(0, currentIndex - cardsPerPage);
-                targetCard = cards[targetIndex];
+                // If this card is above or at viewport top, it's our target
+                if (cardTop < viewportTop + 10) {
+                    targetCard = card;
+                    break;
+                }
+            }
+
+            // If no partially clipped card found, use first card in this column
+            if (!targetCard) {
+                targetCard = cards[currentColumn] || cards[0];
             }
 
             const targetIndex = cards.indexOf(targetCard);
             // If we're at the top, scroll to show header
-            if (targetIndex === 0) {
+            if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 targetCard.focus();
             } else {
@@ -367,32 +373,47 @@ const KEYBOARD_SHORTCUTS = {
             const cards = Array.from(document.querySelectorAll('.template-card'));
             if (cards.length === 0) return;
 
-            const lastVisible = getLastVisibleTemplateCard();
-            if (!lastVisible) return;
+            // Get current card (focused or first visible)
+            const currentCard = cards.includes(document.activeElement) ?
+                document.activeElement : getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
 
             const viewportBottom = window.scrollY + window.innerHeight;
-            const lastRect = lastVisible.getBoundingClientRect();
-            const lastCardTop = lastRect.top + window.scrollY;
-            const lastCardBottom = lastCardTop + lastRect.height;
 
-            // Check if last visible card is partially cut off at bottom
-            const isPartiallyVisible = lastCardBottom > viewportBottom;
+            // Find the first card in the same column that's partially clipped at bottom
+            let targetCard = null;
+            for (let i = currentIndex + columnCount; i < cards.length; i += columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardBottom = rect.top + window.scrollY + rect.height;
 
-            let targetCard;
-            if (isPartiallyVisible) {
-                // The partially visible card becomes the target for next page
-                targetCard = lastVisible;
-            } else {
-                // All cards fully visible, move to first card in next row
-                const currentIndex = cards.indexOf(lastVisible);
-                const columnCount = getGridColumnCount();
-                const targetIndex = Math.min(cards.length - 1, currentIndex + columnCount);
-                targetCard = cards[targetIndex];
+                // If this card extends beyond viewport bottom, it's our target
+                if (cardBottom > viewportBottom - 10) {
+                    targetCard = card;
+                    break;
+                }
             }
 
+            // If no partially clipped card found, use last card in this column
+            if (!targetCard) {
+                // Find last card in the same column
+                for (let i = cards.length - 1; i >= 0; i--) {
+                    if (i % columnCount === currentColumn) {
+                        targetCard = cards[i];
+                        break;
+                    }
+                }
+            }
+
+            if (!targetCard) return;
+
             const targetIndex = cards.indexOf(targetCard);
-            // If we're at the last card, scroll to show footer
-            if (targetIndex === cards.length - 1) {
+            // If we're at or near the last row, scroll to show footer
+            if (targetIndex >= cards.length - columnCount) {
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
                 targetCard.focus();
             } else {
@@ -636,32 +657,35 @@ function setupKeyboardShortcuts() {
             const cards = Array.from(document.querySelectorAll('.template-card'));
             if (cards.length === 0) return;
 
-            const firstVisible = getFirstVisibleTemplateCard();
-            if (!firstVisible) return;
+            // From search box, use first visible card as starting point
+            const currentCard = getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
 
             const viewportTop = window.scrollY;
-            const firstRect = firstVisible.getBoundingClientRect();
-            const firstCardTop = firstRect.top + window.scrollY;
 
-            // Check if first visible card is partially cut off at top
-            const isPartiallyVisible = firstCardTop < viewportTop;
+            // Find the first card in the same column that's partially clipped at top
+            let targetCard = null;
+            for (let i = currentIndex - columnCount; i >= 0; i -= columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
 
-            let targetCard;
-            if (isPartiallyVisible) {
-                // The partially visible card becomes the target
-                targetCard = firstVisible;
-            } else {
-                // Move up by approximately one viewport of cards
-                const currentIndex = cards.indexOf(firstVisible);
-                const columnCount = getGridColumnCount();
-                const rowsPerPage = getRowsPerViewport();
-                const cardsPerPage = columnCount * rowsPerPage;
-                const targetIndex = Math.max(0, currentIndex - cardsPerPage);
-                targetCard = cards[targetIndex];
+                if (cardTop < viewportTop + 10) {
+                    targetCard = card;
+                    break;
+                }
+            }
+
+            if (!targetCard) {
+                targetCard = cards[currentColumn] || cards[0];
             }
 
             const targetIndex = cards.indexOf(targetCard);
-            if (targetIndex === 0) {
+            if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 targetCard.focus();
             } else {
@@ -673,31 +697,43 @@ function setupKeyboardShortcuts() {
             const cards = Array.from(document.querySelectorAll('.template-card'));
             if (cards.length === 0) return;
 
-            const lastVisible = getLastVisibleTemplateCard();
-            if (!lastVisible) return;
+            // From search box, use first visible card as starting point
+            const currentCard = getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
 
             const viewportBottom = window.scrollY + window.innerHeight;
-            const lastRect = lastVisible.getBoundingClientRect();
-            const lastCardTop = lastRect.top + window.scrollY;
-            const lastCardBottom = lastCardTop + lastRect.height;
 
-            // Check if last visible card is partially cut off at bottom
-            const isPartiallyVisible = lastCardBottom > viewportBottom;
+            // Find the first card in the same column that's partially clipped at bottom
+            let targetCard = null;
+            for (let i = currentIndex + columnCount; i < cards.length; i += columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardBottom = rect.top + window.scrollY + rect.height;
 
-            let targetCard;
-            if (isPartiallyVisible) {
-                // The partially visible card becomes the target for next page
-                targetCard = lastVisible;
-            } else {
-                // All cards fully visible, move to first card in next row
-                const currentIndex = cards.indexOf(lastVisible);
-                const columnCount = getGridColumnCount();
-                const targetIndex = Math.min(cards.length - 1, currentIndex + columnCount);
-                targetCard = cards[targetIndex];
+                if (cardBottom > viewportBottom - 10) {
+                    targetCard = card;
+                    break;
+                }
             }
 
+            if (!targetCard) {
+                // Find last card in the same column
+                for (let i = cards.length - 1; i >= 0; i--) {
+                    if (i % columnCount === currentColumn) {
+                        targetCard = cards[i];
+                        break;
+                    }
+                }
+            }
+
+            if (!targetCard) return;
+
             const targetIndex = cards.indexOf(targetCard);
-            if (targetIndex === cards.length - 1) {
+            if (targetIndex >= cards.length - columnCount) {
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
                 targetCard.focus();
             } else {
