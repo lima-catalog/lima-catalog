@@ -56,6 +56,19 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 				// Template unchanged (same SHA) but we checked it
 				oldTemplate.LastChecked = time.Now() // We checked it
 				// Don't update LastUpdated - content didn't change
+				// But if LastUpdated is zero (old data before field was added), initialize it
+				if oldTemplate.LastUpdated.IsZero() {
+					// For migration: Set to a time definitely before AnalyzedAt to avoid re-analysis
+					if !oldTemplate.AnalyzedAt.IsZero() {
+						// Set to 1 hour before AnalyzedAt (or DiscoveredAt if that's earlier)
+						oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
+						if oldTemplate.AnalyzedAt.Add(-1 * time.Hour).After(oldTemplate.DiscoveredAt) {
+							oldTemplate.LastUpdated = oldTemplate.AnalyzedAt.Add(-1 * time.Hour)
+						}
+					} else {
+						oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
+					}
+				}
 				result.UnchangedCount++
 				result.AllTemplates = append(result.AllTemplates, oldTemplate)
 			}
@@ -76,6 +89,19 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 	for id, oldTemplate := range existingMap {
 		if !preservedTemplates[id] {
 			// Template wasn't checked this run - preserve unchanged, don't update LastChecked
+			// But if LastUpdated is zero (old data before field was added), initialize it
+			if oldTemplate.LastUpdated.IsZero() {
+				// For migration: Set to a time definitely before AnalyzedAt to avoid re-analysis
+				if !oldTemplate.AnalyzedAt.IsZero() {
+					// Set to 1 hour before AnalyzedAt (or DiscoveredAt if that's earlier)
+					oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
+					if oldTemplate.AnalyzedAt.Add(-1 * time.Hour).After(oldTemplate.DiscoveredAt) {
+						oldTemplate.LastUpdated = oldTemplate.AnalyzedAt.Add(-1 * time.Hour)
+					}
+				} else {
+					oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
+				}
+			}
 			result.UnchangedCount++
 			result.AllTemplates = append(result.AllTemplates, oldTemplate)
 		}
