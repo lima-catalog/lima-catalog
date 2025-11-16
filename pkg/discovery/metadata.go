@@ -271,16 +271,20 @@ func (m *MetadataCollector) CollectMetadataIncremental(newTemplates []types.Temp
 	}
 	fmt.Printf("Refreshed %d organizations\n\n", len(orgsToRefresh))
 
-	// Convert maps back to slices
-	repositories := make([]types.Repository, 0, len(repoMap))
+	// Convert maps back to slices for merge functions
+	collectedRepos := make([]types.Repository, 0, len(repoMap))
 	for _, repo := range repoMap {
-		repositories = append(repositories, repo)
+		collectedRepos = append(collectedRepos, repo)
 	}
 
-	organizations := make([]types.Organization, 0, len(orgMap))
+	collectedOrgs := make([]types.Organization, 0, len(orgMap))
 	for _, org := range orgMap {
-		organizations = append(organizations, org)
+		collectedOrgs = append(collectedOrgs, org)
 	}
+
+	// Use merge functions to ensure proper sorting
+	repositories := MergeRepositories(existingRepos, collectedRepos)
+	organizations := MergeOrganizations(existingOrgs, collectedOrgs)
 
 	return repositories, organizations, nil
 }
@@ -340,6 +344,18 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 		time.Sleep(500 * time.Millisecond) // Be nice to the API
 	}
 	fmt.Printf("Collected metadata for %d organizations\n\n", len(organizations))
+
+	// Sort for stable output
+	sort.Slice(repositories, func(i, j int) bool {
+		if repositories[i].Owner != repositories[j].Owner {
+			return repositories[i].Owner < repositories[j].Owner
+		}
+		return repositories[i].Name < repositories[j].Name
+	})
+
+	sort.Slice(organizations, func(i, j int) bool {
+		return organizations[i].ID < organizations[j].ID
+	})
 
 	return repositories, organizations, nil
 }
