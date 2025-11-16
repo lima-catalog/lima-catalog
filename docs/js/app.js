@@ -333,6 +333,12 @@ const KEYBOARD_SHORTCUTS = {
             const columnCount = getGridColumnCount();
             const currentColumn = currentIndex % columnCount;
 
+            // If already on the top row, just scroll to show header
+            if (currentIndex < columnCount) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
             const viewportTop = window.scrollY;
             const viewportBottom = viewportTop + window.innerHeight;
 
@@ -401,6 +407,12 @@ const KEYBOARD_SHORTCUTS = {
             const currentIndex = cards.indexOf(currentCard);
             const columnCount = getGridColumnCount();
             const currentColumn = currentIndex % columnCount;
+
+            // If already on the last row, just scroll to show footer
+            if (currentIndex >= cards.length - columnCount) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                return;
+            }
 
             const viewportTop = window.scrollY;
             const viewportBottom = viewportTop + window.innerHeight;
@@ -702,6 +714,12 @@ function setupKeyboardShortcuts() {
             const columnCount = getGridColumnCount();
             const currentColumn = currentIndex % columnCount;
 
+            // If already on the top row, just scroll to show header
+            if (currentIndex < columnCount) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
             const viewportTop = window.scrollY;
             const viewportBottom = viewportTop + window.innerHeight;
 
@@ -757,6 +775,12 @@ function setupKeyboardShortcuts() {
             const currentIndex = cards.indexOf(currentCard);
             const columnCount = getGridColumnCount();
             const currentColumn = currentIndex % columnCount;
+
+            // If already on the last row, just scroll to show footer
+            if (currentIndex >= cards.length - columnCount) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                return;
+            }
 
             const viewportTop = window.scrollY;
             const viewportBottom = viewportTop + window.innerHeight;
