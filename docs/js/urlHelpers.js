@@ -4,25 +4,28 @@
 
 /**
  * Get URL with default branch instead of commit SHA
- * @param {Object} template - Template object
- * @param {Object} repo - Repository object
+ * Uses the raw_url field to construct the display URL with default branch
+ * @param {Object} template - Template object with raw_url field
  * @returns {string} URL with default branch
  */
-export function getDefaultBranchURL(template, repo) {
-    if (!repo || !repo.default_branch) {
-        return template.url; // Fallback to original URL
+export function getDefaultBranchURL(template) {
+    // If we have raw_url, convert it to display URL
+    // From: https://raw.githubusercontent.com/owner/repo/branch/path
+    // To: https://github.com/owner/repo/blob/branch/path
+    if (template.raw_url) {
+        // Parse the raw URL
+        // Format: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH
+        const rawPattern = /^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/;
+        const match = template.raw_url.match(rawPattern);
+
+        if (match) {
+            const [, owner, repo, branch, path] = match;
+            return `https://github.com/${owner}/${repo}/blob/${branch}/${path}`;
+        }
     }
 
-    // Pattern: https://github.com/owner/repo/blob/COMMIT_SHA/path
-    const urlPattern = /^https:\/\/github\.com\/([^\/]+\/[^\/]+)\/blob\/([a-f0-9]{40})\/(.+)$/;
-    const match = template.url.match(urlPattern);
-
-    if (!match) {
-        return template.url; // Not a commit URL, return as-is
-    }
-
-    const [, repoPath, , filePath] = match;
-    return `https://github.com/${repoPath}/blob/${repo.default_branch}/${filePath}`;
+    // Fallback to original URL
+    return template.url;
 }
 
 /**

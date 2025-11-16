@@ -4,7 +4,6 @@
 
 // State
 let templates = [];
-let repositories = new Map();
 let filteredTemplates = [];
 let selectedKeywords = new Set();
 let selectedCategory = null;
@@ -12,10 +11,6 @@ let selectedCategory = null;
 // Getters
 export function getTemplates() {
     return templates;
-}
-
-export function getRepositories() {
-    return repositories;
 }
 
 export function getFilteredTemplates() {
@@ -33,10 +28,6 @@ export function getSelectedCategory() {
 // Setters
 export function setTemplates(newTemplates) {
     templates = newTemplates;
-}
-
-export function setRepositories(newRepositories) {
-    repositories = newRepositories;
 }
 
 export function setFilteredTemplates(newFilteredTemplates) {

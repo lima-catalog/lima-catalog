@@ -98,6 +98,23 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - Test 4 in `scripts/test-integration.sh`
 - Validates JSON format, required fields, sorting
 
+**Frontend Integration (2025-01-16):**
+- Updated frontend to use `catalog.jsonl` instead of loading `templates.jsonl` and `repos.jsonl` separately
+- Simplified data loading: single HTTP request instead of two
+- Removed repository state management and lookup code
+- Updated URL helpers to use embedded `raw_url` field
+- All 76 frontend tests passing
+
+**Changed files:**
+- `docs/js/data.js` - Replaced `loadTemplates()` and `loadRepositories()` with `loadCatalog()`
+- `docs/js/app.js` - Removed repositories parameter from rendering functions
+- `docs/js/filters.js` - Use embedded `stars` and `updated_at` fields directly
+- `docs/js/templateCard.js` - Use embedded `description` and `stars` fields
+- `docs/js/modal.js` - Removed repo parameter, use `raw_url` directly
+- `docs/js/urlHelpers.js` - Convert `raw_url` to display URL without repo lookup
+- `docs/js/state.js` - Removed repositories state management
+- Test files updated to match new data structure
+
 ---
 
 ## Testing Strategy
