@@ -382,7 +382,7 @@ const KEYBOARD_SHORTCUTS = {
                 const cardTop = rect.top + window.scrollY;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
-            targetCard.focus();
+            targetCard.focus({ preventScroll: true });
         }
     },
     'PageDown': {
@@ -457,7 +457,7 @@ const KEYBOARD_SHORTCUTS = {
                 const cardTop = rect.top + window.scrollY;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
-            targetCard.focus();
+            targetCard.focus({ preventScroll: true });
         }
     },
     'Home': {
@@ -745,7 +745,7 @@ function setupKeyboardShortcuts() {
                 const cardTop = rect.top + window.scrollY;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
-            targetCard.focus();
+            targetCard.focus({ preventScroll: true });
         } else if (e.key === 'PageDown') {
             e.preventDefault();
             const cards = Array.from(document.querySelectorAll('.template-card'));
@@ -804,7 +804,7 @@ function setupKeyboardShortcuts() {
                 const cardTop = rect.top + window.scrollY;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }
-            targetCard.focus();
+            targetCard.focus({ preventScroll: true });
         }
     });
 
