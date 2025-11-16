@@ -3,6 +3,7 @@ package discovery
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -135,26 +136,19 @@ func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.R
 	})
 
 	// Select up to 5% of stale repos (prioritize oldest)
-	maxRefresh := len(existingRepos) / 20 // 5%
-	if maxRefresh < 1 {
-		maxRefresh = 1
-	}
+	maxRefresh := max(1, len(existingRepos)/20) // At least 1, up to 5%
 
 	var staleToRefresh []string
-	refreshCount := maxRefresh
-	if len(staleCandidates) < maxRefresh {
-		refreshCount = len(staleCandidates)
-	}
+	refreshCount := min(maxRefresh, len(staleCandidates))
 
 	for i := 0; i < refreshCount; i++ {
 		staleToRefresh = append(staleToRefresh, staleCandidates[i].ID)
 	}
 
 	// Combine new repos + stale repos
-	result := make([]string, 0, len(newRepoSet)+len(staleToRefresh))
-	for repo := range newRepoSet {
-		result = append(result, repo)
-	}
+	newRepos := slices.Collect(maps.Keys(newRepoSet))
+	result := make([]string, 0, len(newRepos)+len(staleToRefresh))
+	result = append(result, newRepos...)
 	result = append(result, staleToRefresh...)
 
 	return result
@@ -200,26 +194,19 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 	})
 
 	// Select up to 5% of stale orgs (prioritize oldest)
-	maxRefresh := len(existingOrgs) / 20 // 5%
-	if maxRefresh < 1 {
-		maxRefresh = 1
-	}
+	maxRefresh := max(1, len(existingOrgs)/20) // At least 1, up to 5%
 
 	var staleToRefresh []string
-	refreshCount := maxRefresh
-	if len(staleCandidates) < maxRefresh {
-		refreshCount = len(staleCandidates)
-	}
+	refreshCount := min(maxRefresh, len(staleCandidates))
 
 	for i := 0; i < refreshCount; i++ {
 		staleToRefresh = append(staleToRefresh, staleCandidates[i].ID)
 	}
 
 	// Combine new orgs + stale orgs
-	result := make([]string, 0, len(newOrgSet)+len(staleToRefresh))
-	for org := range newOrgSet {
-		result = append(result, org)
-	}
+	newOrgs := slices.Collect(maps.Keys(newOrgSet))
+	result := make([]string, 0, len(newOrgs)+len(staleToRefresh))
+	result = append(result, newOrgs...)
 	result = append(result, staleToRefresh...)
 
 	return result
