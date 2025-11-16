@@ -254,3 +254,44 @@ INCREMENTAL=1    # Enable incremental mode
 - New: Single `catalog.jsonl` for frontend
 - Frontend only needs to load one file
 - Reduces network requests and client-side processing
+
+---
+
+## Code Quality Improvements
+
+### Keyboard Navigation Refactoring (2025-01-16)
+
+**Motivation:** External code review noted that keyboard navigation in `app.js` was imperative and hard to maintain. Modifier key handling was inconsistent across different shortcuts.
+
+**Changes:**
+- Converted 160+ lines of if/else chains to declarative `KEYBOARD_SHORTCUTS` configuration object
+- Created `getKeyString()` helper for consistent key+modifier matching
+- Made modifier key requirements explicit (`requiresNoModifiers`, `allowsShift`)
+- Added `skipIfTyping`, `preventDefault`, and `condition` flags for clear behavior specification
+- Added descriptive comments for each shortcut directly in config
+
+**Benefits:**
+- All 15+ shortcuts visible at a glance in single config object
+- Modifier key handling is now explicit and consistent
+- Easier to add/modify shortcuts - just add/edit config entry
+- Self-documenting structure with description fields
+- Reduces chance of bugs like the Ctrl+Up navigation issue we just fixed
+- Config-based approach makes it clear that `Ctrl+ArrowUp` is separate from plain `ArrowUp`
+
+**Example config entry:**
+```javascript
+'Ctrl+ArrowUp': {
+    description: 'Focus header (theme switcher)',
+    skipIfTyping: false,
+    preventDefault: true,
+    action: (e, ctx) => {
+        const themeButton = document.querySelector('.theme-switcher button');
+        if (themeButton) themeButton.focus();
+    }
+}
+```
+
+**Files changed:**
+- `docs/js/app.js` - Refactored `setupKeyboardShortcuts()` function
+
+**No functional changes** - all existing shortcuts work exactly the same way.
