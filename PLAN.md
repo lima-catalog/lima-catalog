@@ -563,7 +563,28 @@ func shouldGenerateLLM(template) bool {
 4. Update combine stage to use priority order
 5. No changes needed to existing templates without meta
 
-#### Stage 4: Metadata Management
+---
+
+#### Stage 4: Metadata Management ✅ COMPLETE
+
+**Status**: Implemented
+
+**What was completed**:
+- ✅ Intelligent refresh cycle (new templates + 5% of stale entries)
+- ✅ LastFetched tracking (already in Repository/Organization types)
+- ✅ SelectReposToRefresh() and SelectOrgsToRefresh() helpers
+- ✅ CollectMetadataIncremental() for efficient refreshes
+- ✅ Integrated with main.go incremental mode
+- ✅ Comprehensive unit tests (9 test cases, all passing)
+
+**Implementation details**:
+- `pkg/discovery/metadata.go` - Refresh selection logic
+- `pkg/discovery/metadata_test.go` - Unit tests
+- Spreads refresh load over ~20 days (100% / 5%)
+- Uses random sampling for even distribution
+- Prevents thundering herd problem
+
+**Original Plan:**
 
 **Goal**: Fetch repo/org data efficiently
 
