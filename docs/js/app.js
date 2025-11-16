@@ -383,10 +383,11 @@ const KEYBOARD_SHORTCUTS = {
             if (targetIndex < columnCount) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                // Scroll so target card is at the very top of viewport
+                // Scroll so target card is at the top of viewport with small offset for border/focus
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                window.scrollTo({ top: cardTop, behavior: 'smooth' });
+                const offset = 10; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
         }
@@ -464,10 +465,11 @@ const KEYBOARD_SHORTCUTS = {
             if (targetIndex >= cards.length - columnCount) {
                 window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
             } else {
-                // Scroll so target card is at the very top of viewport
+                // Scroll so target card is at the top of viewport with small offset for border/focus
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                window.scrollTo({ top: cardTop, behavior: 'smooth' });
+                const offset = 10; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
         }
@@ -761,7 +763,8 @@ function setupKeyboardShortcuts() {
             } else {
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                window.scrollTo({ top: cardTop, behavior: 'smooth' });
+                const offset = 10; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
         } else if (e.key === 'PageDown') {
@@ -826,7 +829,8 @@ function setupKeyboardShortcuts() {
             } else {
                 const rect = targetCard.getBoundingClientRect();
                 const cardTop = rect.top + window.scrollY;
-                window.scrollTo({ top: cardTop, behavior: 'smooth' });
+                const offset = 10; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
             }
             targetCard.focus({ preventScroll: true });
         }
