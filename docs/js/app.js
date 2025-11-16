@@ -254,6 +254,8 @@ const KEYBOARD_SHORTCUTS = {
         preventDefault: false, // Let page scroll naturally
         action: (e, ctx) => {
             setTimeout(() => {
+                // Don't auto-focus if we're at the very top (header visible)
+                if (window.scrollY <= 50) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
@@ -265,6 +267,9 @@ const KEYBOARD_SHORTCUTS = {
         preventDefault: false, // Let page scroll naturally
         action: (e, ctx) => {
             setTimeout(() => {
+                // Don't auto-focus if we're at the very bottom (footer visible)
+                const scrolledToBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50;
+                if (scrolledToBottom) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
@@ -277,8 +282,9 @@ const KEYBOARD_SHORTCUTS = {
         action: (e, ctx) => {
             const firstCard = document.querySelector('.template-card');
             if (firstCard) {
+                // Scroll to top of page to show header
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 firstCard.focus();
-                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
             }
         }
     },
@@ -290,8 +296,9 @@ const KEYBOARD_SHORTCUTS = {
             const cards = document.querySelectorAll('.template-card');
             if (cards.length > 0) {
                 const lastCard = cards[cards.length - 1];
+                // Scroll to bottom of page to show footer
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
                 lastCard.focus();
-                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
             }
         }
     },
@@ -313,6 +320,8 @@ const KEYBOARD_SHORTCUTS = {
         },
         action: (e, ctx) => {
             setTimeout(() => {
+                // Don't auto-focus if we're at the very top (header visible)
+                if (window.scrollY <= 50) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
@@ -334,6 +343,9 @@ const KEYBOARD_SHORTCUTS = {
         },
         action: (e, ctx) => {
             setTimeout(() => {
+                // Don't auto-focus if we're at the very bottom (footer visible)
+                const scrolledToBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50;
+                if (scrolledToBottom) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
@@ -480,26 +492,33 @@ function setupKeyboardShortcuts() {
             e.preventDefault();
             const firstCard = document.querySelector('.template-card');
             if (firstCard) {
+                // Scroll to top of page to show header
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 firstCard.focus();
-                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
             }
         } else if (e.key === 'End') {
             e.preventDefault();
             const cards = document.querySelectorAll('.template-card');
             if (cards.length > 0) {
                 const lastCard = cards[cards.length - 1];
+                // Scroll to bottom of page to show footer
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
                 lastCard.focus();
-                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
             }
         } else if (e.key === 'PageUp') {
             // Let the page scroll normally
             setTimeout(() => {
+                // Don't auto-focus if we're at the very top (header visible)
+                if (window.scrollY <= 50) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
         } else if (e.key === 'PageDown') {
             // Let the page scroll normally
             setTimeout(() => {
+                // Don't auto-focus if we're at the very bottom (footer visible)
+                const scrolledToBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50;
+                if (scrolledToBottom) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);

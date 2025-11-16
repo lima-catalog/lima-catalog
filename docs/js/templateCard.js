@@ -182,7 +182,12 @@ export function createTemplateCard(template, onCardClick) {
 
             // Move down by one row (columnCount cards)
             const nextCard = cards[currentIndex + columnCount];
-            if (nextCard) nextCard.focus();
+            if (nextCard) {
+                nextCard.focus();
+            } else {
+                // At bottom row - scroll to bottom to show footer
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             const grid = card.parentElement;
@@ -196,7 +201,12 @@ export function createTemplateCard(template, onCardClick) {
 
             // Move up by one row (columnCount cards)
             const prevCard = cards[currentIndex - columnCount];
-            if (prevCard) prevCard.focus();
+            if (prevCard) {
+                prevCard.focus();
+            } else {
+                // At top row - scroll to top to show header
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     });
 
