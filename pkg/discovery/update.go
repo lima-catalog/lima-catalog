@@ -110,6 +110,11 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 	// Note: RemovedTemplates is currently unused
 	// Template deletion detection will be implemented in Stage 7
 
+	// Sort templates by ID for stable output
+	sort.Slice(result.AllTemplates, func(i, j int) bool {
+		return result.AllTemplates[i].ID < result.AllTemplates[j].ID
+	})
+
 	return result
 }
 
