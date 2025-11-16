@@ -14,9 +14,17 @@ This file contains persistent instructions for Claude when working on this proje
 - Backend changes → Add to relevant section
 - Bug fixes → May not need PLAN.md update (use judgment)
 
+**⚠️ IMPORTANT: Keep PLAN.md concise!**
+
+When updating PLAN.md, check if implementation details should go to IMPLEMENTATION_NOTES.md instead:
+- **PLAN.md**: Current architecture, remaining work, high-level design decisions
+- **IMPLEMENTATION_NOTES.md**: Detailed "how we did it" notes, completed stage details, migration notes
+
+If you're adding detailed implementation notes for a completed feature, put them in IMPLEMENTATION_NOTES.md and keep only a summary in PLAN.md.
+
 **Then commit PLAN.md updates:**
 ```bash
-git add PLAN.md
+git add PLAN.md IMPLEMENTATION_NOTES.md  # If both changed
 git commit -m "Update PLAN.md to document [feature name]"
 ```
 
@@ -60,7 +68,9 @@ npm test
 
 ## Project Context
 
-See [PLAN.md](PLAN.md) for full project architecture, implementation details, and progress tracking.
+- **[PLAN.md](PLAN.md)** - Current architecture, remaining work, design decisions
+- **[IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md)** - Detailed implementation notes for completed features
+- **[INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)** - Complete UI/UX design system
 
 ## Key Reminders
 
