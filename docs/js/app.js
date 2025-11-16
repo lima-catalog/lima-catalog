@@ -408,9 +408,10 @@ function setupKeyboardShortcuts() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Skip if modal is open - let modal handle its own keyboard navigation
-        const modal = document.getElementById('preview-modal');
-        const isModalOpen = modal && modal.style.display !== 'none';
+        // Skip if any modal/overlay is open - let them handle their own keyboard navigation
+        const previewModal = document.getElementById('preview-modal');
+        const keyboardHelpOverlay = document.getElementById('keyboard-help-overlay');
+        const isModalOpen = (previewModal && previewModal.style.display !== 'none') || keyboardHelpOverlay;
         if (isModalOpen) {
             return;
         }
