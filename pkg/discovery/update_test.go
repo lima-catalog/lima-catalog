@@ -149,6 +149,60 @@ func TestMergeTemplates(t *testing.T) {
 			},
 		},
 		{
+			name: "Unchanged template updates LastChecked but not LastUpdated",
+			existing: []types.Template{
+				{
+					ID:           "owner1/repo1/template1.yaml",
+					SHA:          "abc123",
+					DiscoveredAt: now.Add(-48 * time.Hour),
+					LastChecked:  now.Add(-24 * time.Hour),
+					LastUpdated:  now.Add(-48 * time.Hour), // Last content change
+					AnalyzedAt:   now.Add(-47 * time.Hour), // Analyzed after last update
+				},
+			},
+			discovered: []types.Template{
+				{
+					ID:           "owner1/repo1/template1.yaml",
+					SHA:          "abc123", // Same SHA
+					DiscoveredAt: now,
+				},
+			},
+			expectedAllCount:       1,
+			expectedNewCount:       0,
+			expectedUpdatedCount:   0,
+			expectedUnchangedCount: 1,
+			checkResults: func(t *testing.T, result UpdateResult) {
+				if len(result.AllTemplates) != 1 {
+					t.Fatalf("Expected 1 template in AllTemplates, got %d", len(result.AllTemplates))
+				}
+				tmpl := result.AllTemplates[0]
+
+				// LastChecked should be updated (we checked it)
+				if tmpl.LastChecked.Before(now) {
+					t.Errorf("LastChecked should be updated to now when we check template")
+				}
+
+				// LastUpdated should NOT be updated (content didn't change)
+				oldLastUpdated := now.Add(-48 * time.Hour)
+				if !tmpl.LastUpdated.Equal(oldLastUpdated) {
+					t.Errorf("LastUpdated should not change when SHA unchanged\nGot: %v\nWant: %v",
+						tmpl.LastUpdated, oldLastUpdated)
+				}
+
+				// AnalyzedAt should be preserved
+				oldAnalyzedAt := now.Add(-47 * time.Hour)
+				if !tmpl.AnalyzedAt.Equal(oldAnalyzedAt) {
+					t.Errorf("AnalyzedAt should be preserved\nGot: %v\nWant: %v",
+						tmpl.AnalyzedAt, oldAnalyzedAt)
+				}
+
+				// Analyzer skip logic: AnalyzedAt.After(LastUpdated)
+				if !tmpl.AnalyzedAt.After(tmpl.LastUpdated) {
+					t.Error("AnalyzedAt should be after LastUpdated to enable analyzer skip")
+				}
+			},
+		},
+		{
 			name: "Mixed scenario: new, updated, unchanged, not-checked",
 			existing: []types.Template{
 				{

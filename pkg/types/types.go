@@ -12,7 +12,8 @@ type Template struct {
 	LastModified     time.Time `json:"last_modified"`              // Last commit date
 	URL              string    `json:"url"`                        // Raw content URL
 	DiscoveredAt     time.Time `json:"discovered_at"`              // When we found it
-	LastChecked      time.Time `json:"last_checked"`               // Last time we verified it
+	LastChecked      time.Time `json:"last_checked"`               // Last time we verified it exists
+	LastUpdated      time.Time `json:"last_updated"`               // Last time content changed (SHA changed)
 	IsOfficial       bool      `json:"is_official"`                // From lima-vm/lima
 	Name             string    `json:"name,omitempty"`             // Short name (e.g., "ubuntu-dev")
 	DisplayName      string    `json:"display_name,omitempty"`     // Human-readable name
