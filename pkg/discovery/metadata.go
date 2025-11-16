@@ -1,8 +1,10 @@
 package discovery
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 	"time"
 
@@ -123,31 +125,30 @@ func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.R
 	}
 
 	// Sort stale repos by LastFetched (oldest first)
-	sort.Slice(staleCandidates, func(i, j int) bool {
-		return staleCandidates[i].LastFetched.Before(staleCandidates[j].LastFetched)
+	slices.SortFunc(staleCandidates, func(a, b types.Repository) int {
+		if a.LastFetched.Before(b.LastFetched) {
+			return -1
+		}
+		if b.LastFetched.Before(a.LastFetched) {
+			return 1
+		}
+		return 0
 	})
 
 	// Select up to 5% of stale repos (prioritize oldest)
-	maxRefresh := len(existingRepos) / 20 // 5%
-	if maxRefresh < 1 {
-		maxRefresh = 1
-	}
+	maxRefresh := max(1, len(existingRepos)/20) // At least 1, up to 5%
 
 	var staleToRefresh []string
-	refreshCount := maxRefresh
-	if len(staleCandidates) < maxRefresh {
-		refreshCount = len(staleCandidates)
-	}
+	refreshCount := min(maxRefresh, len(staleCandidates))
 
 	for i := 0; i < refreshCount; i++ {
 		staleToRefresh = append(staleToRefresh, staleCandidates[i].ID)
 	}
 
 	// Combine new repos + stale repos
-	result := make([]string, 0, len(newRepoSet)+len(staleToRefresh))
-	for repo := range newRepoSet {
-		result = append(result, repo)
-	}
+	newRepos := slices.Collect(maps.Keys(newRepoSet))
+	result := make([]string, 0, len(newRepos)+len(staleToRefresh))
+	result = append(result, newRepos...)
 	result = append(result, staleToRefresh...)
 
 	return result
@@ -182,31 +183,30 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 	}
 
 	// Sort stale orgs by LastFetched (oldest first)
-	sort.Slice(staleCandidates, func(i, j int) bool {
-		return staleCandidates[i].LastFetched.Before(staleCandidates[j].LastFetched)
+	slices.SortFunc(staleCandidates, func(a, b types.Organization) int {
+		if a.LastFetched.Before(b.LastFetched) {
+			return -1
+		}
+		if b.LastFetched.Before(a.LastFetched) {
+			return 1
+		}
+		return 0
 	})
 
 	// Select up to 5% of stale orgs (prioritize oldest)
-	maxRefresh := len(existingOrgs) / 20 // 5%
-	if maxRefresh < 1 {
-		maxRefresh = 1
-	}
+	maxRefresh := max(1, len(existingOrgs)/20) // At least 1, up to 5%
 
 	var staleToRefresh []string
-	refreshCount := maxRefresh
-	if len(staleCandidates) < maxRefresh {
-		refreshCount = len(staleCandidates)
-	}
+	refreshCount := min(maxRefresh, len(staleCandidates))
 
 	for i := 0; i < refreshCount; i++ {
 		staleToRefresh = append(staleToRefresh, staleCandidates[i].ID)
 	}
 
 	// Combine new orgs + stale orgs
-	result := make([]string, 0, len(newOrgSet)+len(staleToRefresh))
-	for org := range newOrgSet {
-		result = append(result, org)
-	}
+	newOrgs := slices.Collect(maps.Keys(newOrgSet))
+	result := make([]string, 0, len(newOrgs)+len(staleToRefresh))
+	result = append(result, newOrgs...)
 	result = append(result, staleToRefresh...)
 
 	return result
@@ -346,15 +346,15 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 	fmt.Printf("Collected metadata for %d organizations\n\n", len(organizations))
 
 	// Sort for stable output
-	sort.Slice(repositories, func(i, j int) bool {
-		if repositories[i].Owner != repositories[j].Owner {
-			return repositories[i].Owner < repositories[j].Owner
-		}
-		return repositories[i].Name < repositories[j].Name
+	slices.SortFunc(repositories, func(a, b types.Repository) int {
+		return cmp.Or(
+			cmp.Compare(a.Owner, b.Owner),
+			cmp.Compare(a.Name, b.Name),
+		)
 	})
 
-	sort.Slice(organizations, func(i, j int) bool {
-		return organizations[i].ID < organizations[j].ID
+	slices.SortFunc(organizations, func(a, b types.Organization) int {
+		return cmp.Compare(a.ID, b.ID)
 	})
 
 	return repositories, organizations, nil

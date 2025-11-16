@@ -1,8 +1,9 @@
 package discovery
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/types"
@@ -111,8 +112,8 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 	// Template deletion detection will be implemented in Stage 7
 
 	// Sort templates by ID for stable output
-	sort.Slice(result.AllTemplates, func(i, j int) bool {
-		return result.AllTemplates[i].ID < result.AllTemplates[j].ID
+	slices.SortFunc(result.AllTemplates, func(a, b types.Template) int {
+		return cmp.Compare(a.ID, b.ID)
 	})
 
 	return result
@@ -139,11 +140,11 @@ func MergeRepositories(existing, collected []types.Repository) []types.Repositor
 	}
 
 	// Sort by owner (org), then name for stable output
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Owner != result[j].Owner {
-			return result[i].Owner < result[j].Owner
-		}
-		return result[i].Name < result[j].Name
+	slices.SortFunc(result, func(a, b types.Repository) int {
+		return cmp.Or(
+			cmp.Compare(a.Owner, b.Owner),
+			cmp.Compare(a.Name, b.Name),
+		)
 	})
 
 	return result
@@ -170,8 +171,8 @@ func MergeOrganizations(existing, collected []types.Organization) []types.Organi
 	}
 
 	// Sort by ID (login) for stable output
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].ID < result[j].ID
+	slices.SortFunc(result, func(a, b types.Organization) int {
+		return cmp.Compare(a.ID, b.ID)
 	})
 
 	return result

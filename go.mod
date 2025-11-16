@@ -1,6 +1,6 @@
 module github.com/lima-catalog/lima-catalog
 
-go 1.24.7
+go 1.25.1
 
 require (
 	github.com/google/go-github/v57 v57.0.0 // indirect
