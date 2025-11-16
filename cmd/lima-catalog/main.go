@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/lima-catalog/lima-catalog/pkg/combiner"
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/storage"
@@ -325,6 +327,45 @@ func run() error {
 		fmt.Println()
 	}
 
+	// Phase 4: Frontend Data Combination
+	fmt.Println("=== Phase 4: Frontend Data Combination ===")
+	fmt.Println()
+
+	// Load all data files
+	combineTemplates, err := store.LoadTemplates()
+	if err != nil {
+		return fmt.Errorf("failed to load templates: %w", err)
+	}
+
+	combineRepos, err := store.LoadRepositories()
+	if err != nil {
+		return fmt.Errorf("failed to load repositories: %w", err)
+	}
+
+	combineOrgs, err := store.LoadOrganizations()
+	if err != nil {
+		return fmt.Errorf("failed to load organizations: %w", err)
+	}
+
+	// Load blocklist
+	blocklist, err := discovery.LoadBlocklist(filepath.Join("config", "blocklist.yaml"))
+	if err != nil {
+		fmt.Printf("Warning: Failed to load blocklist: %v\n", err)
+		blocklist = &types.Blocklist{} // Use empty blocklist
+	}
+
+	// Create combiner
+	dataCombiner := combiner.NewCombiner(blocklist)
+
+	// Generate combined data file
+	combinedPath := filepath.Join(dataDir, "templates-combined.jsonl")
+	if err := dataCombiner.CombineData(combineTemplates, combineRepos, combineOrgs, combinedPath); err != nil {
+		return fmt.Errorf("failed to combine data: %w", err)
+	}
+
+	fmt.Printf("✓ Created templates-combined.jsonl\n")
+	fmt.Println()
+
 	// Final summary
 	fmt.Println("====================================================================")
 	fmt.Println("Collection Complete!")
@@ -340,6 +381,7 @@ func run() error {
 	fmt.Printf("  - templates.jsonl\n")
 	fmt.Printf("  - repos.jsonl\n")
 	fmt.Printf("  - orgs.jsonl\n")
+	fmt.Printf("  - templates-combined.jsonl (frontend data)\n")
 	fmt.Printf("  - progress.json\n")
 	fmt.Println()
 

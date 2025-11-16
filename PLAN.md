@@ -619,11 +619,31 @@ refresh_list = random.sample(refresh_candidates, refresh_count)
 fetch_metadata(new_repos + refresh_list)
 ```
 
-#### Stage 5: Frontend Data Combination
+#### Stage 5: Frontend Data Combination ✅ COMPLETE
+
+**Status**: Implemented
+
+**What was completed**:
+- ✅ Created `pkg/combiner` package for frontend data generation
+- ✅ CombineData() method merges templates + repos + orgs
+- ✅ Blocklist integration (skips filtered templates)
+- ✅ Smart field selection (only includes what frontend needs)
+- ✅ Automatic sorting by org/repo/path
+- ✅ Raw URL generation for template content
+- ✅ Integrated with main.go as Phase 4
+- ✅ Comprehensive unit tests (19 test cases, all passing)
+
+**Implementation details**:
+- `pkg/combiner/combiner.go` - Data combination logic
+- `pkg/combiner/combiner_test.go` - Unit tests
+- Generates `templates-combined.jsonl` in data directory
+- Uses description priority: short_description > first 3 keywords
+- Uses name priority: display_name > name > path
+- Constructs raw GitHub URLs from default branch
 
 **Goal**: Create optimized file for web interface
 
-**Output**: `templates-combined.jsonl` (already exists)
+**Output**: `templates-combined.jsonl`
 
 **Fields** (only include what frontend needs):
 ```json
