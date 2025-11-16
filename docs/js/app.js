@@ -185,6 +185,44 @@ function getFirstVisibleTemplateCard() {
 }
 
 /**
+ * Calculate how many rows of cards approximately fit in the viewport
+ * @returns {number} Number of rows that fit in viewport
+ */
+function getRowsPerViewport() {
+    const cards = Array.from(document.querySelectorAll('.template-card'));
+    if (cards.length === 0) return 3; // Default fallback
+
+    // Get first card to measure height
+    const firstCard = cards[0];
+    const cardRect = firstCard.getBoundingClientRect();
+    const cardHeight = cardRect.height;
+
+    // Get grid to measure gap
+    const grid = firstCard.parentElement;
+    const gridStyle = window.getComputedStyle(grid);
+    const gap = parseInt(gridStyle.rowGap) || 0;
+
+    // Calculate rows per viewport (leave a bit of overlap for context)
+    const effectiveCardHeight = cardHeight + gap;
+    const rowsPerViewport = Math.max(1, Math.floor((window.innerHeight * 0.9) / effectiveCardHeight));
+
+    return rowsPerViewport;
+}
+
+/**
+ * Get number of columns in the grid
+ * @returns {number} Number of columns
+ */
+function getGridColumnCount() {
+    const grid = document.querySelector('.templates-grid');
+    if (!grid) return 3; // Default fallback
+
+    const gridStyle = window.getComputedStyle(grid);
+    const gridTemplateColumns = gridStyle.gridTemplateColumns;
+    return gridTemplateColumns.split(' ').length;
+}
+
+/**
  * Setup global keyboard shortcuts
  */
 /**
@@ -249,30 +287,69 @@ const KEYBOARD_SHORTCUTS = {
 
     // Vertical scrolling keys
     'PageUp': {
-        description: 'Scroll up and focus visible template',
+        description: 'Scroll up one page of templates',
         skipIfTyping: true,
-        preventDefault: false, // Let page scroll naturally
+        preventDefault: true,
         action: (e, ctx) => {
-            setTimeout(() => {
-                // Don't auto-focus if we're at the very top (header visible)
-                if (window.scrollY <= 50) return;
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            // Get currently focused card, or first visible card
+            const currentCard = cards.includes(document.activeElement) ?
+                document.activeElement : getFirstVisibleTemplateCard();
+
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const rowsPerPage = getRowsPerViewport();
+            const cardsPerPage = columnCount * rowsPerPage;
+
+            // Move up by approximately one page of cards
+            const targetIndex = Math.max(0, currentIndex - cardsPerPage);
+            const targetCard = cards[targetIndex];
+
+            // If we're at the top, scroll to show header
+            if (targetIndex === 0) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                targetCard.focus();
+            } else {
+                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                targetCard.focus();
+            }
         }
     },
     'PageDown': {
-        description: 'Scroll down and focus visible template',
+        description: 'Scroll down one page of templates',
         skipIfTyping: true,
-        preventDefault: false, // Let page scroll naturally
+        preventDefault: true,
         action: (e, ctx) => {
-            setTimeout(() => {
-                // Don't auto-focus if we're at the very bottom (footer visible)
-                const scrolledToBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50;
-                if (scrolledToBottom) return;
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            // Get currently focused card, or first visible card
+            const currentCard = cards.includes(document.activeElement) ?
+                document.activeElement : getFirstVisibleTemplateCard();
+
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const rowsPerPage = getRowsPerViewport();
+            const cardsPerPage = columnCount * rowsPerPage;
+
+            // Move down by approximately one page of cards
+            const targetIndex = Math.min(cards.length - 1, currentIndex + cardsPerPage);
+            const targetCard = cards[targetIndex];
+
+            // If we're at the bottom, scroll to show footer
+            if (targetIndex === cards.length - 1) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                targetCard.focus();
+            } else {
+                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                targetCard.focus();
+            }
         }
     },
     'Home': {
@@ -506,22 +583,51 @@ function setupKeyboardShortcuts() {
                 lastCard.focus();
             }
         } else if (e.key === 'PageUp') {
-            // Let the page scroll normally
-            setTimeout(() => {
-                // Don't auto-focus if we're at the very top (header visible)
-                if (window.scrollY <= 50) return;
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            e.preventDefault();
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            const firstVisibleCard = getFirstVisibleTemplateCard();
+            if (!firstVisibleCard) return;
+
+            const currentIndex = cards.indexOf(firstVisibleCard);
+            const columnCount = getGridColumnCount();
+            const rowsPerPage = getRowsPerViewport();
+            const cardsPerPage = columnCount * rowsPerPage;
+
+            const targetIndex = Math.max(0, currentIndex - cardsPerPage);
+            const targetCard = cards[targetIndex];
+
+            if (targetIndex === 0) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                targetCard.focus();
+            } else {
+                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                targetCard.focus();
+            }
         } else if (e.key === 'PageDown') {
-            // Let the page scroll normally
-            setTimeout(() => {
-                // Don't auto-focus if we're at the very bottom (footer visible)
-                const scrolledToBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50;
-                if (scrolledToBottom) return;
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            e.preventDefault();
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            const firstVisibleCard = getFirstVisibleTemplateCard();
+            if (!firstVisibleCard) return;
+
+            const currentIndex = cards.indexOf(firstVisibleCard);
+            const columnCount = getGridColumnCount();
+            const rowsPerPage = getRowsPerViewport();
+            const cardsPerPage = columnCount * rowsPerPage;
+
+            const targetIndex = Math.min(cards.length - 1, currentIndex + cardsPerPage);
+            const targetCard = cards[targetIndex];
+
+            if (targetIndex === cards.length - 1) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                targetCard.focus();
+            } else {
+                targetCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                targetCard.focus();
+            }
         }
     });
 
