@@ -187,6 +187,222 @@ function getFirstVisibleTemplateCard() {
 /**
  * Setup global keyboard shortcuts
  */
+/**
+ * Keyboard shortcut configuration
+ * Each entry defines a keyboard shortcut with its behavior
+ */
+const KEYBOARD_SHORTCUTS = {
+    // Help and search
+    '/': {
+        description: 'Focus search box',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            ctx.searchInput.focus();
+            ctx.searchInput.select();
+        }
+    },
+    '?': {
+        description: 'Show keyboard help',
+        skipIfTyping: false, // Works everywhere, even in search
+        preventDefault: true,
+        action: (e, ctx) => showKeyboardHelp(ctx.isTypingInSearch)
+    },
+
+    // Ctrl+Arrow navigation between major sections
+    'Ctrl+ArrowLeft': {
+        description: 'Focus sidebar from templates',
+        skipIfTyping: false,
+        preventDefault: true,
+        action: (e, ctx) => {
+            ctx.searchInput.focus();
+            ctx.searchInput.select();
+        }
+    },
+    'Ctrl+ArrowRight': {
+        description: 'Focus first template from sidebar',
+        skipIfTyping: false,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+        }
+    },
+    'Ctrl+ArrowUp': {
+        description: 'Focus header (theme switcher)',
+        skipIfTyping: false,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const themeButton = document.querySelector('.theme-switcher button');
+            if (themeButton) themeButton.focus();
+        }
+    },
+    'Ctrl+ArrowDown': {
+        description: 'Focus first template from header',
+        skipIfTyping: false,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+        }
+    },
+
+    // Vertical scrolling keys
+    'PageUp': {
+        description: 'Scroll up and focus visible template',
+        skipIfTyping: true,
+        preventDefault: false, // Let page scroll naturally
+        action: (e, ctx) => {
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+        }
+    },
+    'PageDown': {
+        description: 'Scroll down and focus visible template',
+        skipIfTyping: true,
+        preventDefault: false, // Let page scroll naturally
+        action: (e, ctx) => {
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+        }
+    },
+    'Home': {
+        description: 'Focus first template card',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const firstCard = document.querySelector('.template-card');
+            if (firstCard) {
+                firstCard.focus();
+                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }
+        }
+    },
+    'End': {
+        description: 'Focus last template card',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const cards = document.querySelectorAll('.template-card');
+            if (cards.length > 0) {
+                const lastCard = cards[cards.length - 1];
+                lastCard.focus();
+                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
+            }
+        }
+    },
+
+    // Auto-focus on scroll (without Ctrl modifier)
+    'ArrowUp': {
+        description: 'Auto-focus template when scrolling up',
+        skipIfTyping: true,
+        preventDefault: false,
+        requiresNoModifiers: true, // Only plain ArrowUp
+        condition: (e, ctx) => {
+            const activeElement = document.activeElement;
+            const isInHeader = activeElement && (
+                activeElement.closest('.theme-switcher') ||
+                activeElement.id === 'keyboard-help-btn'
+            );
+            // Only auto-focus if not in an interactive element or header
+            return !isInHeader && (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML');
+        },
+        action: (e, ctx) => {
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+        }
+    },
+    'ArrowDown': {
+        description: 'Auto-focus template when scrolling down',
+        skipIfTyping: true,
+        preventDefault: false,
+        requiresNoModifiers: true, // Only plain ArrowDown
+        condition: (e, ctx) => {
+            const activeElement = document.activeElement;
+            const isInHeader = activeElement && (
+                activeElement.closest('.theme-switcher') ||
+                activeElement.id === 'keyboard-help-btn'
+            );
+            // Only auto-focus if not in an interactive element or header
+            return !isInHeader && (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML');
+        },
+        action: (e, ctx) => {
+            setTimeout(() => {
+                const visibleCard = getFirstVisibleTemplateCard();
+                if (visibleCard) visibleCard.focus();
+            }, 100);
+        }
+    },
+
+    // Letter shortcuts (work with Shift, even when typing)
+    'k': {
+        description: 'Focus first keyword',
+        skipIfTyping: true,
+        allowsShift: true, // K works even when typing
+        preventDefault: true,
+        action: (e, ctx) => {
+            const firstSelected = document.querySelector('.selected-keyword');
+            const firstKeyword = document.querySelector('.keyword-tag');
+            if (firstSelected) {
+                firstSelected.focus();
+            } else if (firstKeyword) {
+                firstKeyword.focus();
+            }
+        }
+    },
+    'c': {
+        description: 'Focus first category',
+        skipIfTyping: true,
+        allowsShift: true, // C works even when typing
+        preventDefault: true,
+        action: (e, ctx) => {
+            const firstCategory = document.querySelector('.category-item');
+            if (firstCategory) firstCategory.focus();
+        }
+    },
+    's': {
+        description: 'Focus sort dropdown',
+        skipIfTyping: true,
+        allowsShift: true, // S works even when typing
+        preventDefault: true,
+        action: (e, ctx) => {
+            const sortDropdown = document.getElementById('sort');
+            if (sortDropdown) sortDropdown.focus();
+        }
+    },
+    't': {
+        description: 'Focus first template card',
+        skipIfTyping: true,
+        allowsShift: true, // T works even when typing
+        preventDefault: true,
+        action: (e, ctx) => {
+            const firstTemplate = document.querySelector('.template-card');
+            if (firstTemplate) firstTemplate.focus();
+        }
+    }
+};
+
+/**
+ * Build a key string from a keyboard event for matching against shortcuts
+ */
+function getKeyString(e) {
+    const modifiers = [];
+    if (e.ctrlKey) modifiers.push('Ctrl');
+    if (e.altKey) modifiers.push('Alt');
+    if (e.metaKey) modifiers.push('Meta');
+
+    if (modifiers.length > 0) {
+        return `${modifiers.join('+')}+${e.key}`;
+    }
+    return e.key;
+}
+
 function setupKeyboardShortcuts() {
     const searchInput = document.getElementById('search');
 
@@ -198,160 +414,48 @@ function setupKeyboardShortcuts() {
                         document.activeElement.tagName === 'TEXTAREA' ||
                         document.activeElement.isContentEditable;
 
-        // Check if typing in search specifically
         const isTypingInSearch = document.activeElement === searchInput;
+        const context = { searchInput, isTyping, isTypingInSearch };
 
-        // "/" hotkey to focus search box (like Gmail, GitHub)
-        if (e.key === '/' && !isTyping) {
-            e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
-            return;
-        }
+        // Build key string for matching
+        const keyString = getKeyString(e);
 
-        // "?" hotkey to show keyboard help - works everywhere, even in search
-        if (e.key === '?') {
-            e.preventDefault();
-            showKeyboardHelp(isTypingInSearch);
-            return;
-        }
-
-        // Ctrl+Arrow navigation between major sections
-        // Ctrl+Left: templates → sidebar (search box)
-        if (e.ctrlKey && e.key === 'ArrowLeft') {
-            e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
-            return;
-        }
-
-        // Ctrl+Right: sidebar → first visible template
-        if (e.ctrlKey && e.key === 'ArrowRight') {
-            e.preventDefault();
-            const firstTemplate = document.querySelector('.template-card');
-            if (firstTemplate) firstTemplate.focus();
-            return;
-        }
-
-        // Ctrl+Up: anywhere → header (theme switcher)
-        if (e.ctrlKey && e.key === 'ArrowUp') {
-            e.preventDefault();
-            const themeButton = document.querySelector('.theme-switcher button');
-            if (themeButton) themeButton.focus();
-            return;
-        }
-
-        // Ctrl+Down: header → templates (first template)
-        if (e.ctrlKey && e.key === 'ArrowDown') {
-            e.preventDefault();
-            const firstTemplate = document.querySelector('.template-card');
-            if (firstTemplate) firstTemplate.focus();
-            return;
-        }
-
-        // Vertical scrolling keys: auto-focus template cards
-        // PageUp: Let page scroll, then focus first visible card
-        if (e.key === 'PageUp' && !isTyping) {
-            // Don't prevent default - let the page scroll normally
-            setTimeout(() => {
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
-            return;
-        }
-
-        // PageDown: Let page scroll, then focus first visible card
-        if (e.key === 'PageDown' && !isTyping) {
-            // Don't prevent default - let the page scroll normally
-            setTimeout(() => {
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
-            return;
-        }
-
-        // Home: Focus very first template card
-        if (e.key === 'Home' && !isTyping) {
-            e.preventDefault();
-            const firstCard = document.querySelector('.template-card');
-            if (firstCard) {
-                firstCard.focus();
-                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
-            }
-            return;
-        }
-
-        // End: Focus very last template card
-        if (e.key === 'End' && !isTyping) {
-            e.preventDefault();
-            const cards = document.querySelectorAll('.template-card');
-            if (cards.length > 0) {
-                const lastCard = cards[cards.length - 1];
-                lastCard.focus();
-                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
-            }
-            return;
-        }
-
-        // ArrowUp/ArrowDown: Auto-focus templates when scrolling (if not in a focusable element)
-        if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isTyping) {
-            const activeElement = document.activeElement;
-            // Don't auto-focus if we're in the header (theme buttons, help button)
-            const isInHeader = activeElement && (
-                activeElement.closest('.theme-switcher') ||
-                activeElement.id === 'keyboard-help-btn'
-            );
-
-            // Only auto-focus if we're not already in an interactive element or header
-            if (!isInHeader && (!activeElement || activeElement === document.body || activeElement.tagName === 'HTML')) {
-                // Let the scroll happen, then focus first visible card
-                setTimeout(() => {
-                    const visibleCard = getFirstVisibleTemplateCard();
-                    if (visibleCard) visibleCard.focus();
-                }, 100);
+        // Check for uppercase letter shortcuts (k/c/s/t with Shift)
+        // These work even when typing in search box
+        const upperKey = e.key.toUpperCase();
+        if (e.shiftKey && e.key.length === 1 && upperKey >= 'A' && upperKey <= 'Z') {
+            const lowerKey = e.key.toLowerCase();
+            const shortcut = KEYBOARD_SHORTCUTS[lowerKey];
+            if (shortcut && shortcut.allowsShift) {
+                if (shortcut.preventDefault) e.preventDefault();
+                shortcut.action(e, context);
+                return;
             }
         }
 
-        // K/k to focus first keyword (selected or unselected)
-        // Uppercase works even when typing (e.g., Shift+K from search box)
-        if ((e.key === 'k' && !isTyping) || e.key === 'K') {
-            e.preventDefault();
-            // Focus first selected keyword if any, otherwise first unselected
-            const firstSelected = document.querySelector('.selected-keyword');
-            const firstKeyword = document.querySelector('.keyword-tag');
-            if (firstSelected) {
-                firstSelected.focus();
-            } else if (firstKeyword) {
-                firstKeyword.focus();
+        // Match against configured shortcuts
+        const shortcut = KEYBOARD_SHORTCUTS[keyString];
+        if (shortcut) {
+            // Check if we should skip when typing
+            if (shortcut.skipIfTyping && isTyping) {
+                return;
             }
-            return;
-        }
 
-        // C/c to focus first category
-        // Uppercase works even when typing
-        if ((e.key === 'c' && !isTyping) || e.key === 'C') {
-            e.preventDefault();
-            const firstCategory = document.querySelector('.category-item');
-            if (firstCategory) firstCategory.focus();
-            return;
-        }
+            // Check if shortcut requires no modifiers (for ArrowUp/Down auto-focus)
+            if (shortcut.requiresNoModifiers && (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey)) {
+                return;
+            }
 
-        // S/s to focus sort dropdown
-        // Uppercase works even when typing
-        if ((e.key === 's' && !isTyping) || e.key === 'S') {
-            e.preventDefault();
-            const sortDropdown = document.getElementById('sort');
-            if (sortDropdown) sortDropdown.focus();
-            return;
-        }
+            // Check custom condition if present
+            if (shortcut.condition && !shortcut.condition(e, context)) {
+                return;
+            }
 
-        // T/t to focus first template card
-        // Uppercase works even when typing
-        if ((e.key === 't' && !isTyping) || e.key === 'T') {
-            e.preventDefault();
-            const firstTemplate = document.querySelector('.template-card');
-            if (firstTemplate) firstTemplate.focus();
-            return;
+            // Execute the shortcut
+            if (shortcut.preventDefault) {
+                e.preventDefault();
+            }
+            shortcut.action(e, context);
         }
     });
 
