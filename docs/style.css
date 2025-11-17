@@ -11,6 +11,8 @@
     --secondary: #64748b;
     --success: #10b981;
     --warning: #f59e0b;
+    --lime-green: #32CD32;
+    --forest-green: #228B22;
     --bg: #f8fafc;
     --surface: #ffffff;
     --surface-elevated: #ffffff;
@@ -35,6 +37,8 @@
     --secondary: #94a3b8;
     --success: #34d399;
     --warning: #fbbf24;
+    --lime-green: #3AE03A;
+    --forest-green: #2AAA2A;
     --bg: #0f172a;
     --surface: #1e293b;
     --surface-elevated: #2d3748;
@@ -1098,13 +1102,16 @@ footer a:hover {
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--border);
 }
 
 .keyboard-help-header h2 {
     margin: 0;
     font-size: 1.125rem;
-    color: var(--text);
+    background: linear-gradient(135deg, var(--lime-green) 0%, var(--forest-green) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .keyboard-help-close {
@@ -1168,8 +1175,8 @@ footer a:hover {
 }
 
 .help-tab:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
+    outline: none;
+    box-shadow: inset 0 -2px 0 0 var(--primary);
 }
 
 .tab-content {

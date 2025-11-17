@@ -1022,16 +1022,9 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
     const tabs = overlay.querySelectorAll('.help-tab');
     const tabContents = overlay.querySelectorAll('.tab-content');
 
-    console.log('Modal opened with initialTab:', initialTab);
-    console.log('Tab contents found:', tabContents.length);
-    tabContents.forEach(tc => {
-        console.log(`  ${tc.id}: active=${tc.classList.contains('active')}, display=${getComputedStyle(tc).display}`);
-    });
-
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const targetTab = tab.dataset.tab;
-            console.log('Tab clicked:', targetTab);
 
             // Update tabs
             tabs.forEach(t => {
@@ -1043,10 +1036,7 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
 
             // Update content
             tabContents.forEach(tc => {
-                const wasActive = tc.classList.contains('active');
                 tc.classList.toggle('active', tc.id === `tab-${targetTab}`);
-                const isActive = tc.classList.contains('active');
-                console.log(`  ${tc.id}: ${wasActive} -> ${isActive}, display=${getComputedStyle(tc).display}`);
             });
         });
 
