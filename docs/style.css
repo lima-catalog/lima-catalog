@@ -1084,8 +1084,9 @@ footer a:hover {
     background: var(--surface);
     border-radius: 0.5rem;
     box-shadow: var(--shadow-lg);
-    max-width: 700px;
+    max-width: 900px;
     width: 100%;
+    min-height: 600px;
     max-height: 90vh;
     overflow-y: auto;
     border: 1px solid var(--border);
