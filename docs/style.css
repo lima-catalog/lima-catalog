@@ -1111,12 +1111,10 @@ footer a:hover {
 
 .keyboard-help-header h2 .title-lima {
     color: var(--lima-lime) !important;
-    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5) !important;
 }
 
 .keyboard-help-header h2 .title-catalog {
     color: var(--catalog-teal) !important;
-    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5) !important;
 }
 
 .keyboard-help-close {
