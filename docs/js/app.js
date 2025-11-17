@@ -153,8 +153,24 @@ function setupEventListeners() {
     // Clear keywords button
     document.getElementById('clear-keywords').addEventListener('click', clearKeywords);
 
-    // Keyboard help button
-    document.getElementById('keyboard-help-btn').addEventListener('click', showKeyboardHelp);
+    // Keyboard help button - opens help tab
+    document.getElementById('keyboard-help-btn').addEventListener('click', () => showKeyboardHelp(false, 'help'));
+
+    // App icon - opens about tab
+    const headerIcon = document.querySelector('.header-icon');
+    if (headerIcon) {
+        headerIcon.style.cursor = 'pointer';
+        headerIcon.setAttribute('role', 'button');
+        headerIcon.setAttribute('aria-label', 'About Lima Catalog');
+        headerIcon.setAttribute('tabindex', '0');
+        headerIcon.addEventListener('click', () => showKeyboardHelp(false, 'about'));
+        headerIcon.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showKeyboardHelp(false, 'about');
+            }
+        });
+    }
 }
 
 /**
@@ -274,7 +290,7 @@ const KEYBOARD_SHORTCUTS = {
         description: 'Show keyboard help',
         skipIfTyping: false, // Works everywhere, even in search
         preventDefault: true,
-        action: (e, ctx) => showKeyboardHelp(ctx.isTypingInSearch)
+        action: (e, ctx) => showKeyboardHelp(ctx.isTypingInSearch, 'help')
     },
 
     // Ctrl+Arrow navigation between major sections
@@ -862,7 +878,7 @@ function setupKeyboardShortcuts() {
 let keyboardHelpPreviousFocus = null;
 let shouldRestoreFocus = true;
 
-function showKeyboardHelp(returnFocusToSearch = false) {
+function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
     const existingOverlay = document.getElementById('keyboard-help-overlay');
     if (existingOverlay) {
         closeKeyboardHelp(returnFocusToSearch);
@@ -883,56 +899,108 @@ function showKeyboardHelp(returnFocusToSearch = false) {
     overlay.innerHTML = `
         <div class="keyboard-help-content">
             <div class="keyboard-help-header">
-                <h2 id="keyboard-help-title">Keyboard Shortcuts</h2>
-                <button class="keyboard-help-close" tabindex="0" aria-label="Close keyboard help">×</button>
+                <h2 id="keyboard-help-title">Lima Catalog</h2>
+                <button class="keyboard-help-close" tabindex="0" aria-label="Close modal">×</button>
+            </div>
+            <div class="keyboard-help-tabs" role="tablist" aria-label="Help sections">
+                <button class="help-tab ${initialTab === 'about' ? 'active' : ''}"
+                        data-tab="about"
+                        role="tab"
+                        aria-selected="${initialTab === 'about'}"
+                        aria-controls="tab-about"
+                        tabindex="${initialTab === 'about' ? '0' : '-1'}">
+                    About
+                </button>
+                <button class="help-tab ${initialTab === 'help' ? 'active' : ''}"
+                        data-tab="help"
+                        role="tab"
+                        aria-selected="${initialTab === 'help'}"
+                        aria-controls="tab-help"
+                        tabindex="${initialTab === 'help' ? '0' : '-1'}">
+                    Keyboard Help
+                </button>
             </div>
             <div class="keyboard-help-body">
-                <div class="keyboard-help-section">
-                    <h3>Jump to Section</h3>
-                    <dl class="keyboard-shortcuts">
-                        <dt><kbd>/</kbd></dt>
-                        <dd>Search box</dd>
-                        <dt><kbd>K</kbd> or <kbd>Shift+K</kbd></dt>
-                        <dd>Keywords</dd>
-                        <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
-                        <dd>Categories</dd>
-                        <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
-                        <dd>Sort dropdown</dd>
-                        <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
-                        <dd>Templates</dd>
-                        <dt><kbd>Ctrl+↑</kbd></dt>
-                        <dd>Header (theme + help)</dd>
-                    </dl>
-                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
-                        Tip: Uppercase (Shift+K/C/S/T) work while typing
+                <div id="tab-about" class="tab-content ${initialTab === 'about' ? 'active' : ''}" role="tabpanel" aria-labelledby="tab-about-label">
+                    <h3 id="tab-about-label">About Lima Catalog</h3>
+                    <p>
+                        Lima Catalog is a searchable directory of Lima VM templates from across GitHub.
+                        It helps you discover and explore community-contributed templates for creating Linux virtual machines with Lima.
+                    </p>
+                    <div class="warning-box" role="alert">
+                        <h4>⚠️ Important Notice</h4>
+                        <p>
+                            <strong>Templates in this catalog have not been reviewed or verified.</strong>
+                            Exercise caution before using any template. Always review the template contents
+                            and source repository before running on your system.
+                        </p>
+                    </div>
+                    <h4>How the Catalog Works</h4>
+                    <p>
+                        The catalog is automatically maintained through a GitHub Actions workflow that:
+                    </p>
+                    <ul>
+                        <li>Searches GitHub for repositories containing Lima template files (*.yaml files)</li>
+                        <li>Analyzes template metadata, including OS images, keywords, and categories</li>
+                        <li>Updates the catalog daily with new templates and changes</li>
+                        <li>Provides a web interface for browsing and searching templates</li>
+                    </ul>
+                    <h4>Get Involved</h4>
+                    <p>
+                        Found a bug or have a suggestion?
+                        <a href="https://github.com/lima-catalog/lima-catalog/issues" target="_blank" rel="noopener noreferrer">
+                            File an issue on GitHub
+                        </a>
                     </p>
                 </div>
-                <div class="keyboard-help-section">
-                    <h3>Navigate & Scroll</h3>
-                    <dl class="keyboard-shortcuts">
-                        <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
-                        <dd>Navigate within sections</dd>
-                        <dt><kbd>Tab</kbd></dt>
-                        <dd>Navigate between elements</dd>
-                        <dt><kbd>Ctrl+←</kbd></dt>
-                        <dd>Templates → sidebar</dd>
-                        <dt><kbd>Ctrl+→</kbd></dt>
-                        <dd>Sidebar → templates</dd>
-                        <dt><kbd>Ctrl+↓</kbd></dt>
-                        <dd>Header → templates</dd>
-                        <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt>
-                        <dd>Scroll + focus visible template</dd>
-                        <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
-                        <dd>First / last template</dd>
-                        <dt><kbd>Enter</kbd> or <kbd>Space</kbd></dt>
-                        <dd>Select / activate</dd>
-                        <dt><kbd>Delete</kbd> or <kbd>Backspace</kbd></dt>
-                        <dd>Remove selected keyword</dd>
-                        <dt><kbd>Esc</kbd></dt>
-                        <dd>Clear search</dd>
-                        <dt><kbd>?</kbd></dt>
-                        <dd>Show/hide this help</dd>
-                    </dl>
+                <div id="tab-help" class="tab-content ${initialTab === 'help' ? 'active' : ''}" role="tabpanel" aria-labelledby="tab-help-label">
+                    <div class="keyboard-help-section">
+                        <h3 id="tab-help-label">Jump to Section</h3>
+                        <dl class="keyboard-shortcuts">
+                            <dt><kbd>/</kbd></dt>
+                            <dd>Search box</dd>
+                            <dt><kbd>K</kbd> or <kbd>Shift+K</kbd></dt>
+                            <dd>Keywords</dd>
+                            <dt><kbd>C</kbd> or <kbd>Shift+C</kbd></dt>
+                            <dd>Categories</dd>
+                            <dt><kbd>S</kbd> or <kbd>Shift+S</kbd></dt>
+                            <dd>Sort dropdown</dd>
+                            <dt><kbd>T</kbd> or <kbd>Shift+T</kbd></dt>
+                            <dd>Templates</dd>
+                            <dt><kbd>Ctrl+↑</kbd></dt>
+                            <dd>Header (theme + help)</dd>
+                        </dl>
+                        <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.75rem; font-style: italic; line-height: 1.4;">
+                            Tip: Uppercase (Shift+K/C/S/T) work while typing
+                        </p>
+                    </div>
+                    <div class="keyboard-help-section">
+                        <h3>Navigate & Scroll</h3>
+                        <dl class="keyboard-shortcuts">
+                            <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
+                            <dd>Navigate within sections</dd>
+                            <dt><kbd>Tab</kbd></dt>
+                            <dd>Navigate between elements</dd>
+                            <dt><kbd>Ctrl+←</kbd></dt>
+                            <dd>Templates → sidebar</dd>
+                            <dt><kbd>Ctrl+→</kbd></dt>
+                            <dd>Sidebar → templates</dd>
+                            <dt><kbd>Ctrl+↓</kbd></dt>
+                            <dd>Header → templates</dd>
+                            <dt><kbd>Page Up</kbd> <kbd>Page Down</kbd></dt>
+                            <dd>Scroll + focus visible template</dd>
+                            <dt><kbd>Home</kbd> <kbd>End</kbd></dt>
+                            <dd>First / last template</dd>
+                            <dt><kbd>Enter</kbd> or <kbd>Space</kbd></dt>
+                            <dd>Select / activate</dd>
+                            <dt><kbd>Delete</kbd> or <kbd>Backspace</kbd></dt>
+                            <dd>Remove selected keyword</dd>
+                            <dt><kbd>Esc</kbd></dt>
+                            <dd>Clear search</dd>
+                            <dt><kbd>?</kbd></dt>
+                            <dd>Show/hide this help</dd>
+                        </dl>
+                    </div>
                 </div>
             </div>
         </div>
@@ -950,8 +1018,44 @@ function showKeyboardHelp(returnFocusToSearch = false) {
         if (e.target === overlay) closeKeyboardHelp(returnFocusToSearch);
     });
 
+    // Tab switching functionality
+    const tabs = overlay.querySelectorAll('.help-tab');
+    const tabContents = overlay.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+
+            // Update tabs
+            tabs.forEach(t => {
+                const isActive = t.dataset.tab === targetTab;
+                t.classList.toggle('active', isActive);
+                t.setAttribute('aria-selected', isActive);
+                t.setAttribute('tabindex', isActive ? '0' : '-1');
+            });
+
+            // Update content
+            tabContents.forEach(tc => {
+                tc.classList.toggle('active', tc.id === `tab-${targetTab}`);
+            });
+        });
+
+        // Keyboard navigation for tabs
+        tab.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                const currentIndex = Array.from(tabs).indexOf(tab);
+                const nextIndex = e.key === 'ArrowRight'
+                    ? (currentIndex + 1) % tabs.length
+                    : (currentIndex - 1 + tabs.length) % tabs.length;
+                tabs[nextIndex].click();
+                tabs[nextIndex].focus();
+            }
+        });
+    });
+
     // Get all focusable elements in the modal for focus trap
-    const focusableElements = content.querySelectorAll('button, [tabindex="0"]');
+    const focusableElements = content.querySelectorAll('button, a, [tabindex="0"]');
     const firstFocusable = focusableElements[0];
     const lastFocusable = focusableElements[focusableElements.length - 1];
 
@@ -1015,8 +1119,13 @@ function showKeyboardHelp(returnFocusToSearch = false) {
         }
     });
 
-    // Focus the close button for accessibility
-    closeBtn.focus();
+    // Focus the first tab or close button for accessibility
+    const activeTab = overlay.querySelector('.help-tab.active');
+    if (activeTab) {
+        activeTab.focus();
+    } else {
+        closeBtn.focus();
+    }
 }
 
 function closeKeyboardHelp(returnFocusToSearch = false) {
