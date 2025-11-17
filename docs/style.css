@@ -11,8 +11,8 @@
     --secondary: #64748b;
     --success: #10b981;
     --warning: #f59e0b;
-    --lima-lime: #BDDE64;
-    --catalog-teal: #1B2C3C;
+    --lima-lime: #B3DF4D;
+    --catalog-teal: #142C3D;
     --bg: #f8fafc;
     --surface: #ffffff;
     --surface-elevated: #ffffff;
@@ -1100,7 +1100,7 @@ footer a:hover {
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    background: #455F6C;
+    background: #3C5E6D;
 }
 
 .keyboard-help-header h2 {
