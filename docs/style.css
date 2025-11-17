@@ -1351,8 +1351,6 @@ footer a:hover {
 
     .keyboard-help-body {
         padding: 1rem;
-        grid-template-columns: 1fr;
-        gap: 1rem;
     }
 }
 
