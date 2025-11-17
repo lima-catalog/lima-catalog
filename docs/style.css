@@ -1171,11 +1171,11 @@ footer a:hover {
 }
 
 .tab-content {
-    display: none;
+    display: none !important;
 }
 
 .tab-content.active {
-    display: block;
+    display: block !important;
 }
 
 .tab-content h3 {
