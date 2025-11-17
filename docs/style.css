@@ -11,8 +11,8 @@
     --secondary: #64748b;
     --success: #10b981;
     --warning: #f59e0b;
-    --lima-lime: #9ACD32;
-    --catalog-teal: #20B2AA;
+    --lima-lime: #BDDE64;
+    --catalog-teal: #1B2C3C;
     --bg: #f8fafc;
     --surface: #ffffff;
     --surface-elevated: #ffffff;
@@ -37,8 +37,8 @@
     --secondary: #94a3b8;
     --success: #34d399;
     --warning: #fbbf24;
-    --lima-lime: #B4E854;
-    --catalog-teal: #40E0D0;
+    --lima-lime: #CFF46E;
+    --catalog-teal: #23394E;
     --bg: #0f172a;
     --surface: #1e293b;
     --surface-elevated: #2d3748;
@@ -577,7 +577,7 @@ header {
 }
 
 .template-badge.official {
-    background: #A8DF65;
+    background: var(--lima-lime);
     color: #2d4a5a;
 }
 
