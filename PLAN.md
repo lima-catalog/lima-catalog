@@ -55,6 +55,7 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 - Category browsing with dynamic counts
 - Template preview modal with YAML syntax highlighting
 - Lima 2.0 `github:` URL generation and copy
+- About/Help modal with tabbed interface (catalog info + keyboard shortcuts)
 - Responsive design for mobile/tablet/desktop
 - Fetches `catalog.jsonl` directly from `data` branch
 
