@@ -874,7 +874,7 @@ footer a:hover {
 .copy-yaml-button {
     position: absolute;
     top: 0.5rem;
-    right: 2rem;
+    right: 1rem;
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
     font-weight: 500;
@@ -957,7 +957,6 @@ footer a:hover {
 .modal-code {
     margin: 0;
     padding: 0;
-    padding-right: 4rem;
     background: transparent;
     border: none;
     font-size: 0.8125rem;
