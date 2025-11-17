@@ -185,6 +185,74 @@ function getFirstVisibleTemplateCard() {
 }
 
 /**
+ * Get the last card that's at least partially visible in viewport
+ * @returns {HTMLElement|null} The last visible card or null
+ */
+function getLastVisibleTemplateCard() {
+    const cards = Array.from(document.querySelectorAll('.template-card'));
+    if (cards.length === 0) return null;
+
+    const viewportTop = window.scrollY;
+    const viewportBottom = viewportTop + window.innerHeight;
+
+    let lastVisible = null;
+
+    for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const cardTop = rect.top + window.scrollY;
+        const cardBottom = cardTop + rect.height;
+
+        // Card is visible if it overlaps with viewport
+        if (cardBottom > viewportTop && cardTop < viewportBottom) {
+            lastVisible = card;
+        } else if (cardTop >= viewportBottom) {
+            // We've passed the viewport, stop searching
+            break;
+        }
+    }
+
+    return lastVisible || cards[cards.length - 1];
+}
+
+/**
+ * Calculate how many rows of cards approximately fit in the viewport
+ * @returns {number} Number of rows that fit in viewport
+ */
+function getRowsPerViewport() {
+    const cards = Array.from(document.querySelectorAll('.template-card'));
+    if (cards.length === 0) return 3; // Default fallback
+
+    // Get first card to measure height
+    const firstCard = cards[0];
+    const cardRect = firstCard.getBoundingClientRect();
+    const cardHeight = cardRect.height;
+
+    // Get grid to measure gap
+    const grid = firstCard.parentElement;
+    const gridStyle = window.getComputedStyle(grid);
+    const gap = parseInt(gridStyle.rowGap) || 0;
+
+    // Calculate rows per viewport (leave a bit of overlap for context)
+    const effectiveCardHeight = cardHeight + gap;
+    const rowsPerViewport = Math.max(1, Math.floor((window.innerHeight * 0.9) / effectiveCardHeight));
+
+    return rowsPerViewport;
+}
+
+/**
+ * Get number of columns in the grid
+ * @returns {number} Number of columns
+ */
+function getGridColumnCount() {
+    const grid = document.querySelector('.templates-grid');
+    if (!grid) return 3; // Default fallback
+
+    const gridStyle = window.getComputedStyle(grid);
+    const gridTemplateColumns = gridStyle.gridTemplateColumns;
+    return gridTemplateColumns.split(' ').length;
+}
+
+/**
  * Setup global keyboard shortcuts
  */
 /**
@@ -249,25 +317,161 @@ const KEYBOARD_SHORTCUTS = {
 
     // Vertical scrolling keys
     'PageUp': {
-        description: 'Scroll up and focus visible template',
+        description: 'Scroll up one page of templates',
         skipIfTyping: true,
-        preventDefault: false, // Let page scroll naturally
+        preventDefault: true,
         action: (e, ctx) => {
-            setTimeout(() => {
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            // Get current card (focused or first visible)
+            const currentCard = cards.includes(document.activeElement) ?
+                document.activeElement : getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
+
+            // If already on the top row, just scroll to show header
+            if (currentIndex < columnCount) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
+
+            // Find the first card in this column that's at or near the top of viewport
+            let firstVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
+
+                // Is this card visible?
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    firstVisibleInColumn = card;
+                    break;
+                }
+            }
+
+            if (!firstVisibleInColumn) return;
+
+            const firstVisibleIndex = cards.indexOf(firstVisibleInColumn);
+            const firstVisibleRect = firstVisibleInColumn.getBoundingClientRect();
+            const firstVisibleTop = firstVisibleRect.top + window.scrollY;
+
+            // Check if first visible card in column is partially clipped at top
+            const isClipped = firstVisibleTop < viewportTop + 10;
+
+            let targetCard;
+            if (isClipped && firstVisibleIndex >= columnCount) {
+                // Use the clipped card
+                targetCard = firstVisibleInColumn;
+            } else {
+                // Move up by one viewport worth of rows
+                const rowsPerPage = getRowsPerViewport();
+                const cardsToMove = columnCount * rowsPerPage;
+                const targetIndex = Math.max(currentColumn, firstVisibleIndex - cardsToMove);
+                targetCard = cards[targetIndex];
+            }
+
+            const targetIndex = cards.indexOf(targetCard);
+            // If we're at the top row, scroll to show header
+            if (targetIndex < columnCount) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // Scroll so target card is at the top of viewport with small offset for border/focus
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const offset = 20; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
+            }
+            targetCard.focus({ preventScroll: true });
         }
     },
     'PageDown': {
-        description: 'Scroll down and focus visible template',
+        description: 'Scroll down one page of templates',
         skipIfTyping: true,
-        preventDefault: false, // Let page scroll naturally
+        preventDefault: true,
         action: (e, ctx) => {
-            setTimeout(() => {
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            // Get current card (focused or first visible)
+            const currentCard = cards.includes(document.activeElement) ?
+                document.activeElement : getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
+
+            // If already on the last row, just scroll to show footer
+            if (currentIndex >= cards.length - columnCount) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                return;
+            }
+
+            const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
+
+            // Find the LAST card in this column that's currently visible
+            let lastVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
+
+                // Is this card visible?
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    lastVisibleInColumn = card;
+                    // Keep going to find the LAST visible card
+                } else if (cardTop >= viewportBottom) {
+                    // We've gone past the viewport
+                    break;
+                }
+            }
+
+            if (!lastVisibleInColumn) return;
+
+            const lastVisibleIndex = cards.indexOf(lastVisibleInColumn);
+            const lastVisibleRect = lastVisibleInColumn.getBoundingClientRect();
+            const lastVisibleBottom = lastVisibleRect.top + window.scrollY + lastVisibleRect.height;
+
+            // Check if last visible card in column is partially clipped at bottom
+            const isClipped = lastVisibleBottom > viewportBottom - 10;
+
+            let targetCard;
+            if (isClipped) {
+                // Use the clipped card as target
+                targetCard = lastVisibleInColumn;
+            } else {
+                // All visible cards are fully visible, move to next card in column
+                const nextIndex = lastVisibleIndex + columnCount;
+                if (nextIndex < cards.length && nextIndex % columnCount === currentColumn) {
+                    targetCard = cards[nextIndex];
+                } else {
+                    // No more cards below, use last card in column
+                    targetCard = lastVisibleInColumn;
+                }
+            }
+
+            const targetIndex = cards.indexOf(targetCard);
+            // If we're at or near the last row, scroll to show footer
+            if (targetIndex >= cards.length - columnCount) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            } else {
+                // Scroll so target card is at the top of viewport with small offset for border/focus
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const offset = 20; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
+            }
+            targetCard.focus({ preventScroll: true });
         }
     },
     'Home': {
@@ -277,8 +481,9 @@ const KEYBOARD_SHORTCUTS = {
         action: (e, ctx) => {
             const firstCard = document.querySelector('.template-card');
             if (firstCard) {
+                // Scroll to top of page to show header
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 firstCard.focus();
-                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
             }
         }
     },
@@ -290,8 +495,9 @@ const KEYBOARD_SHORTCUTS = {
             const cards = document.querySelectorAll('.template-card');
             if (cards.length > 0) {
                 const lastCard = cards[cards.length - 1];
+                // Scroll to bottom of page to show footer
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
                 lastCard.focus();
-                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
             }
         }
     },
@@ -313,6 +519,8 @@ const KEYBOARD_SHORTCUTS = {
         },
         action: (e, ctx) => {
             setTimeout(() => {
+                // Don't auto-focus if we're at the very top (header visible)
+                if (window.scrollY <= 50) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
@@ -334,6 +542,9 @@ const KEYBOARD_SHORTCUTS = {
         },
         action: (e, ctx) => {
             setTimeout(() => {
+                // Don't auto-focus if we're at the very bottom (footer visible)
+                const scrolledToBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50;
+                if (scrolledToBottom) return;
                 const visibleCard = getFirstVisibleTemplateCard();
                 if (visibleCard) visibleCard.focus();
             }, 100);
@@ -480,29 +691,148 @@ function setupKeyboardShortcuts() {
             e.preventDefault();
             const firstCard = document.querySelector('.template-card');
             if (firstCard) {
+                // Scroll to top of page to show header
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 firstCard.focus();
-                firstCard.scrollIntoView({ block: 'start', behavior: 'smooth' });
             }
         } else if (e.key === 'End') {
             e.preventDefault();
             const cards = document.querySelectorAll('.template-card');
             if (cards.length > 0) {
                 const lastCard = cards[cards.length - 1];
+                // Scroll to bottom of page to show footer
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
                 lastCard.focus();
-                lastCard.scrollIntoView({ block: 'end', behavior: 'smooth' });
             }
         } else if (e.key === 'PageUp') {
-            // Let the page scroll normally
-            setTimeout(() => {
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            e.preventDefault();
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            const currentCard = getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
+
+            // If already on the top row, just scroll to show header
+            if (currentIndex < columnCount) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
+
+            // Find the first card in this column that's at or near the top of viewport
+            let firstVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
+
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    firstVisibleInColumn = card;
+                    break;
+                }
+            }
+
+            if (!firstVisibleInColumn) return;
+
+            const firstVisibleIndex = cards.indexOf(firstVisibleInColumn);
+            const firstVisibleRect = firstVisibleInColumn.getBoundingClientRect();
+            const firstVisibleTop = firstVisibleRect.top + window.scrollY;
+
+            const isClipped = firstVisibleTop < viewportTop + 10;
+
+            let targetCard;
+            if (isClipped && firstVisibleIndex >= columnCount) {
+                targetCard = firstVisibleInColumn;
+            } else {
+                const rowsPerPage = getRowsPerViewport();
+                const cardsToMove = columnCount * rowsPerPage;
+                const targetIndex = Math.max(currentColumn, firstVisibleIndex - cardsToMove);
+                targetCard = cards[targetIndex];
+            }
+
+            const targetIndex = cards.indexOf(targetCard);
+            if (targetIndex < columnCount) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const offset = 20; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
+            }
+            targetCard.focus({ preventScroll: true });
         } else if (e.key === 'PageDown') {
-            // Let the page scroll normally
-            setTimeout(() => {
-                const visibleCard = getFirstVisibleTemplateCard();
-                if (visibleCard) visibleCard.focus();
-            }, 100);
+            e.preventDefault();
+            const cards = Array.from(document.querySelectorAll('.template-card'));
+            if (cards.length === 0) return;
+
+            const currentCard = getFirstVisibleTemplateCard();
+            if (!currentCard) return;
+
+            const currentIndex = cards.indexOf(currentCard);
+            const columnCount = getGridColumnCount();
+            const currentColumn = currentIndex % columnCount;
+
+            // If already on the last row, just scroll to show footer
+            if (currentIndex >= cards.length - columnCount) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                return;
+            }
+
+            const viewportTop = window.scrollY;
+            const viewportBottom = viewportTop + window.innerHeight;
+
+            // Find the LAST card in this column that's currently visible
+            let lastVisibleInColumn = null;
+            for (let i = currentColumn; i < cards.length; i += columnCount) {
+                const card = cards[i];
+                const rect = card.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const cardBottom = cardTop + rect.height;
+
+                if (cardBottom > viewportTop && cardTop < viewportBottom) {
+                    lastVisibleInColumn = card;
+                } else if (cardTop >= viewportBottom) {
+                    break;
+                }
+            }
+
+            if (!lastVisibleInColumn) return;
+
+            const lastVisibleIndex = cards.indexOf(lastVisibleInColumn);
+            const lastVisibleRect = lastVisibleInColumn.getBoundingClientRect();
+            const lastVisibleBottom = lastVisibleRect.top + window.scrollY + lastVisibleRect.height;
+
+            const isClipped = lastVisibleBottom > viewportBottom - 10;
+
+            let targetCard;
+            if (isClipped) {
+                targetCard = lastVisibleInColumn;
+            } else {
+                const nextIndex = lastVisibleIndex + columnCount;
+                if (nextIndex < cards.length && nextIndex % columnCount === currentColumn) {
+                    targetCard = cards[nextIndex];
+                } else {
+                    targetCard = lastVisibleInColumn;
+                }
+            }
+
+            const targetIndex = cards.indexOf(targetCard);
+            if (targetIndex >= cards.length - columnCount) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            } else {
+                const rect = targetCard.getBoundingClientRect();
+                const cardTop = rect.top + window.scrollY;
+                const offset = 20; // Space for border and focus outline
+                window.scrollTo({ top: Math.max(0, cardTop - offset), behavior: 'smooth' });
+            }
+            targetCard.focus({ preventScroll: true });
         }
     });
 

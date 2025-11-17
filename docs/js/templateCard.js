@@ -182,7 +182,23 @@ export function createTemplateCard(template, onCardClick) {
 
             // Move down by one row (columnCount cards)
             const nextCard = cards[currentIndex + columnCount];
-            if (nextCard) nextCard.focus();
+            if (nextCard) {
+                nextCard.focus({ preventScroll: true });
+
+                // Check if next card is fully visible
+                const rect = nextCard.getBoundingClientRect();
+                const margin = 20; // Space for border and focus outline
+                const isFullyVisible = rect.top >= margin && rect.bottom <= window.innerHeight - margin;
+
+                // Only scroll if not fully visible
+                if (!isFullyVisible) {
+                    const cardTop = rect.top + window.scrollY;
+                    window.scrollTo({ top: cardTop - margin, behavior: 'smooth' });
+                }
+            } else {
+                // At bottom row - scroll to bottom to show footer
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             const grid = card.parentElement;
@@ -196,7 +212,26 @@ export function createTemplateCard(template, onCardClick) {
 
             // Move up by one row (columnCount cards)
             const prevCard = cards[currentIndex - columnCount];
-            if (prevCard) prevCard.focus();
+            if (prevCard) {
+                prevCard.focus({ preventScroll: true });
+
+                // Check if prev card is fully visible
+                const rect = prevCard.getBoundingClientRect();
+                const margin = 20; // Space for border and focus outline
+                const isFullyVisible = rect.top >= margin && rect.bottom <= window.innerHeight - margin;
+
+                // Only scroll if not fully visible
+                if (!isFullyVisible) {
+                    const cardTop = rect.top + window.scrollY;
+                    const cardHeight = rect.height;
+                    // Position card so its bottom is at (viewport bottom - margin)
+                    const targetScrollY = cardTop + cardHeight - window.innerHeight + margin;
+                    window.scrollTo({ top: Math.max(0, targetScrollY), behavior: 'smooth' });
+                }
+            } else {
+                // At top row - scroll to top to show header
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     });
 
