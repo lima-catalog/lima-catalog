@@ -1261,15 +1261,15 @@ footer a:hover {
     padding: 1.25rem;
 }
 
-/* Two-column layout for keyboard help tab only */
-#tab-help {
+/* Two-column layout for keyboard help tab only when active */
+#tab-help.active {
     display: grid;
     gap: 1.25rem;
     grid-template-columns: 1fr;
 }
 
 @media (min-width: 600px) {
-    #tab-help {
+    #tab-help.active {
         grid-template-columns: 1fr 1fr;
         gap: 1.5rem;
     }
