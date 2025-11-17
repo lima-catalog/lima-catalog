@@ -37,8 +37,6 @@
     --secondary: #94a3b8;
     --success: #34d399;
     --warning: #fbbf24;
-    --lima-lime: #CFF46E;
-    --catalog-teal: #23394E;
     --bg: #0f172a;
     --surface: #1e293b;
     --surface-elevated: #2d3748;
@@ -1102,6 +1100,7 @@ footer a:hover {
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
+    background: #455F6C;
 }
 
 .keyboard-help-header h2 {
@@ -1122,7 +1121,7 @@ footer a:hover {
     border: none;
     font-size: 1.5rem;
     line-height: 1;
-    color: var(--text-light);
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
     padding: 0;
     width: 1.75rem;
@@ -1135,8 +1134,8 @@ footer a:hover {
 }
 
 .keyboard-help-close:hover {
-    background: var(--bg);
-    color: var(--text);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 1);
 }
 
 .keyboard-help-close:focus {
