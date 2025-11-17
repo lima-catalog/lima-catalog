@@ -899,7 +899,7 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
     overlay.innerHTML = `
         <div class="keyboard-help-content">
             <div class="keyboard-help-header">
-                <h2 id="keyboard-help-title"><span class="title-lima">Lima</span> <span class="title-catalog">Catalog</span></h2>
+                <h2 id="keyboard-help-title"><span class="title-lima">lima-</span><span class="title-catalog">catalog</span></h2>
                 <button class="keyboard-help-close" tabindex="0" aria-label="Close modal">×</button>
             </div>
             <div class="keyboard-help-tabs" role="tablist" aria-label="Help sections">
