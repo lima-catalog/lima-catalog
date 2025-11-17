@@ -1110,13 +1110,13 @@ footer a:hover {
 }
 
 .keyboard-help-header h2 .title-lima {
-    color: var(--lima-lime);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: var(--lima-lime) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 .keyboard-help-header h2 .title-catalog {
-    color: var(--catalog-teal);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: var(--catalog-teal) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 .keyboard-help-close {
