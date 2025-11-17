@@ -1263,7 +1263,7 @@ footer a:hover {
 
 /* Two-column layout for keyboard help tab only when active */
 #tab-help.active {
-    display: grid;
+    display: grid !important;
     gap: 1.25rem;
     grid-template-columns: 1fr;
 }
