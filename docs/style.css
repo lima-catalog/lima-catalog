@@ -1086,9 +1086,10 @@ footer a:hover {
     box-shadow: var(--shadow-lg);
     max-width: 900px;
     width: 100%;
-    min-height: 600px;
+    height: 600px;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--border);
 }
 
@@ -1260,6 +1261,8 @@ footer a:hover {
 
 .keyboard-help-body {
     padding: 1.25rem;
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* Two-column layout for keyboard help tab only when active */
