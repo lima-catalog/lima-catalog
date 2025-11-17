@@ -11,8 +11,8 @@
     --secondary: #64748b;
     --success: #10b981;
     --warning: #f59e0b;
-    --lime-green: #32CD32;
-    --forest-green: #228B22;
+    --lima-lime: #9ACD32;
+    --catalog-teal: #20B2AA;
     --bg: #f8fafc;
     --surface: #ffffff;
     --surface-elevated: #ffffff;
@@ -37,8 +37,8 @@
     --secondary: #94a3b8;
     --success: #34d399;
     --warning: #fbbf24;
-    --lime-green: #3AE03A;
-    --forest-green: #2AAA2A;
+    --lima-lime: #B4E854;
+    --catalog-teal: #40E0D0;
     --bg: #0f172a;
     --surface: #1e293b;
     --surface-elevated: #2d3748;
@@ -1107,11 +1107,16 @@ footer a:hover {
 .keyboard-help-header h2 {
     margin: 0;
     font-size: 1.125rem;
-    background: linear-gradient(135deg, var(--lime-green) 0%, var(--forest-green) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.keyboard-help-header h2 .title-lima {
+    color: var(--lima-lime);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.keyboard-help-header h2 .title-catalog {
+    color: var(--catalog-teal);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .keyboard-help-close {
