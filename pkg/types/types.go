@@ -90,15 +90,13 @@ type Blocklist struct {
 
 // Progress tracks the state of data collection for resumability
 type Progress struct {
-	Phase                string    `json:"phase"`                  // "discovery", "metadata", "complete"
-	LastSearchCursor     string    `json:"last_search_cursor"`     // pagination cursor
-	TemplatesDiscovered  int       `json:"templates_discovered"`   // total templates found
-	ReposFetched         int       `json:"repos_fetched"`          // repos metadata collected
-	OrgsFetched          int       `json:"orgs_fetched"`           // orgs metadata collected
-	LastUpdated          time.Time `json:"last_updated"`           // last progress update
-	RateLimitRemaining   int       `json:"rate_limit_remaining"`   // remaining API calls
-	RateLimitReset       time.Time `json:"rate_limit_reset"`       // when rate limit resets
-	TemplatesFetched     int       `json:"templates_fetched"`      // templates with full metadata
-	OfficialTemplates    int       `json:"official_templates"`     // official lima-vm/lima templates
-	CommunityTemplates   int       `json:"community_templates"`    // community templates
+	Phase               string    `json:"phase"`                // "discovery", "metadata", "complete"
+	TemplatesDiscovered int       `json:"templates_discovered"` // total templates found
+	ReposFetched        int       `json:"repos_fetched"`        // repos metadata collected
+	OrgsFetched         int       `json:"orgs_fetched"`         // orgs metadata collected
+	LastUpdated         time.Time `json:"last_updated"`         // last progress update
+	RateLimitRemaining  int       `json:"rate_limit_remaining"` // remaining API calls
+	RateLimitReset      time.Time `json:"rate_limit_reset"`     // when rate limit resets
+	OfficialTemplates   int       `json:"official_templates"`   // official lima-vm/lima templates
+	CommunityTemplates  int       `json:"community_templates"`  // community templates
 }

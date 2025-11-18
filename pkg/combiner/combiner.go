@@ -77,12 +77,6 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 			continue
 		}
 
-		// Skip templates with meta.noindex (future enhancement)
-		// if template.MetaNoindex {
-		//     filtered++
-		//     continue
-		// }
-
 		// Get repo data
 		repo, hasRepo := repoMap[template.Repo]
 		if !hasRepo {
@@ -162,13 +156,8 @@ func (c *Combiner) getDisplayName(template types.Template) string {
 }
 
 // getDescription returns a description for the template
-// Priority: meta.description (future) > short_description > joined keywords
+// Priority: short_description > joined keywords
 func (c *Combiner) getDescription(template types.Template) string {
-	// Future: Check template.MetaDescription first
-	// if template.MetaDescription != "" {
-	//     return template.MetaDescription
-	// }
-
 	if template.ShortDescription != "" {
 		return template.ShortDescription
 	}

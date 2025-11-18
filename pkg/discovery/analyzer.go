@@ -14,10 +14,6 @@ import (
 
 // Analyzer handles template analysis and categorization
 type Analyzer struct {
-	// LLMEnabled controls whether to use LLM for analysis
-	LLMEnabled bool
-	// LLMAPIKey is the API key for the LLM service
-	LLMAPIKey string
 	// OfficialImages contains the list of official image names from lima-vm/lima
 	OfficialImages map[string]bool
 	// DefaultComments contains normalized comment lines from default.yaml
@@ -31,10 +27,8 @@ type Analyzer struct {
 }
 
 // NewAnalyzer creates a new template analyzer
-func NewAnalyzer(llmEnabled bool, apiKey string, forceAnalyze bool) *Analyzer {
+func NewAnalyzer(forceAnalyze bool) *Analyzer {
 	return &Analyzer{
-		LLMEnabled:      llmEnabled,
-		LLMAPIKey:       apiKey,
 		OfficialImages:  make(map[string]bool),
 		DefaultComments: make(map[string]bool),
 		ForceAnalyze:    forceAnalyze,
@@ -104,14 +98,6 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 
 	// Generate basic description
 	template.ShortDescription = a.generateBasicDescription(template, templateInfo, repoInfo)
-
-	// Step 4: Use LLM for enhanced analysis (if enabled)
-	if a.LLMEnabled && a.LLMAPIKey != "" {
-		if err := a.enhanceWithLLM(template, templateInfo, repoInfo); err != nil {
-			fmt.Printf("Warning: LLM enhancement failed for %s: %v\n", template.ID, err)
-			// Continue with basic analysis
-		}
-	}
 
 	template.AnalyzedAt = a.Clock.Now()
 
@@ -194,19 +180,6 @@ func (a *Analyzer) generateBasicDescription(template *types.Template, info *Temp
 	}
 
 	return description
-}
-
-// enhanceWithLLM uses an LLM to generate better descriptions and categories
-// This is a placeholder - will be implemented in the next step
-func (a *Analyzer) enhanceWithLLM(template *types.Template, info *TemplateInfo, repo *types.Repository) error {
-	// TODO: Implement LLM-based enhancement
-	// This will call an LLM API (Claude, OpenAI, etc.) to generate:
-	// - Better display name
-	// - More detailed short description
-	// - Full description
-	// - Better keywords and categories
-
-	return nil
 }
 
 // AnalyzeTemplates analyzes multiple templates

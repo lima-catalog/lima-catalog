@@ -12,6 +12,10 @@ const (
 
 	// MetadataAPIDelay is the delay between metadata API calls
 	MetadataAPIDelay = 500 * time.Millisecond
+
+	// MaxMetadataConcurrency is the maximum number of concurrent metadata API calls
+	// Allows parallel fetching while respecting rate limits
+	MaxMetadataConcurrency = 5
 )
 
 // Rate limit threshold constants
