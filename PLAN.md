@@ -94,7 +94,7 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
     "param_count": 3,
     "env_count": 5,
     "comment_line_count": 15,
-    "unusual_images": ["nixos"]
+    "unusual_images": ["nixos.org"]
   }
 }
 ```
@@ -162,13 +162,21 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 - `param_count` - Number of configurable parameters
 - `env_count` - Number of environment variables
 - `comment_line_count` - Number of YAML comment lines (indicates documentation quality)
-- `unusual_images` - Images not in official lima-vm/lima templates
+- `unusual_images` - List of unusual image **domains** (not in official templates)
 
-**Official Images Detection**:
+**Official Images Detection** (Domain-Based):
 - Dynamically fetched from `lima-vm/lima/templates/_images/` directory via GitHub API
-- No hardcoded image list - fully autonomous system
+- Extracts **domains** from image URLs (e.g., `cloud-images.ubuntu.com`)
+- Domain-based matching handles version updates automatically
+- No hardcoded data - fully autonomous system
 - Fetched once per analyzer run, cached for all template analyses
-- Official images extracted from both filenames and YAML `images.location` fields
+
+**Unusual Images** (what gets stored):
+- Template image URLs are parsed to extract their domains
+- Domains not found in official images list are stored in `unusual_images`
+- Example: Template using `https://nixos.org/channels/...` would store `nixos.org`
+- Deduplicates domains (multiple images from same domain counted once)
+- Skips `template://` references (internal template references)
 
 **Score Calculation** (weighted sum):
 1. **Message**: 100 points (strong signal for reusability)
@@ -176,8 +184,8 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 3. **Parameters**: 20 points per param (indicates configurability)
 4. **Environment vars**: 10 points per var (shows configuration effort)
 5. **Probes**: 5 points per probe + 1 point per 10 lines
-6. **Unusual images**: 30 points per image (specialized use case)
-7. **Comment lines**: 1 point per comment line (documentation quality)
+6. **Unusual images**: 30 points if any unusual domains present (Lima uses first available)
+7. **Comment lines**: 2 points per comment line (documentation quality)
 8. **Repository stars**: 1 point per 10 stars (capped at 50 points)
 
 **Usage**:

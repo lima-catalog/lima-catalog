@@ -7,19 +7,13 @@ import (
 )
 
 func TestIdentifyUnusualImages(t *testing.T) {
-	// Create a test official images map
-	officialImages := map[string]bool{
-		"ubuntu":      true,
-		"alpine":      true,
-		"debian":      true,
-		"fedora":      true,
-		"arch":        true,
-		"almalinux":   true,
-		"rocky":       true,
-		"opensuse":    true,
-		"centos":      true,
-		"oracle":      true,
-		"amazonlinux": true,
+	// Create a test official domains map (domains from official Lima images)
+	officialDomains := map[string]bool{
+		"cloud-images.ubuntu.com":    true,
+		"dl-cdn.alpinelinux.org":     true,
+		"cloud.debian.org":           true,
+		"download.fedoraproject.org": true,
+		"geo.mirror.pkgbuild.com":    true, // Arch Linux
 	}
 
 	tests := []struct {
@@ -28,19 +22,30 @@ func TestIdentifyUnusualImages(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:     "All official images",
-			images:   []string{"ubuntu", "alpine", "debian"},
+			name: "All official image domains",
+			images: []string{
+				"https://cloud-images.ubuntu.com/releases/22.04/ubuntu-22.04-server-cloudimg-amd64.img",
+				"https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/alpine-virt-3.18.0-x86_64.iso",
+			},
 			expected: []string{},
 		},
 		{
-			name:     "Mixed official and unusual",
-			images:   []string{"ubuntu", "nixos", "alpine", "gentoo"},
-			expected: []string{"nixos", "gentoo"},
+			name: "Mixed official and unusual domains",
+			images: []string{
+				"https://cloud-images.ubuntu.com/releases/22.04/ubuntu.img",
+				"https://nixos.org/channels/nixos-23.05/nixos.iso",
+				"https://dl-cdn.alpinelinux.org/alpine/v3.18/alpine.iso",
+				"https://example.com/custom.img",
+			},
+			expected: []string{"nixos.org", "example.com"},
 		},
 		{
-			name:     "All unusual images",
-			images:   []string{"custom", "special"},
-			expected: []string{"custom", "special"},
+			name: "All unusual domains",
+			images: []string{
+				"https://custom.example.com/image.img",
+				"https://special.domain.org/system.qcow2",
+			},
+			expected: []string{"custom.example.com", "special.domain.org"},
 		},
 		{
 			name:     "Empty list",
@@ -48,17 +53,29 @@ func TestIdentifyUnusualImages(t *testing.T) {
 			expected: []string{},
 		},
 		{
-			name:     "Case insensitive matching",
-			images:   []string{"Ubuntu", "ALPINE", "CustomOS"},
-			expected: []string{"CustomOS"},
+			name: "Deduplicates same domain from multiple images",
+			images: []string{
+				"https://nixos.org/channels/23.05/nixos.iso",
+				"https://nixos.org/channels/23.11/nixos.iso",
+				"https://example.com/v1/image.img",
+			},
+			expected: []string{"nixos.org", "example.com"},
+		},
+		{
+			name: "Skips template:// references",
+			images: []string{
+				"template://_images/ubuntu.yaml",
+				"https://nixos.org/channels/nixos.iso",
+			},
+			expected: []string{"nixos.org"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IdentifyUnusualImages(tt.images, officialImages)
+			result := IdentifyUnusualImages(tt.images, officialDomains)
 			if len(result) != len(tt.expected) {
-				t.Errorf("IdentifyUnusualImages() got %d unusual images, want %d", len(result), len(tt.expected))
+				t.Errorf("IdentifyUnusualImages() got %d unusual domains, want %d", len(result), len(tt.expected))
 				t.Errorf("Got: %v", result)
 				t.Errorf("Want: %v", tt.expected)
 				return
@@ -129,11 +146,11 @@ func TestCalculateNotabilityScore(t *testing.T) {
 		{
 			name: "Template with unusual images",
 			metrics: &types.NotabilityMetrics{
-				UnusualImages: []string{"nixos", "gentoo"},
+				UnusualImages: []string{"nixos.org", "gentoo.org"},
 			},
 			repoStars: 0,
-			minScore:  60.0, // 2*30 = 60
-			maxScore:  60.0,
+			minScore:  30.0, // 30 points once (not per domain)
+			maxScore:  30.0,
 		},
 		{
 			name: "Template with stars (capped at 50)",
@@ -150,8 +167,8 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				CommentLineCount: 25,
 			},
 			repoStars: 0,
-			minScore:  25.0, // 25 comments * 1 point each
-			maxScore:  25.0,
+			minScore:  50.0, // 25 comments * 2 points each
+			maxScore:  50.0,
 		},
 		{
 			name: "Complex template (everything)",
@@ -164,11 +181,11 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				ParamCount:          4,
 				EnvCount:            6,
 				CommentLineCount:    15,
-				UnusualImages:       []string{"nixos"},
+				UnusualImages:       []string{"nixos.org"},
 			},
 			repoStars: 500,
-			minScore:  100 + 30 + 10 + 10 + 2 + 80 + 60 + 15 + 30 + 50, // Total = 387
-			maxScore:  387.0,
+			minScore:  100 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 30 + 50, // Total = 402
+			maxScore:  402.0,
 		},
 	}
 
@@ -183,23 +200,18 @@ func TestCalculateNotabilityScore(t *testing.T) {
 }
 
 func TestPopulateNotabilityMetrics(t *testing.T) {
-	// Create a test official images map
-	officialImages := map[string]bool{
-		"ubuntu":      true,
-		"alpine":      true,
-		"debian":      true,
-		"fedora":      true,
-		"arch":        true,
-		"almalinux":   true,
-		"rocky":       true,
-		"opensuse":    true,
-		"centos":      true,
-		"oracle":      true,
-		"amazonlinux": true,
+	// Create a test official domains map
+	officialDomains := map[string]bool{
+		"cloud-images.ubuntu.com": true,
+		"dl-cdn.alpinelinux.org":  true,
 	}
 
 	info := &TemplateInfo{
-		Images:              []string{"ubuntu", "nixos", "alpine"},
+		Images: []string{
+			"https://cloud-images.ubuntu.com/releases/22.04/ubuntu.img",
+			"https://nixos.org/channels/nixos.iso",
+			"https://dl-cdn.alpinelinux.org/alpine/v3.18/alpine.iso",
+		},
 		MessageLength:       150,
 		ProvisionCount:      3,
 		ProvisionTotalLines: 75,
@@ -210,7 +222,7 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		CommentLineCount:    20,
 	}
 
-	metrics := PopulateNotabilityMetrics(info, officialImages)
+	metrics := PopulateNotabilityMetrics(info, officialDomains)
 
 	if metrics.MessageLength != 150 {
 		t.Errorf("MessageLength = %d, want 150", metrics.MessageLength)
@@ -237,11 +249,11 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		t.Errorf("CommentLineCount = %d, want 20", metrics.CommentLineCount)
 	}
 
-	// Should identify nixos as unusual
+	// Should identify nixos.org as unusual domain
 	if len(metrics.UnusualImages) != 1 {
 		t.Errorf("UnusualImages length = %d, want 1", len(metrics.UnusualImages))
 	}
-	if len(metrics.UnusualImages) > 0 && metrics.UnusualImages[0] != "nixos" {
-		t.Errorf("UnusualImages[0] = %q, want %q", metrics.UnusualImages[0], "nixos")
+	if len(metrics.UnusualImages) > 0 && metrics.UnusualImages[0] != "nixos.org" {
+		t.Errorf("UnusualImages[0] = %q, want %q", metrics.UnusualImages[0], "nixos.org")
 	}
 }

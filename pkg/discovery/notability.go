@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/google/go-github/v57/github"
@@ -10,22 +11,56 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// IdentifyUnusualImages returns a list of images not in the official template set
-func IdentifyUnusualImages(images []string, officialImages map[string]bool) []string {
-	var unusual []string
-	for _, img := range images {
-		imgLower := strings.ToLower(img)
-		isOfficial := false
-		for officialImg := range officialImages {
-			if strings.Contains(imgLower, officialImg) {
-				isOfficial = true
-				break
-			}
-		}
-		if !isOfficial {
-			unusual = append(unusual, img)
+// extractDomain extracts the domain from a URL or location string
+func extractDomain(location string) string {
+	// Handle template:// references (these are references to local templates)
+	if strings.HasPrefix(location, "template://") {
+		return "" // Not a real domain, skip
+	}
+
+	// Try to parse as URL
+	if strings.HasPrefix(location, "http://") || strings.HasPrefix(location, "https://") {
+		parsedURL, err := url.Parse(location)
+		if err == nil && parsedURL.Host != "" {
+			return strings.ToLower(parsedURL.Host)
 		}
 	}
+
+	// If it looks like a domain (contains dots but no slashes before first dot)
+	if strings.Contains(location, ".") {
+		parts := strings.Split(location, "/")
+		domain := parts[0]
+		if strings.Contains(domain, ".") {
+			return strings.ToLower(domain)
+		}
+	}
+
+	return ""
+}
+
+// IdentifyUnusualImages returns a list of image domains not in the official template set
+func IdentifyUnusualImages(images []string, officialDomains map[string]bool) []string {
+	seenDomains := make(map[string]bool)
+	var unusual []string
+
+	for _, img := range images {
+		domain := extractDomain(img)
+		if domain == "" {
+			continue // Skip if we couldn't extract a domain
+		}
+
+		// Skip if already seen
+		if seenDomains[domain] {
+			continue
+		}
+		seenDomains[domain] = true
+
+		// Check if this domain is in official domains
+		if !officialDomains[domain] {
+			unusual = append(unusual, domain)
+		}
+	}
+
 	return unusual
 }
 
@@ -38,8 +73,8 @@ func IdentifyUnusualImages(images []string, officialImages map[string]bool) []st
 // - Parameters: 20 points per param (indicates configurability)
 // - Environment vars: 10 points per var
 // - Probes: 5 points per probe + 1 point per 10 lines
-// - Unusual images: 30 points per unusual image
-// - Comment lines: 1 point per comment line (indicates documentation quality)
+// - Unusual images: 30 points if any unusual image domains (Lima uses first available)
+// - Comment lines: 2 points per comment line (indicates documentation quality)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, repoStars int) float64 {
 	if metrics == nil {
@@ -68,10 +103,13 @@ func CalculateNotabilityScore(metrics *types.NotabilityMetrics, repoStars int) f
 	score += float64(metrics.ProbeTotalLines) / 10.0
 
 	// Unusual images (indicates specialized use case)
-	score += float64(len(metrics.UnusualImages)) * 30.0
+	// Award bonus once if any unusual domains (Lima uses first available image)
+	if len(metrics.UnusualImages) > 0 {
+		score += 30.0
+	}
 
 	// Comment lines (indicates documentation quality)
-	score += float64(metrics.CommentLineCount)
+	score += float64(metrics.CommentLineCount) * 2.0
 
 	// Repository stars (capped to avoid dominating other factors)
 	starsScore := float64(repoStars) / 10.0
@@ -98,10 +136,10 @@ func PopulateNotabilityMetrics(info *TemplateInfo, officialImages map[string]boo
 	}
 }
 
-// FetchOfficialImages retrieves the list of official image names from lima-vm/lima repository
+// FetchOfficialImages retrieves the list of official image domains from lima-vm/lima repository
 // by fetching and parsing all files in the templates/_images/ directory
 func FetchOfficialImages(ctx context.Context, client *github.Client) (map[string]bool, error) {
-	officialImages := make(map[string]bool)
+	officialDomains := make(map[string]bool)
 
 	// Fetch the contents of lima-vm/lima/templates/_images/ directory
 	_, dirContents, _, err := client.Repositories.GetContents(
@@ -150,24 +188,16 @@ func FetchOfficialImages(ctx context.Context, client *github.Client) (map[string
 			continue
 		}
 
-		// Extract image names from locations
+		// Extract domains from image locations
 		for _, img := range imageTemplate.Images {
 			if img.Location != "" {
-				imageName := extractImageName(img.Location)
-				if imageName != "" && imageName != img.Location {
-					// Only add if we successfully extracted a clean name
-					officialImages[strings.ToLower(imageName)] = true
+				domain := extractDomain(img.Location)
+				if domain != "" {
+					officialDomains[domain] = true
 				}
 			}
 		}
-
-		// Also add the base filename without extension as an image name
-		// e.g., "_images/ubuntu.yaml" -> "ubuntu"
-		baseName := strings.TrimSuffix(item.GetName(), ".yaml")
-		if baseName != "" {
-			officialImages[strings.ToLower(baseName)] = true
-		}
 	}
 
-	return officialImages, nil
+	return officialDomains, nil
 }
