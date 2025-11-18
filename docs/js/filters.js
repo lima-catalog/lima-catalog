@@ -92,7 +92,7 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
 /**
  * Sort templates by specified criteria
  * @param {Array} templates - Templates to sort
- * @param {string} sortBy - Sort criteria ('notability', 'name', 'stars', 'updated')
+ * @param {string} sortBy - Sort criteria ('notability', 'name', 'stars', 'updated', or breakdown components)
  * @returns {Array} Sorted templates (mutates original array)
  */
 export function sortTemplates(templates, sortBy) {
@@ -106,6 +106,25 @@ export function sortTemplates(templates, sortBy) {
                 return (b.stars || 0) - (a.stars || 0);
             case 'updated':
                 return new Date(b.updated_at) - new Date(a.updated_at);
+
+            // Debug mode: sort by individual notability breakdown components
+            case 'breakdown-message':
+                return (b.notability_score_breakdown?.message || 0) - (a.notability_score_breakdown?.message || 0);
+            case 'breakdown-provision':
+                return (b.notability_score_breakdown?.provision || 0) - (a.notability_score_breakdown?.provision || 0);
+            case 'breakdown-parameters':
+                return (b.notability_score_breakdown?.parameters || 0) - (a.notability_score_breakdown?.parameters || 0);
+            case 'breakdown-env_vars':
+                return (b.notability_score_breakdown?.env_vars || 0) - (a.notability_score_breakdown?.env_vars || 0);
+            case 'breakdown-probes':
+                return (b.notability_score_breakdown?.probes || 0) - (a.notability_score_breakdown?.probes || 0);
+            case 'breakdown-unusual_images':
+                return (b.notability_score_breakdown?.unusual_images || 0) - (a.notability_score_breakdown?.unusual_images || 0);
+            case 'breakdown-comments':
+                return (b.notability_score_breakdown?.comments || 0) - (a.notability_score_breakdown?.comments || 0);
+            case 'breakdown-stars':
+                return (b.notability_score_breakdown?.stars || 0) - (a.notability_score_breakdown?.stars || 0);
+
             default:
                 return 0;
         }
