@@ -149,7 +149,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 	}
 
 	// Create analyzer
-	analyzer := discovery.NewAnalyzer(forceAnalyze)
+	analyzer := discovery.NewAnalyzer(discovery.WithForceAnalyze(forceAnalyze))
 
 	// Fetch official images for notability scoring
 	fmt.Println("Fetching official images from lima-vm/lima...")

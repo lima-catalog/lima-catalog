@@ -26,29 +26,69 @@ type Analyzer struct {
 	Clock interfaces.Clock
 }
 
-// NewAnalyzer creates a new template analyzer with the specified force-analyze setting.
+// AnalyzerOption configures an Analyzer
+type AnalyzerOption func(*Analyzer)
+
+// WithForceAnalyze sets whether to force re-analysis of already analyzed templates
+func WithForceAnalyze(force bool) AnalyzerOption {
+	return func(a *Analyzer) {
+		a.ForceAnalyze = force
+	}
+}
+
+// WithHTTPClient sets a custom HTTP client for template fetching
+func WithHTTPClient(client interfaces.HTTPClient) AnalyzerOption {
+	return func(a *Analyzer) {
+		a.HTTPClient = client
+	}
+}
+
+// WithClock sets a custom clock for time operations
+func WithClock(clock interfaces.Clock) AnalyzerOption {
+	return func(a *Analyzer) {
+		a.Clock = clock
+	}
+}
+
+// NewAnalyzer creates a new template analyzer with optional configuration.
 //
 // The analyzer is responsible for extracting metadata from Lima templates including
 // OS images, categories, keywords, and notability metrics.
 //
-// Parameters:
-//   - forceAnalyze: If true, forces re-analysis of all templates even if already analyzed.
-//     Use this when analysis logic changes and all templates need updating.
+// Options:
+//   - WithForceAnalyze(bool): Force re-analysis of already analyzed templates
+//   - WithHTTPClient(client): Use custom HTTP client (for testing)
+//   - WithClock(clock): Use custom clock (for testing)
 //
 // Returns a configured Analyzer with empty OfficialImages and DefaultComments maps.
 // Call FetchOfficialImagesForAnalyzer and FetchDefaultTemplateComments before analyzing
 // templates to populate these reference sets.
 //
-// The analyzer uses default implementations for HTTP client and clock, which can be
-// replaced with mocks for testing.
-func NewAnalyzer(forceAnalyze bool) *Analyzer {
-	return &Analyzer{
+// Example:
+//
+//	// Production code
+//	analyzer := NewAnalyzer(WithForceAnalyze(true))
+//
+//	// Test code with mocks
+//	analyzer := NewAnalyzer(
+//	    WithHTTPClient(mockClient),
+//	    WithClock(mockClock),
+//	)
+func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
+	a := &Analyzer{
 		OfficialImages:  make(map[string]bool),
 		DefaultComments: make(map[string]bool),
-		ForceAnalyze:    forceAnalyze,
+		ForceAnalyze:    false, // default
 		HTTPClient:      interfaces.NewDefaultHTTPClient(),
 		Clock:           interfaces.NewDefaultClock(),
 	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(a)
+	}
+
+	return a
 }
 
 // FetchOfficialImagesForAnalyzer fetches official image domains from lima-vm/lima and stores them.
