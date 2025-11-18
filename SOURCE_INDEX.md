@@ -76,28 +76,26 @@ Quick reference for all source files and their purposes.
 | File | Purpose |
 |------|---------|
 | `docs/index.html` | Main HTML structure with semantic layout and accessibility |
-| `docs/styles.css` | Complete design system (colors, typography, spacing, components) |
-| `docs/js/app.js` | Main application logic and orchestration |
+| `docs/style.css` | Complete design system (colors, typography, spacing, components) |
+| `docs/tests.html` | Browser-based test runner page |
 
 ### Modular JavaScript (ES6)
 
 | File | Purpose |
 |------|---------|
+| `docs/js/app.js` | Main application orchestration, event handlers, keyboard shortcuts |
 | `docs/js/config.js` | Configuration (data URL, cache keys) |
 | `docs/js/state.js` | Application state management |
-| `docs/js/data-loader.js` | Fetch and cache catalog data from data branch |
-| `docs/js/data-parser.js` | Parse JSONL and build lookup maps |
-| `docs/js/filters.js` | Filter templates by keywords and categories (AND logic) |
-| `docs/js/search.js` | Search UI and state management |
-| `docs/js/categories.js` | Category filtering and dynamic counts |
-| `docs/js/template-card.js` | Template card rendering with metadata |
-| `docs/js/template-list.js` | Template list rendering and updates |
-| `docs/js/modal-preview.js` | Template preview modal with YAML syntax highlighting |
-| `docs/js/modal-about.js` | About/Help modal with tabbed interface |
-| `docs/js/keyboard.js` | Keyboard shortcuts (Ctrl+K search, Escape close modals) |
-| `docs/js/url-helpers.js` | Lima 2.0 `github:` URL generation |
+| `docs/js/data.js` | Fetch and parse catalog data from data branch (JSONL format) |
+| `docs/js/filters.js` | Filter and sort templates by keywords, categories, search terms |
+| `docs/js/sidebar.js` | Sidebar navigation, keyword cloud, category list |
+| `docs/js/templateCard.js` | Template card rendering with metadata and formatting |
+| `docs/js/modal.js` | Template preview and help modals with YAML syntax highlighting |
+| `docs/js/theme.js` | Dark/light theme management |
+| `docs/js/urlHelpers.js` | Lima 2.0 `github:` URL generation and GitHub URL conversions |
+| `docs/js/utils.js` | Utility functions (debounce, HTML escaping, etc.) |
 | `docs/js/test-framework.js` | Minimal test framework (assertions, runner) |
-| `docs/js/*.test.js` | Unit tests for each module (76+ tests) |
+| `docs/js/*.test.js` | Unit tests for each module (83 tests total) |
 
 ### Test Infrastructure
 
@@ -158,14 +156,12 @@ discovery.go
 
 ### Frontend Data Flow
 ```
-data-loader.js (fetch catalog.jsonl)
-  └─> data-parser.js (parse JSONL)
-      └─> state.js (store in memory)
-          ├─> filters.js (apply filters)
-          ├─> categories.js (filter by category)
-          └─> search.js (keyword search)
-              └─> template-list.js (render)
-                  └─> template-card.js (individual cards)
+data.js (fetch and parse catalog.jsonl)
+  └─> state.js (store in memory)
+      └─> app.js (orchestrate UI updates)
+          ├─> filters.js (apply filters and sorting)
+          ├─> sidebar.js (update keyword cloud and categories)
+          └─> templateCard.js (render individual cards)
 ```
 
 ### LLM Prompt Generation Flow *(NEW)*
@@ -222,18 +218,17 @@ No build step required - uses ES6 modules directly in browser.
 
 ### Frontend Modules
 
-- **data-loader**: Fetch and cache catalog data
-- **data-parser**: Parse JSONL into usable structures
+- **app**: Main orchestration, event handling, keyboard shortcuts, help modal
+- **config**: Configuration constants
 - **state**: Centralized application state
-- **filters**: Template filtering logic
-- **search**: Search UI and state
-- **categories**: Category filtering with counts
-- **template-card**: Individual template rendering
-- **template-list**: List rendering and updates
-- **modal-preview**: YAML preview with syntax highlighting
-- **modal-about**: About/Help modal with tabs
-- **keyboard**: Keyboard shortcuts
-- **url-helpers**: Lima 2.0 URL generation
+- **data**: Fetch and parse catalog data (JSONL)
+- **filters**: Template filtering and sorting logic
+- **sidebar**: Sidebar navigation, keyword cloud, category list
+- **templateCard**: Individual template card rendering
+- **modal**: Template preview and help modals with syntax highlighting
+- **theme**: Dark/light theme management
+- **urlHelpers**: Lima 2.0 URL generation and GitHub URL conversions
+- **utils**: Utility functions (debounce, HTML escaping)
 
 ## Recent Additions (This Session)
 
@@ -259,10 +254,10 @@ No build step required - uses ES6 modules directly in browser.
 - Categorization → `pkg/discovery/analyzer.go`
 - GitHub API calls → `pkg/github/client.go`
 - Data storage → `pkg/storage/storage.go`
-- Frontend data loading → `docs/js/data-loader.js`
-- Template rendering → `docs/js/template-card.js`
-- Search/filter → `docs/js/filters.js` + `docs/js/search.js`
-- UI design system → `INTERFACE_GUIDELINES.md` + `docs/styles.css`
+- Frontend data loading → `docs/js/data.js`
+- Template rendering → `docs/js/templateCard.js`
+- Search/filter → `docs/js/filters.js` + `docs/js/app.js`
+- UI design system → `INTERFACE_GUIDELINES.md` + `docs/style.css`
 - LLM prompt generation → `pkg/prompt/builder.go`
 - CLI tools → `cmd/*/main.go`
 
