@@ -341,6 +341,13 @@ func TestCombineData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Compile blocklist patterns if present
+			if tt.blocklist != nil {
+				if err := tt.blocklist.CompilePatterns(); err != nil {
+					t.Fatalf("failed to compile blocklist patterns: %v", err)
+				}
+			}
+
 			// Create combiner
 			combiner := NewCombiner(tt.blocklist)
 

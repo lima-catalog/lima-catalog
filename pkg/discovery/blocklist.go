@@ -3,7 +3,6 @@ package discovery
 import (
 	"fmt"
 	"os"
-	"regexp"
 
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 	"gopkg.in/yaml.v3"
@@ -28,6 +27,11 @@ func LoadBlocklist(path string) (*types.Blocklist, error) {
 		return nil, fmt.Errorf("failed to parse blocklist: %w", err)
 	}
 
+	// Pre-compile all regex patterns for performance
+	if err := blocklist.CompilePatterns(); err != nil {
+		return nil, fmt.Errorf("failed to compile blocklist patterns: %w", err)
+	}
+
 	return &blocklist, nil
 }
 
@@ -39,28 +43,16 @@ func IsBlocklisted(owner, repo, path string, blocklist *types.Blocklist) bool {
 
 	fullPath := owner + "/" + repo + "/" + path
 
-	// Check repo patterns (matches against full org/repo/path)
-	for _, pattern := range blocklist.Repos {
-		matched, err := regexp.MatchString(pattern, fullPath)
-		if err != nil {
-			// Invalid regex pattern - log warning and skip
-			fmt.Fprintf(os.Stderr, "Warning: invalid regex pattern in blocklist repos: %q: %v\n", pattern, err)
-			continue
-		}
-		if matched {
+	// Check repo patterns using pre-compiled regexes (matches against full org/repo/path)
+	for _, re := range blocklist.GetCompiledRepos() {
+		if re.MatchString(fullPath) {
 			return true
 		}
 	}
 
-	// Check path patterns (matches against path within repo)
-	for _, pattern := range blocklist.Paths {
-		matched, err := regexp.MatchString(pattern, path)
-		if err != nil {
-			// Invalid regex pattern - log warning and skip
-			fmt.Fprintf(os.Stderr, "Warning: invalid regex pattern in blocklist paths: %q: %v\n", pattern, err)
-			continue
-		}
-		if matched {
+	// Check path patterns using pre-compiled regexes (matches against path within repo)
+	for _, re := range blocklist.GetCompiledPaths() {
+		if re.MatchString(path) {
 			return true
 		}
 	}
