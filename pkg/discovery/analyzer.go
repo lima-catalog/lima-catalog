@@ -157,6 +157,7 @@ func (a *Analyzer) FetchDefaultTemplateComments(ctx context.Context, client *git
 //  7. Sets AnalyzedAt timestamp to current time
 //
 // Parameters:
+//   - ctx: Context for cancellation support
 //   - template: Template to analyze (will be modified in place with analysis results)
 //   - repoInfo: Repository metadata (used for topic-based categorization, can be nil)
 //
@@ -165,7 +166,13 @@ func (a *Analyzer) FetchDefaultTemplateComments(ctx context.Context, client *git
 //
 // The template's existing fields (ID, Repo, Path, URL, etc.) are preserved.
 // Only analysis-related fields are populated or updated.
-func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Repository) error {
+func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template, repoInfo *types.Repository) error {
+	// Check if context is cancelled before starting
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
 	// Step 1: Derive name
 	template.Name = DeriveTemplateName(template.Path, template.Repo)
 	template.DisplayName = GenerateDisplayName(template.Name)
@@ -325,6 +332,7 @@ func (a *Analyzer) generateBasicDescription(template *types.Template, info *Temp
 //   - Templates that fail analysis are skipped (logged but not included in output)
 //
 // Parameters:
+//   - ctx: Context for cancellation support
 //   - templates: Templates to analyze
 //   - repoMap: Map of repository ID to metadata (for topic-based categorization)
 //
@@ -341,10 +349,17 @@ func (a *Analyzer) generateBasicDescription(template *types.Template, info *Temp
 // Use Cases:
 //   - Incremental mode: Only analyze new/changed templates (efficient)
 //   - Full refresh: Set ForceAnalyze=true to re-analyze everything (after logic changes)
-func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[string]*types.Repository) ([]types.Template, error) {
+func (a *Analyzer) AnalyzeTemplates(ctx context.Context, templates []types.Template, repoMap map[string]*types.Repository) ([]types.Template, error) {
 	analyzed := make([]types.Template, 0, len(templates))
 
 	for i := range templates {
+		// Check for context cancellation before processing each template
+		select {
+		case <-ctx.Done():
+			return analyzed, ctx.Err()
+		default:
+		}
+
 		template := &templates[i]
 
 		// Skip if already analyzed and content hasn't changed since analysis
@@ -364,7 +379,11 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 		}
 
 		// Analyze template
-		if err := a.AnalyzeTemplate(template, repoInfo); err != nil {
+		if err := a.AnalyzeTemplate(ctx, template, repoInfo); err != nil {
+			// Check if error is due to context cancellation
+			if ctx.Err() != nil {
+				return analyzed, ctx.Err()
+			}
 			fmt.Printf("Warning: failed to analyze %s: %v (skipping)\n", template.ID, err)
 			// Skip templates that fail analysis to avoid saving incomplete data
 			continue
@@ -373,7 +392,12 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 		analyzed = append(analyzed, *template)
 
 		// Rate limiting - be nice to external services
-		time.Sleep(config.MetadataAPIDelay)
+		// Use select to allow context cancellation during sleep
+		select {
+		case <-ctx.Done():
+			return analyzed, ctx.Err()
+		case <-time.After(config.MetadataAPIDelay):
+		}
 	}
 
 	return analyzed, nil

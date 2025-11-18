@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -361,7 +362,7 @@ func TestAnalyzeTemplatesSkipLogic(t *testing.T) {
 
 			repoMap := make(map[string]*types.Repository)
 
-			analyzed, err := a.AnalyzeTemplates(tt.templates, repoMap)
+			analyzed, err := a.AnalyzeTemplates(context.Background(), tt.templates, repoMap)
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -412,7 +413,7 @@ func TestAnalyzeTemplate(t *testing.T) {
 			Topics:      []string{"testing"},
 		}
 
-		err := a.AnalyzeTemplate(template, repo)
+		err := a.AnalyzeTemplate(context.Background(), template, repo)
 
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -457,7 +458,7 @@ func TestAnalyzeTemplate(t *testing.T) {
 			URL:  "http://example.com/template.yaml",
 		}
 
-		err := a.AnalyzeTemplate(template, nil)
+		err := a.AnalyzeTemplate(context.Background(), template, nil)
 
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)

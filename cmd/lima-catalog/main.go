@@ -168,7 +168,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 	fmt.Println()
 
 	// Analyze templates
-	analyzedTemplates, err := analyzer.AnalyzeTemplates(templates, repoMap)
+	analyzedTemplates, err := analyzer.AnalyzeTemplates(ctx, templates, repoMap)
 	if err != nil {
 		return fmt.Errorf("analysis failed: %w", err)
 	}
