@@ -455,8 +455,19 @@ const KEYBOARD_SHORTCUTS = {
 };
 
 /**
- * Update sort dropdown options based on debug mode
+ * Build a key string from a keyboard event for matching against shortcuts
  */
+function getKeyString(e) {
+    const modifiers = [];
+    if (e.ctrlKey) modifiers.push('Ctrl');
+    if (e.altKey) modifiers.push('Alt');
+    if (e.metaKey) modifiers.push('Meta');
+
+    if (modifiers.length > 0) {
+        return `${modifiers.join('+')}+${e.key}`;
+    }
+    return e.key;
+}
 
 function setupKeyboardShortcuts() {
     const searchInput = document.getElementById('search');
