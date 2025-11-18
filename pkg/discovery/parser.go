@@ -11,7 +11,10 @@ import (
 
 // LimaTemplate represents the structure of a Lima YAML template
 type LimaTemplate struct {
-	Images []struct {
+	Message string                 `yaml:"message"` // Message displayed to user (indicates reusability)
+	Param   map[string]interface{} `yaml:"param"`   // Configurable parameters
+	Env     map[string]string      `yaml:"env"`     // Environment variables
+	Images  []struct {
 		Location string `yaml:"location"`
 		Arch     string `yaml:"arch"`
 	} `yaml:"images"`
@@ -47,13 +50,22 @@ type LimaTemplate struct {
 
 // TemplateInfo contains extracted information from a Lima template
 type TemplateInfo struct {
-	Images      []string
-	Arch        []string
-	Keywords    []string
-	HasDocker   bool
-	HasK8s      bool
-	HasPodman   bool
-	Categories  []string
+	Images       []string
+	Arch         []string
+	Keywords     []string
+	HasDocker    bool
+	HasK8s       bool
+	HasPodman    bool
+	Categories   []string
+
+	// Notability metrics (raw data for scoring)
+	MessageLength       int
+	ProvisionCount      int
+	ProvisionTotalLines int
+	ProbeCount          int
+	ProbeTotalLines     int
+	ParamCount          int
+	EnvCount            int
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file
@@ -97,6 +109,11 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		Categories: []string{},
 	}
 
+	// Extract notability metrics
+	info.MessageLength = len(strings.TrimSpace(template.Message))
+	info.ParamCount = len(template.Param)
+	info.EnvCount = len(template.Env)
+
 	// Extract images
 	for _, img := range template.Images {
 		if img.Location != "" {
@@ -125,12 +142,21 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		}
 	}
 
-	// Analyze provisioning scripts
+	// Analyze provisioning scripts and collect metrics
 	provisioningText := ""
+	info.ProvisionCount = len(template.Provision)
 	for _, prov := range template.Provision {
 		provisioningText += " " + prov.Script
+		// Count lines in this provision script
+		info.ProvisionTotalLines += strings.Count(prov.Script, "\n") + 1
 	}
 	provisioningText = strings.ToLower(provisioningText)
+
+	// Collect probe metrics
+	info.ProbeCount = len(template.Probes)
+	for _, probe := range template.Probes {
+		info.ProbeTotalLines += strings.Count(probe.Script, "\n") + 1
+	}
 
 	// Detect technologies from provisioning scripts
 	info.HasDocker = strings.Contains(provisioningText, "docker")

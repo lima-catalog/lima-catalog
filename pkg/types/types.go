@@ -25,6 +25,20 @@ type Template struct {
 	Images           []string  `json:"images,omitempty"`           // OS images used
 	Arch             []string  `json:"arch,omitempty"`             // Architectures supported
 	AnalyzedAt       time.Time `json:"analyzed_at,omitempty"`      // When analysis was performed
+	Notability       *NotabilityMetrics `json:"notability,omitempty"` // Metrics for calculating notability score
+}
+
+// NotabilityMetrics contains raw observations used to calculate template notability score
+// These are stored as raw data to allow weight adjustments without re-analysis
+type NotabilityMetrics struct {
+	MessageLength       int      `json:"message_length"`           // Length of message in characters (>0 means template has message)
+	ProvisionCount      int      `json:"provision_count"`          // Number of provision scripts
+	ProvisionTotalLines int      `json:"provision_total_lines"`    // Total lines across all provision scripts
+	ProbeCount          int      `json:"probe_count"`              // Number of probe scripts
+	ProbeTotalLines     int      `json:"probe_total_lines"`        // Total lines across all probe scripts
+	ParamCount          int      `json:"param_count"`              // Number of configurable parameters
+	EnvCount            int      `json:"env_count"`                // Number of environment variables
+	UnusualImages       []string `json:"unusual_images,omitempty"` // Images not in official templates
 }
 
 // Repository represents a GitHub repository containing templates

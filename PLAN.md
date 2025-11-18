@@ -84,7 +84,17 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
   "keywords": ["ubuntu", "docker", "git"],
   "images": ["ubuntu"],
   "arch": ["x86_64", "aarch64"],
-  "analyzed_at": "2025-01-15T10:05:00Z"
+  "analyzed_at": "2025-01-15T10:05:00Z",
+  "notability": {
+    "message_length": 100,
+    "provision_count": 2,
+    "provision_total_lines": 50,
+    "probe_count": 1,
+    "probe_total_lines": 10,
+    "param_count": 3,
+    "env_count": 5,
+    "unusual_images": ["nixos"]
+  }
 }
 ```
 
@@ -133,9 +143,40 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
   "updated_at": "2024-03-20",
   "official": true,
   "url": "https://github.com/...",
-  "raw_url": "https://raw.githubusercontent.com/..."
+  "raw_url": "https://raw.githubusercontent.com/...",
+  "notability_score": 285.5
 }
 ```
+
+## Notability Scoring System
+
+**Purpose**: Identify and prioritize the most "interesting" templates for LLM analysis and user discovery.
+
+**Raw Metrics** (stored in `notability` field):
+- `message_length` - Length of user-facing message (>0 indicates template meant for reuse)
+- `provision_count` - Number of provision scripts
+- `provision_total_lines` - Total lines across all provision scripts
+- `probe_count` - Number of probe scripts
+- `probe_total_lines` - Total lines across all probe scripts
+- `param_count` - Number of configurable parameters
+- `env_count` - Number of environment variables
+- `unusual_images` - Images not in official lima-vm/lima templates
+
+**Score Calculation** (weighted sum):
+1. **Message**: 100 points (strong signal for reusability)
+2. **Provision scripts**: 10 points per script + 1 point per 10 lines
+3. **Parameters**: 20 points per param (indicates configurability)
+4. **Environment vars**: 10 points per var (shows configuration effort)
+5. **Probes**: 5 points per probe + 1 point per 10 lines
+6. **Unusual images**: 30 points per image (specialized use case)
+7. **Repository stars**: 1 point per 10 stars (capped at 50 points)
+
+**Usage**:
+- Frontend: Sort templates by `notability_score` to show most interesting first
+- LLM Analysis: Process templates in notability order (highest first) to prioritize valuable templates
+- Rate limiting: With ~20-30 LLM requests/day, notability ensures we analyze the best templates first
+
+**Design Decision**: Store raw metrics, calculate score on-demand. This allows weight tuning without re-analyzing all templates.
 
 ## Remaining Work
 

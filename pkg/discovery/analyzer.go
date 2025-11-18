@@ -47,6 +47,9 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 	template.Arch = templateInfo.Arch
 	template.Keywords = templateInfo.Keywords
 
+	// Populate notability metrics
+	template.Notability = PopulateNotabilityMetrics(templateInfo)
+
 	// Step 3: Infer basic category and description
 	category, useCase := a.inferCategory(templateInfo, repoInfo)
 	template.Category = category
