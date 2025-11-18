@@ -392,7 +392,7 @@ func runDiscoveryPhase(ctx context.Context, client *github.Client, store *storag
 			}
 		}
 
-		discoveredTemplates, err := discoverer.DiscoverAll(sinceDate, existingTemplates)
+		discoveredTemplates, err := discoverer.DiscoverAll(ctx, sinceDate, existingTemplates)
 		if err != nil {
 			return nil, updateResult, fmt.Errorf("discovery failed: %w", err)
 		}
