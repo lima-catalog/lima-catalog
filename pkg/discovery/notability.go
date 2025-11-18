@@ -64,6 +64,19 @@ func IdentifyUnusualImages(images []string, officialDomains map[string]bool) []s
 	return unusual
 }
 
+// NotabilityScoreBreakdown contains the individual components of the notability score
+type NotabilityScoreBreakdown struct {
+	Message       float64 `json:"message"`        // 100 if has message
+	Provision     float64 `json:"provision"`      // 10 per script + 1 per 10 lines
+	Parameters    float64 `json:"parameters"`     // 20 per param
+	EnvVars       float64 `json:"env_vars"`       // 10 per var
+	Probes        float64 `json:"probes"`         // 5 per probe + 1 per 10 lines
+	UnusualImages float64 `json:"unusual_images"` // 30 if any unusual domains
+	Comments      float64 `json:"comments"`       // 2 per comment line
+	Stars         float64 `json:"stars"`          // 1 per 10 stars (capped at 50)
+	Total         float64 `json:"total"`          // Sum of all components
+}
+
 // CalculateNotabilityScore computes a weighted score from notability metrics
 // Higher score = more interesting/notable template
 //
@@ -77,48 +90,57 @@ func IdentifyUnusualImages(images []string, officialDomains map[string]bool) []s
 // - Comment lines: 2 points per comment line (indicates documentation quality)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, repoStars int) float64 {
-	if metrics == nil {
-		return 0.0
-	}
+	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, repoStars)
+	return breakdown.Total
+}
 
-	score := 0.0
+// CalculateNotabilityScoreWithBreakdown computes the score and returns the breakdown
+func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, repoStars int) NotabilityScoreBreakdown {
+	breakdown := NotabilityScoreBreakdown{}
+
+	if metrics == nil {
+		return breakdown
+	}
 
 	// Message presence (strong signal for reusability)
 	if metrics.MessageLength > 0 {
-		score += 100.0
+		breakdown.Message = 100.0
 	}
 
 	// Provision scripts (indicates customization/setup)
-	score += float64(metrics.ProvisionCount) * 10.0
-	score += float64(metrics.ProvisionTotalLines) / 10.0
+	breakdown.Provision = float64(metrics.ProvisionCount)*10.0 + float64(metrics.ProvisionTotalLines)/10.0
 
 	// Parameters (indicates configurability)
-	score += float64(metrics.ParamCount) * 20.0
+	breakdown.Parameters = float64(metrics.ParamCount) * 20.0
 
 	// Environment variables (shows configuration effort)
-	score += float64(metrics.EnvCount) * 10.0
+	breakdown.EnvVars = float64(metrics.EnvCount) * 10.0
 
 	// Probes (less important than provision)
-	score += float64(metrics.ProbeCount) * 5.0
-	score += float64(metrics.ProbeTotalLines) / 10.0
+	breakdown.Probes = float64(metrics.ProbeCount)*5.0 + float64(metrics.ProbeTotalLines)/10.0
 
 	// Unusual images (indicates specialized use case)
 	// Award bonus once if any unusual domains (Lima uses first available image)
 	if len(metrics.UnusualImages) > 0 {
-		score += 30.0
+		breakdown.UnusualImages = 30.0
 	}
 
 	// Comment lines (indicates documentation quality)
-	score += float64(metrics.CommentLineCount) * 2.0
+	breakdown.Comments = float64(metrics.CommentLineCount) * 2.0
 
 	// Repository stars (capped to avoid dominating other factors)
 	starsScore := float64(repoStars) / 10.0
 	if starsScore > 50.0 {
 		starsScore = 50.0
 	}
-	score += starsScore
+	breakdown.Stars = starsScore
 
-	return score
+	// Calculate total
+	breakdown.Total = breakdown.Message + breakdown.Provision + breakdown.Parameters +
+		breakdown.EnvVars + breakdown.Probes + breakdown.UnusualImages +
+		breakdown.Comments + breakdown.Stars
+
+	return breakdown
 }
 
 // PopulateNotabilityMetrics creates NotabilityMetrics from TemplateInfo

@@ -612,8 +612,45 @@ const KEYBOARD_SHORTCUTS = {
             const firstTemplate = document.querySelector('.template-card');
             if (firstTemplate) firstTemplate.focus();
         }
+    },
+    '@': {
+        description: 'Toggle debug mode',
+        skipIfTyping: false, // Works everywhere, even in search
+        preventDefault: true,
+        action: (e, ctx) => {
+            const newDebugMode = State.toggleDebugMode();
+            // Re-render templates to show/hide debug info
+            filterAndRender();
+            // Show a subtle notification
+            showDebugModeNotification(newDebugMode);
+        }
     }
 };
+
+/**
+ * Show debug mode notification
+ */
+function showDebugModeNotification(enabled) {
+    // Remove any existing notification
+    const existing = document.getElementById('debug-mode-notification');
+    if (existing) existing.remove();
+
+    // Create notification
+    const notification = document.createElement('div');
+    notification.id = 'debug-mode-notification';
+    notification.className = 'debug-mode-notification';
+    notification.textContent = `Debug mode ${enabled ? 'enabled' : 'disabled'}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
+
+    document.body.appendChild(notification);
+
+    // Fade out and remove after 2 seconds
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
 
 /**
  * Build a key string from a keyboard event for matching against shortcuts

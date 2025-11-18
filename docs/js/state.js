@@ -7,6 +7,7 @@ let templates = [];
 let filteredTemplates = [];
 let selectedKeywords = new Set();
 let selectedCategory = null;
+let debugMode = false;
 
 // Getters
 export function getTemplates() {
@@ -61,4 +62,14 @@ export function clearCategorySelection() {
 export function clearAllSelections() {
     selectedKeywords.clear();
     selectedCategory = null;
+}
+
+// Debug mode
+export function isDebugMode() {
+    return debugMode;
+}
+
+export function toggleDebugMode() {
+    debugMode = !debugMode;
+    return debugMode;
 }
