@@ -359,3 +359,40 @@ INCREMENTAL=1    # Enable incremental mode
 - `pkg/discovery/notability_test.go` - Updated test expectations
 
 **Impact:** Templates will be re-analyzed with new comment filtering, significantly reducing scores for derivative templates while preserving scores for templates with unique documentation.
+
+---
+
+## Debug Mode Subscore Sorting (2025-01-18)
+
+**Motivation:** When tuning notability scoring weights, need ability to sort by individual score components to identify which templates score highest in each category.
+
+**Implementation:**
+- Dynamic sort dropdown: adds 8 subscore options when debug mode enabled
+- Sort by individual components: message, provision, parameters, env_vars, probes, unusual_images, comments, stars
+- Badge shows active subscore: when sorting by a component, badge displays that component's score instead of total
+- Visual indicator: 🔍 emoji prefix on debug sort options
+- Sort options removed when debug mode disabled
+
+**Smart Badge Display:**
+- Default: Shows total notability score
+- Sorting by breakdown component: Shows that specific component score
+- Badge title updates to indicate which score is displayed (e.g., "Comments Score (hover for breakdown)")
+- Hover popup always shows full breakdown regardless of active sort
+
+**Example Use Cases:**
+- Sort by "Comments Score" to find templates with best unique documentation
+- Sort by "Provision Score" to find templates with most setup scripts
+- Sort by "Parameters Score" to find most configurable templates
+- Sort by "Unusual Images Score" to find templates using non-standard distributions
+
+**Files Changed:**
+- `docs/js/filters.js` - Added 8 breakdown sort cases to sortTemplates()
+- `docs/js/app.js` - Added updateSortDropdown() function, called on debug toggle and initialization
+- `docs/js/templateCard.js` - Modified getDebugBadgeText() to accept sortBy parameter and return appropriate score
+- `docs/js/filters.test.js` - Added 6 new tests for breakdown sorting
+
+**Testing:**
+- 6 new test cases covering breakdown sorting for different components
+- Tests verify correct descending sort order
+- Tests verify graceful handling of missing breakdown data
+- Total: 83 tests passing (77 original + 6 new)
