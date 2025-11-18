@@ -524,6 +524,7 @@ header {
     border: 1px solid var(--border);
     overflow: hidden;
     scroll-margin: 0.625rem; /* Half the gap (1.25rem) for better visibility when navigating */
+    position: relative; /* For debug score positioning */
 }
 
 .template-card:hover {
@@ -1376,4 +1377,110 @@ footer a:hover {
 
 .shake {
     animation: shake 0.3s ease-in-out;
+}
+
+/* Debug Mode */
+.debug-mode-notification {
+    position: fixed;
+    top: 5rem;
+    right: 1.5rem;
+    background: var(--surface-elevated);
+    color: var(--text);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 10000;
+    border: 1px solid var(--border-elevated);
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.debug-mode-notification.fade-out {
+    opacity: 0;
+}
+
+.debug-score {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+}
+
+.debug-score-value {
+    background: var(--warning);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: help;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.debug-score-popup {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-elevated);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    padding: 0.75rem;
+    min-width: 200px;
+    z-index: 100;
+}
+
+.debug-popup-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.debug-popup-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.debug-popup-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.6875rem;
+}
+
+.debug-popup-label {
+    color: var(--text-light);
+}
+
+.debug-popup-value {
+    color: var(--text);
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.debug-popup-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.5rem 0;
+}
+
+.debug-popup-total {
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.debug-popup-total .debug-popup-label {
+    color: var(--text);
+}
+
+.debug-popup-total .debug-popup-value {
+    color: var(--warning);
 }

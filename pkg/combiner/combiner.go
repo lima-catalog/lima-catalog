@@ -15,20 +15,21 @@ import (
 
 // CombinedTemplate represents the optimized template data for the frontend
 type CombinedTemplate struct {
-	ID               string   `json:"id"`
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	Keywords         []string `json:"keywords"`
-	Category         string   `json:"category"`
-	Repo             string   `json:"repo"`
-	Org              string   `json:"org"`
-	Path             string   `json:"path"`
-	Stars            int      `json:"stars"`
-	UpdatedAt        string   `json:"updated_at"`
-	Official         bool     `json:"official"`
-	URL              string   `json:"url"`
-	RawURL           string   `json:"raw_url"`
-	NotabilityScore  float64  `json:"notability_score"`  // Weighted score for sorting by "interestingness"
+	ID                      string                                 `json:"id"`
+	Name                    string                                 `json:"name"`
+	Description             string                                 `json:"description"`
+	Keywords                []string                               `json:"keywords"`
+	Category                string                                 `json:"category"`
+	Repo                    string                                 `json:"repo"`
+	Org                     string                                 `json:"org"`
+	Path                    string                                 `json:"path"`
+	Stars                   int                                    `json:"stars"`
+	UpdatedAt               string                                 `json:"updated_at"`
+	Official                bool                                   `json:"official"`
+	URL                     string                                 `json:"url"`
+	RawURL                  string                                 `json:"raw_url"`
+	NotabilityScore         float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
+	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown   `json:"notability_score_breakdown,omitempty"` // Debug: score components
 }
 
 // Combiner combines templates with repo/org metadata for frontend consumption
@@ -94,25 +95,26 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 			fmt.Printf("Warning: No org data for template %s (org: %s)\n", template.ID, owner)
 		}
 
-		// Calculate notability score
-		notabilityScore := discovery.CalculateNotabilityScore(template.Notability, repo.Stars)
+		// Calculate notability score with breakdown
+		breakdown := discovery.CalculateNotabilityScoreWithBreakdown(template.Notability, repo.Stars)
 
 		// Create combined record
 		combined = append(combined, CombinedTemplate{
-			ID:              template.ID,
-			Name:            c.getDisplayName(template),
-			Description:     c.getDescription(template),
-			Keywords:        template.Keywords,
-			Category:        template.Category,
-			Repo:            template.Repo,
-			Org:             owner,
-			Path:            template.Path,
-			Stars:           repo.Stars,
-			UpdatedAt:       c.formatDate(repo.UpdatedAt),
-			Official:        template.IsOfficial,
-			URL:             template.URL,
-			RawURL:          c.getRawURL(template, repo),
-			NotabilityScore: notabilityScore,
+			ID:                      template.ID,
+			Name:                    c.getDisplayName(template),
+			Description:             c.getDescription(template),
+			Keywords:                template.Keywords,
+			Category:                template.Category,
+			Repo:                    template.Repo,
+			Org:                     owner,
+			Path:                    template.Path,
+			Stars:                   repo.Stars,
+			UpdatedAt:               c.formatDate(repo.UpdatedAt),
+			Official:                template.IsOfficial,
+			URL:                     template.URL,
+			RawURL:                  c.getRawURL(template, repo),
+			NotabilityScore:         breakdown.Total,
+			NotabilityScoreBreakdown: &breakdown,
 		})
 	}
 

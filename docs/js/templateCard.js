@@ -2,6 +2,8 @@
  * Template card rendering utilities
  */
 
+import { isDebugMode } from './state.js';
+
 /**
  * Escape HTML to prevent XSS
  * @param {string} text - Text to escape
@@ -36,6 +38,87 @@ export function formatCategoryName(category) {
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
+}
+
+/**
+ * Create debug score element with popup
+ * @param {Object} template - Template object
+ * @returns {HTMLElement} Debug score element
+ */
+function createDebugScore(template) {
+    if (!template.notability_score_breakdown) {
+        return null;
+    }
+
+    const debugScore = document.createElement('div');
+    debugScore.className = 'debug-score';
+
+    const score = template.notability_score || 0;
+    const breakdown = template.notability_score_breakdown;
+
+    debugScore.innerHTML = `
+        <div class="debug-score-value" title="Notability Score (hover for details)">
+            🔍 ${score.toFixed(1)}
+        </div>
+    `;
+
+    // Create popup element
+    const popup = document.createElement('div');
+    popup.className = 'debug-score-popup';
+    popup.innerHTML = `
+        <div class="debug-popup-title">Notability Score Breakdown</div>
+        <div class="debug-popup-items">
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Message:</span>
+                <span class="debug-popup-value">${breakdown.message.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Provision:</span>
+                <span class="debug-popup-value">${breakdown.provision.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Parameters:</span>
+                <span class="debug-popup-value">${breakdown.parameters.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Env Vars:</span>
+                <span class="debug-popup-value">${breakdown.env_vars.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Probes:</span>
+                <span class="debug-popup-value">${breakdown.probes.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Unusual Images:</span>
+                <span class="debug-popup-value">${breakdown.unusual_images.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Comments:</span>
+                <span class="debug-popup-value">${breakdown.comments.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Stars:</span>
+                <span class="debug-popup-value">${breakdown.stars.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-divider"></div>
+            <div class="debug-popup-item debug-popup-total">
+                <span class="debug-popup-label">Total:</span>
+                <span class="debug-popup-value">${breakdown.total.toFixed(1)}</span>
+            </div>
+        </div>
+    `;
+    debugScore.appendChild(popup);
+
+    // Show/hide popup on hover
+    const scoreValue = debugScore.querySelector('.debug-score-value');
+    scoreValue.addEventListener('mouseenter', () => {
+        popup.style.display = 'block';
+    });
+    scoreValue.addEventListener('mouseleave', () => {
+        popup.style.display = 'none';
+    });
+
+    return debugScore;
 }
 
 /**
@@ -86,6 +169,8 @@ export function createTemplateCard(template, onCardClick) {
     const displayName = deriveDisplayName(template);
     const description = template.description || 'No description available';
 
+    const debugScoreElement = isDebugMode() ? createDebugScore(template) : null;
+
     card.innerHTML = `
         <div class="template-header">
             <div class="template-title">
@@ -135,6 +220,11 @@ export function createTemplateCard(template, onCardClick) {
             ` : ''}
         </div>
     `;
+
+    // Append debug score if in debug mode
+    if (debugScoreElement) {
+        card.appendChild(debugScoreElement);
+    }
 
     // Make card clickable - open preview modal
     card.style.cursor = 'pointer';

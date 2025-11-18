@@ -612,8 +612,45 @@ const KEYBOARD_SHORTCUTS = {
             const firstTemplate = document.querySelector('.template-card');
             if (firstTemplate) firstTemplate.focus();
         }
+    },
+    '@': {
+        description: 'Toggle debug mode',
+        skipIfTyping: false, // Works everywhere, even in search
+        preventDefault: true,
+        action: (e, ctx) => {
+            const newDebugMode = State.toggleDebugMode();
+            // Re-render templates to show/hide debug info
+            filterAndRender();
+            // Show a subtle notification
+            showDebugModeNotification(newDebugMode);
+        }
     }
 };
+
+/**
+ * Show debug mode notification
+ */
+function showDebugModeNotification(enabled) {
+    // Remove any existing notification
+    const existing = document.getElementById('debug-mode-notification');
+    if (existing) existing.remove();
+
+    // Create notification
+    const notification = document.createElement('div');
+    notification.id = 'debug-mode-notification';
+    notification.className = 'debug-mode-notification';
+    notification.textContent = `Debug mode ${enabled ? 'enabled' : 'disabled'}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
+
+    document.body.appendChild(notification);
+
+    // Fade out and remove after 2 seconds
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
 
 /**
  * Build a key string from a keyboard event for matching against shortcuts
@@ -944,6 +981,18 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                         <li>Analyzes template metadata, including OS images, keywords, and categories</li>
                         <li>Updates the catalog daily with new templates and changes</li>
                         <li>Provides a web interface for browsing and searching templates</li>
+                    </ul>
+                    <h4>Template Notability</h4>
+                    <p>
+                        Templates are ranked by a "notability score" that helps surface the most interesting
+                        and useful templates. The score considers several factors:
+                    </p>
+                    <ul>
+                        <li><strong>Reusability:</strong> Templates with message text are designed for sharing</li>
+                        <li><strong>Customization:</strong> Provision scripts, parameters, and environment variables</li>
+                        <li><strong>Documentation:</strong> Comment quality and completeness</li>
+                        <li><strong>Specialization:</strong> Use of non-standard OS images</li>
+                        <li><strong>Popularity:</strong> Repository star count (with balanced weighting)</li>
                     </ul>
                     <h4>Get Involved</h4>
                     <p>
