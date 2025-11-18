@@ -26,7 +26,21 @@ type Analyzer struct {
 	Clock interfaces.Clock
 }
 
-// NewAnalyzer creates a new template analyzer
+// NewAnalyzer creates a new template analyzer with the specified force-analyze setting.
+//
+// The analyzer is responsible for extracting metadata from Lima templates including
+// OS images, categories, keywords, and notability metrics.
+//
+// Parameters:
+//   - forceAnalyze: If true, forces re-analysis of all templates even if already analyzed.
+//     Use this when analysis logic changes and all templates need updating.
+//
+// Returns a configured Analyzer with empty OfficialImages and DefaultComments maps.
+// Call FetchOfficialImagesForAnalyzer and FetchDefaultTemplateComments before analyzing
+// templates to populate these reference sets.
+//
+// The analyzer uses default implementations for HTTP client and clock, which can be
+// replaced with mocks for testing.
 func NewAnalyzer(forceAnalyze bool) *Analyzer {
 	return &Analyzer{
 		OfficialImages:  make(map[string]bool),
@@ -37,7 +51,20 @@ func NewAnalyzer(forceAnalyze bool) *Analyzer {
 	}
 }
 
-// FetchOfficialImagesForAnalyzer fetches official images and stores them in the analyzer
+// FetchOfficialImagesForAnalyzer fetches official image domains from lima-vm/lima and stores them.
+//
+// The official images list is used to identify "unusual" images in community templates.
+// Images using domains not found in official templates are flagged as unusual, which
+// increases the template's notability score.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeouts
+//   - client: GitHub client wrapper for API access
+//
+// Returns error if GitHub API call fails, but gracefully falls back to empty map
+// (all images will be considered unusual). The error is logged as a warning.
+//
+// The function prints the count of fetched official images for debugging.
 func (a *Analyzer) FetchOfficialImagesForAnalyzer(ctx context.Context, client *github.Client) error {
 	officialImages, err := FetchOfficialImages(ctx, client)
 	if err != nil {
@@ -51,7 +78,20 @@ func (a *Analyzer) FetchOfficialImagesForAnalyzer(ctx context.Context, client *g
 	return nil
 }
 
-// FetchDefaultTemplateComments fetches and extracts comment lines from lima-vm/lima default.yaml
+// FetchDefaultTemplateComments fetches and extracts comment lines from lima-vm/lima default.yaml.
+//
+// The default template comments are used as a baseline to filter out common boilerplate
+// comments when calculating notability scores. Only comments that differ from the default
+// template contribute to a template's comment score.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeouts
+//   - client: GitHub client wrapper for API access
+//
+// Returns error if GitHub API call fails, but gracefully falls back to empty map
+// (no comments will be filtered). The error is logged as a warning.
+//
+// The function prints the count of fetched comment lines for debugging.
 func (a *Analyzer) FetchDefaultTemplateComments(ctx context.Context, client *github.Client) error {
 	defaultComments, err := FetchDefaultTemplateComments(ctx, client)
 	if err != nil {
@@ -65,7 +105,26 @@ func (a *Analyzer) FetchDefaultTemplateComments(ctx context.Context, client *git
 	return nil
 }
 
-// AnalyzeTemplate performs full analysis on a template
+// AnalyzeTemplate performs comprehensive analysis on a single template.
+//
+// The analysis process:
+//  1. Derives template name from path (strips generic names like "lima.yaml")
+//  2. Generates human-readable display name
+//  3. Parses template YAML to extract images, arch, provision scripts, etc.
+//  4. Populates notability metrics (provision count, params, unusual images, etc.)
+//  5. Infers category and use case from template content and repo info
+//  6. Generates basic description combining OS, category, and technologies
+//  7. Sets AnalyzedAt timestamp to current time
+//
+// Parameters:
+//   - template: Template to analyze (will be modified in place with analysis results)
+//   - repoInfo: Repository metadata (used for topic-based categorization, can be nil)
+//
+// Returns error only for critical failures. Parse failures are logged as warnings
+// and the template is populated with empty/fallback values.
+//
+// The template's existing fields (ID, Repo, Path, URL, etc.) are preserved.
+// Only analysis-related fields are populated or updated.
 func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Repository) error {
 	// Step 1: Derive name
 	template.Name = DeriveTemplateName(template.Path, template.Repo)
@@ -104,7 +163,24 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 	return nil
 }
 
-// inferCategory infers category and use case from parsed template info
+// inferCategory infers the template's category and use case from content and repo metadata.
+//
+// Category inference follows priority order:
+//  1. Container orchestration: Kubernetes presence (highest priority)
+//  2. Container runtime: Docker or Podman presence
+//  3. Template categories: From explicit categories in template parsing
+//  4. Repository topics: Security, testing, ML keywords
+//  5. Default: "general" / "vm" (fallback)
+//
+// Parameters:
+//   - info: Parsed template information (images, runtimes, categories)
+//   - repo: Repository metadata (optional, used for topic analysis)
+//
+// Returns:
+//   - category: Primary category (e.g., "orchestration", "containers", "development")
+//   - useCase: Specific use case (e.g., "kubernetes", "container-runtime", "dev-environment")
+//
+// The function prioritizes technical capabilities over metadata for more accurate categorization.
 func (a *Analyzer) inferCategory(info *TemplateInfo, repo *types.Repository) (string, string) {
 	// Priority order for categories
 	if info.HasK8s {
@@ -145,7 +221,26 @@ func (a *Analyzer) inferCategory(info *TemplateInfo, repo *types.Repository) (st
 	return "general", "vm"
 }
 
-// generateBasicDescription creates a basic description without LLM
+// generateBasicDescription creates a concise template description without using LLM.
+//
+// Constructs description from:
+//   - Primary OS image (e.g., "Ubuntu-based")
+//   - Category (e.g., "development")
+//   - Key technologies (Kubernetes, Docker, Podman)
+//   - Architecture (if specific, e.g., "arm64")
+//   - Repository description (if available)
+//
+// Parameters:
+//   - template: Template with category already populated
+//   - info: Parsed template information (images, arch, runtime flags)
+//   - repo: Repository metadata (optional, adds context from repo description)
+//
+// Returns a human-readable description string suitable for display.
+//
+// Example outputs:
+//   - "Ubuntu-based development with Docker (amd64)"
+//   - "Alpine-based orchestration with Kubernetes"
+//   - "Fedora-based containers with Podman. Repository for Lima VM templates."
 func (a *Analyzer) generateBasicDescription(template *types.Template, info *TemplateInfo, repo *types.Repository) string {
 	parts := []string{}
 
@@ -182,7 +277,30 @@ func (a *Analyzer) generateBasicDescription(template *types.Template, info *Temp
 	return description
 }
 
-// AnalyzeTemplates analyzes multiple templates
+// AnalyzeTemplates analyzes multiple templates with intelligent skip logic.
+//
+// Implements incremental analysis to avoid redundant work:
+//   - Skips templates where AnalyzedAt > LastUpdated (already analyzed, content unchanged)
+//   - Unless ForceAnalyze is true, which forces re-analysis of all templates
+//   - Templates that fail analysis are skipped (logged but not included in output)
+//
+// Parameters:
+//   - templates: Templates to analyze
+//   - repoMap: Map of repository ID to metadata (for topic-based categorization)
+//
+// Returns:
+//   - List of successfully analyzed templates (may be shorter than input if failures occur)
+//   - Error only for critical failures (individual failures are logged but not fatal)
+//
+// Progress is printed for each template: "Analyzing [1/100] owner/repo/template.yaml..."
+//
+// Rate Limiting:
+// Adds a delay (config.MetadataAPIDelay) between templates to avoid overwhelming
+// external services when fetching template content.
+//
+// Use Cases:
+//   - Incremental mode: Only analyze new/changed templates (efficient)
+//   - Full refresh: Set ForceAnalyze=true to re-analyze everything (after logic changes)
 func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[string]*types.Repository) ([]types.Template, error) {
 	analyzed := make([]types.Template, 0, len(templates))
 
