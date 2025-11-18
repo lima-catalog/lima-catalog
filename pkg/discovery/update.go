@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -19,7 +20,7 @@ type UpdateResult struct {
 }
 
 // MergeTemplates performs an incremental update by merging existing templates with newly discovered ones
-func MergeTemplates(existing, discovered []types.Template) UpdateResult {
+func MergeTemplates(existing, discovered []types.Template, clock interfaces.Clock) UpdateResult {
 	result := UpdateResult{
 		AllTemplates:     []types.Template{},
 		NewTemplates:     []types.Template{},
@@ -49,13 +50,13 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 			if oldTemplate.SHA != newTemplate.SHA {
 				// Template was updated (SHA changed)
 				newTemplate.DiscoveredAt = oldTemplate.DiscoveredAt // Preserve original discovery time
-				newTemplate.LastChecked = time.Now()                 // We checked it
-				newTemplate.LastUpdated = time.Now()                 // Content changed
+				newTemplate.LastChecked = clock.Now()                // We checked it
+				newTemplate.LastUpdated = clock.Now()                // Content changed
 				result.UpdatedTemplates = append(result.UpdatedTemplates, newTemplate)
 				result.AllTemplates = append(result.AllTemplates, newTemplate)
 			} else {
 				// Template unchanged (same SHA) but we checked it
-				oldTemplate.LastChecked = time.Now() // We checked it
+				oldTemplate.LastChecked = clock.Now() // We checked it
 				// Don't update LastUpdated - content didn't change
 				// But if LastUpdated is zero (old data before field was added), initialize it
 				if oldTemplate.LastUpdated.IsZero() {
@@ -76,8 +77,8 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 			preservedTemplates[id] = true
 		} else {
 			// New template
-			newTemplate.LastChecked = time.Now() // First check
-			newTemplate.LastUpdated = time.Now() // New content
+			newTemplate.LastChecked = clock.Now() // First check
+			newTemplate.LastUpdated = clock.Now() // New content
 			result.NewTemplates = append(result.NewTemplates, newTemplate)
 			result.AllTemplates = append(result.AllTemplates, newTemplate)
 			preservedTemplates[id] = true

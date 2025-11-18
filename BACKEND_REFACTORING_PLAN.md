@@ -327,11 +327,22 @@ After completing all phases:
 **Phase 1 Status**: 4/7 complete - Core refactoring done, deferred items moved to future phases
 
 ### Phase 2: Improve Quality
-- [ ] 2.1. Introduce interfaces for testability
+- [x] 2.1. Introduce interfaces for testability (HTTPClient, FileSystem, Clock)
+  - Created `pkg/interfaces/interfaces.go` with HTTPClient, FileSystem, Clock interfaces
+  - Added default implementations: DefaultHTTPClient, DefaultFileSystem, DefaultClock
+  - Updated `ParseTemplate()` to accept HTTPClient parameter for testability
+  - Updated `Analyzer` struct to include HTTPClient and Clock fields
+  - Updated `Analyzer.AnalyzeTemplate()` to use Clock.Now() instead of time.Now()
+  - Updated `MergeTemplates()` to accept Clock parameter
+  - Updated `Storage` to use FileSystem interface for all file operations
+  - Added `NewStorageWithFS()` constructor for dependency injection in tests
+  - All tests pass (83/83)
 - [ ] 2.2. Simplify MergeTemplates logic
 - [ ] 2.3. Extract FormatPrompt sections
 - [ ] 2.4. Add input validation
 - [ ] 2.5. Implement retry logic
+
+**Phase 2 Status**: 1/5 complete
 
 ### Phase 3: Polish
 - [ ] 3.1. Remove dead code

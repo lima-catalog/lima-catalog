@@ -7,67 +7,75 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
 // Storage handles reading and writing data in JSON Lines format
 type Storage struct {
 	dataDir string
+	fs      interfaces.FileSystem
 }
 
 // NewStorage creates a new storage instance
 func NewStorage(dataDir string) (*Storage, error) {
+	return NewStorageWithFS(dataDir, interfaces.NewDefaultFileSystem())
+}
+
+// NewStorageWithFS creates a new storage instance with a custom FileSystem
+func NewStorageWithFS(dataDir string, fs interfaces.FileSystem) (*Storage, error) {
 	// Create data directory if it doesn't exist
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := fs.MkdirAll(dataDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
 
 	return &Storage{
 		dataDir: dataDir,
+		fs:      fs,
 	}, nil
 }
 
 // LoadTemplates loads all templates from the JSON Lines file
 func (s *Storage) LoadTemplates() ([]types.Template, error) {
 	path := filepath.Join(s.dataDir, "templates.jsonl")
-	return loadJSONLines[types.Template](path)
+	return loadJSONLines[types.Template](s.fs, path)
 }
 
 // SaveTemplates saves templates to the JSON Lines file
 func (s *Storage) SaveTemplates(templates []types.Template) error {
 	path := filepath.Join(s.dataDir, "templates.jsonl")
-	return saveJSONLines(path, templates)
+	return saveJSONLines(s.fs, path, templates)
 }
 
 // LoadRepositories loads all repositories from the JSON Lines file
 func (s *Storage) LoadRepositories() ([]types.Repository, error) {
 	path := filepath.Join(s.dataDir, "repos.jsonl")
-	return loadJSONLines[types.Repository](path)
+	return loadJSONLines[types.Repository](s.fs, path)
 }
 
 // SaveRepositories saves repositories to the JSON Lines file
 func (s *Storage) SaveRepositories(repos []types.Repository) error {
 	path := filepath.Join(s.dataDir, "repos.jsonl")
-	return saveJSONLines(path, repos)
+	return saveJSONLines(s.fs, path, repos)
 }
 
 // LoadOrganizations loads all organizations from the JSON Lines file
 func (s *Storage) LoadOrganizations() ([]types.Organization, error) {
 	path := filepath.Join(s.dataDir, "orgs.jsonl")
-	return loadJSONLines[types.Organization](path)
+	return loadJSONLines[types.Organization](s.fs, path)
 }
 
 // SaveOrganizations saves organizations to the JSON Lines file
 func (s *Storage) SaveOrganizations(orgs []types.Organization) error {
 	path := filepath.Join(s.dataDir, "orgs.jsonl")
-	return saveJSONLines(path, orgs)
+	return saveJSONLines(s.fs, path, orgs)
 }
 
 // LoadProgress loads the progress state
 func (s *Storage) LoadProgress() (*types.Progress, error) {
 	path := filepath.Join(s.dataDir, "progress.json")
 
-	file, err := os.Open(path)
+	file, err := s.fs.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Return empty progress if file doesn't exist
@@ -91,7 +99,7 @@ func (s *Storage) LoadProgress() (*types.Progress, error) {
 func (s *Storage) SaveProgress(progress *types.Progress) error {
 	path := filepath.Join(s.dataDir, "progress.json")
 
-	file, err := os.Create(path)
+	file, err := s.fs.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create progress file: %w", err)
 	}
@@ -107,8 +115,8 @@ func (s *Storage) SaveProgress(progress *types.Progress) error {
 }
 
 // loadJSONLines loads data from a JSON Lines file
-func loadJSONLines[T any](path string) ([]T, error) {
-	file, err := os.Open(path)
+func loadJSONLines[T any](fs interfaces.FileSystem, path string) ([]T, error) {
+	file, err := fs.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Return empty slice if file doesn't exist
@@ -139,8 +147,8 @@ func loadJSONLines[T any](path string) ([]T, error) {
 }
 
 // saveJSONLines saves data to a JSON Lines file
-func saveJSONLines[T any](path string, items []T) error {
-	file, err := os.Create(path)
+func saveJSONLines[T any](fs interfaces.FileSystem, path string, items []T) error {
+	file, err := fs.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
