@@ -73,21 +73,9 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 
 		result, resp, err := d.client.SearchCode(query, page)
 		if err != nil {
-			// Check if it's a rate limit error
-			if resp != nil && (resp.StatusCode == 403 || resp.StatusCode == 429) {
-				// Check rate limit to get reset time
-				limits, _ := d.client.RateLimit()
-				if limits != nil && limits.Search != nil {
-					resetTime := limits.Search.Reset.Time
-					waitDuration := time.Until(resetTime)
-					if waitDuration > 0 {
-						fmt.Printf("  Rate limit exceeded, waiting %v until reset at %s\n",
-							waitDuration.Round(time.Second), resetTime.Format(time.RFC3339))
-						time.Sleep(waitDuration + config.SearchAPIQueryDelay) // Add buffer
-						fmt.Println("  Retrying after rate limit reset...")
-						continue // Retry the same page
-					}
-				}
+			// Check if it's a rate limit error and handle it
+			if d.client.HandleRateLimitError(resp, "search") {
+				continue // Retry the same page after waiting
 			}
 			return nil, fmt.Errorf("code search failed: %w", err)
 		}
