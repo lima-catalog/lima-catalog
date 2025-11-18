@@ -987,4 +987,6 @@ function closeKeyboardHelp(returnFocusToSearch = false) {
         keyboardHelpPreviousFocus = null;
         shouldRestoreFocus = true;
     }
+}
+
 export { setupKeyboardShortcuts, showKeyboardHelp };
