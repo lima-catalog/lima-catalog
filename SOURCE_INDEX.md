@@ -83,7 +83,7 @@ Quick reference for all source files and their purposes.
 
 | File | Purpose |
 |------|---------|
-| `docs/js/app.js` | Main application orchestration, event handlers, keyboard shortcuts |
+| `docs/js/app.js` | Main application orchestration and event handlers |
 | `docs/js/config.js` | Configuration (data URL, cache keys) |
 | `docs/js/state.js` | Application state management |
 | `docs/js/data.js` | Fetch and parse catalog data from data branch (JSONL format) |
@@ -91,11 +91,12 @@ Quick reference for all source files and their purposes.
 | `docs/js/sidebar.js` | Sidebar navigation, keyword cloud, category list |
 | `docs/js/templateCard.js` | Template card rendering with metadata and formatting |
 | `docs/js/modal.js` | Template preview and help modals with YAML syntax highlighting |
+| `docs/js/keyboard.js` | Keyboard shortcuts, navigation helpers, and help modal |
 | `docs/js/theme.js` | Dark/light theme management |
 | `docs/js/urlHelpers.js` | Lima 2.0 `github:` URL generation and GitHub URL conversions |
 | `docs/js/utils.js` | Utility functions (debounce, HTML escaping, etc.) |
 | `docs/js/test-framework.js` | Minimal test framework (assertions, runner) |
-| `docs/js/*.test.js` | Unit tests for each module (83 tests total) |
+| `docs/js/*.test.js` | Unit tests for each module |
 
 ### Test Infrastructure
 
@@ -218,7 +219,7 @@ No build step required - uses ES6 modules directly in browser.
 
 ### Frontend Modules
 
-- **app**: Main orchestration, event handling, keyboard shortcuts, help modal
+- **app**: Main orchestration and event handling
 - **config**: Configuration constants
 - **state**: Centralized application state
 - **data**: Fetch and parse catalog data (JSONL)
@@ -226,6 +227,7 @@ No build step required - uses ES6 modules directly in browser.
 - **sidebar**: Sidebar navigation, keyword cloud, category list
 - **templateCard**: Individual template card rendering
 - **modal**: Template preview and help modals with syntax highlighting
+- **keyboard**: Keyboard shortcuts, navigation helpers, and help modal
 - **theme**: Dark/light theme management
 - **urlHelpers**: Lima 2.0 URL generation and GitHub URL conversions
 - **utils**: Utility functions (debounce, HTML escaping)
