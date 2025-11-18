@@ -93,6 +93,7 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
     "probe_total_lines": 10,
     "param_count": 3,
     "env_count": 5,
+    "comment_line_count": 15,
     "unusual_images": ["nixos"]
   }
 }
@@ -160,7 +161,14 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 - `probe_total_lines` - Total lines across all probe scripts
 - `param_count` - Number of configurable parameters
 - `env_count` - Number of environment variables
+- `comment_line_count` - Number of YAML comment lines (indicates documentation quality)
 - `unusual_images` - Images not in official lima-vm/lima templates
+
+**Official Images Detection**:
+- Dynamically fetched from `lima-vm/lima/templates/_images/` directory via GitHub API
+- No hardcoded image list - fully autonomous system
+- Fetched once per analyzer run, cached for all template analyses
+- Official images extracted from both filenames and YAML `images.location` fields
 
 **Score Calculation** (weighted sum):
 1. **Message**: 100 points (strong signal for reusability)
@@ -169,7 +177,8 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 4. **Environment vars**: 10 points per var (shows configuration effort)
 5. **Probes**: 5 points per probe + 1 point per 10 lines
 6. **Unusual images**: 30 points per image (specialized use case)
-7. **Repository stars**: 1 point per 10 stars (capped at 50 points)
+7. **Comment lines**: 1 point per comment line (documentation quality)
+8. **Repository stars**: 1 point per 10 stars (capped at 50 points)
 
 **Usage**:
 - Frontend: Sort templates by `notability_score` to show most interesting first

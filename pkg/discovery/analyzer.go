@@ -1,10 +1,12 @@
 package discovery
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/google/go-github/v57/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -14,14 +16,31 @@ type Analyzer struct {
 	LLMEnabled bool
 	// LLMAPIKey is the API key for the LLM service
 	LLMAPIKey string
+	// OfficialImages contains the list of official image names from lima-vm/lima
+	OfficialImages map[string]bool
 }
 
 // NewAnalyzer creates a new template analyzer
 func NewAnalyzer(llmEnabled bool, apiKey string) *Analyzer {
 	return &Analyzer{
-		LLMEnabled: llmEnabled,
-		LLMAPIKey:  apiKey,
+		LLMEnabled:     llmEnabled,
+		LLMAPIKey:      apiKey,
+		OfficialImages: make(map[string]bool),
 	}
+}
+
+// FetchOfficialImagesForAnalyzer fetches official images and stores them in the analyzer
+func (a *Analyzer) FetchOfficialImagesForAnalyzer(ctx context.Context, client *github.Client) error {
+	officialImages, err := FetchOfficialImages(ctx, client)
+	if err != nil {
+		// If fetching fails, use empty map (all images will be considered unusual)
+		fmt.Printf("Warning: failed to fetch official images: %v\n", err)
+		a.OfficialImages = make(map[string]bool)
+		return err
+	}
+	a.OfficialImages = officialImages
+	fmt.Printf("Fetched %d official images from lima-vm/lima\n", len(officialImages))
+	return nil
 }
 
 // AnalyzeTemplate performs full analysis on a template
@@ -48,7 +67,7 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 	template.Keywords = templateInfo.Keywords
 
 	// Populate notability metrics
-	template.Notability = PopulateNotabilityMetrics(templateInfo)
+	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialImages)
 
 	// Step 3: Infer basic category and description
 	category, useCase := a.inferCategory(templateInfo, repoInfo)

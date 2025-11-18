@@ -38,6 +38,7 @@ type NotabilityMetrics struct {
 	ProbeTotalLines     int      `json:"probe_total_lines"`        // Total lines across all probe scripts
 	ParamCount          int      `json:"param_count"`              // Number of configurable parameters
 	EnvCount            int      `json:"env_count"`                // Number of environment variables
+	CommentLineCount    int      `json:"comment_line_count"`       // Number of comment lines in template
 	UnusualImages       []string `json:"unusual_images,omitempty"` // Images not in official templates
 }
 

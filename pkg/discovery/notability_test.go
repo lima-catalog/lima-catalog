@@ -7,6 +7,21 @@ import (
 )
 
 func TestIdentifyUnusualImages(t *testing.T) {
+	// Create a test official images map
+	officialImages := map[string]bool{
+		"ubuntu":      true,
+		"alpine":      true,
+		"debian":      true,
+		"fedora":      true,
+		"arch":        true,
+		"almalinux":   true,
+		"rocky":       true,
+		"opensuse":    true,
+		"centos":      true,
+		"oracle":      true,
+		"amazonlinux": true,
+	}
+
 	tests := []struct {
 		name     string
 		images   []string
@@ -41,7 +56,7 @@ func TestIdentifyUnusualImages(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IdentifyUnusualImages(tt.images)
+			result := IdentifyUnusualImages(tt.images, officialImages)
 			if len(result) != len(tt.expected) {
 				t.Errorf("IdentifyUnusualImages() got %d unusual images, want %d", len(result), len(tt.expected))
 				t.Errorf("Got: %v", result)
@@ -130,6 +145,15 @@ func TestCalculateNotabilityScore(t *testing.T) {
 			maxScore:  150.0,
 		},
 		{
+			name: "Template with comments",
+			metrics: &types.NotabilityMetrics{
+				CommentLineCount: 25,
+			},
+			repoStars: 0,
+			minScore:  25.0, // 25 comments * 1 point each
+			maxScore:  25.0,
+		},
+		{
 			name: "Complex template (everything)",
 			metrics: &types.NotabilityMetrics{
 				MessageLength:       100,
@@ -139,11 +163,12 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				ProbeTotalLines:     20,
 				ParamCount:          4,
 				EnvCount:            6,
+				CommentLineCount:    15,
 				UnusualImages:       []string{"nixos"},
 			},
 			repoStars: 500,
-			minScore:  100 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 50, // Total = 372
-			maxScore:  372.0,
+			minScore:  100 + 30 + 10 + 10 + 2 + 80 + 60 + 15 + 30 + 50, // Total = 387
+			maxScore:  387.0,
 		},
 	}
 
@@ -158,6 +183,21 @@ func TestCalculateNotabilityScore(t *testing.T) {
 }
 
 func TestPopulateNotabilityMetrics(t *testing.T) {
+	// Create a test official images map
+	officialImages := map[string]bool{
+		"ubuntu":      true,
+		"alpine":      true,
+		"debian":      true,
+		"fedora":      true,
+		"arch":        true,
+		"almalinux":   true,
+		"rocky":       true,
+		"opensuse":    true,
+		"centos":      true,
+		"oracle":      true,
+		"amazonlinux": true,
+	}
+
 	info := &TemplateInfo{
 		Images:              []string{"ubuntu", "nixos", "alpine"},
 		MessageLength:       150,
@@ -167,9 +207,10 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		ProbeTotalLines:     10,
 		ParamCount:          5,
 		EnvCount:            3,
+		CommentLineCount:    20,
 	}
 
-	metrics := PopulateNotabilityMetrics(info)
+	metrics := PopulateNotabilityMetrics(info, officialImages)
 
 	if metrics.MessageLength != 150 {
 		t.Errorf("MessageLength = %d, want 150", metrics.MessageLength)
@@ -191,6 +232,9 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 	}
 	if metrics.EnvCount != 3 {
 		t.Errorf("EnvCount = %d, want 3", metrics.EnvCount)
+	}
+	if metrics.CommentLineCount != 20 {
+		t.Errorf("CommentLineCount = %d, want 20", metrics.CommentLineCount)
 	}
 
 	// Should identify nixos as unusual
