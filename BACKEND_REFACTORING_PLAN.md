@@ -487,6 +487,43 @@ After completing all phases:
 
 ---
 
+### Phase 6: Design Improvements (In Progress)
+
+- [ ] 6.1. API design improvements
+  - Change `HandleRateLimitError()` to return error instead of bool
+  - Add FileSystem parameter to `CombineData()`
+  - Add context parameters to discovery/analyzer functions
+  - Use functional options pattern for Analyzer configuration
+- [x] 6.2. Add comprehensive godoc documentation
+  - **Package-level documentation**: Added detailed package comments to all 6 core packages
+    - pkg/discovery: Template discovery, analysis, and metadata collection (33 lines)
+    - pkg/storage: JSON Lines storage with error handling contracts (23 lines)
+    - pkg/github: GitHub API wrapper with rate limiting and caching (34 lines)
+    - pkg/combiner: Frontend data merging and blocklist filtering (29 lines)
+    - pkg/validation: Input validation and security (directory traversal prevention) (18 lines)
+    - pkg/types: Core data structures and JSON serialization (21 lines)
+  - **Function-level documentation**: Added comprehensive godoc to 28 exported functions
+    - pkg/discovery/metadata.go: 9 functions (metadata collection, incremental refresh strategy)
+    - pkg/discovery/analyzer.go: 7 functions (template analysis, category inference, skip logic)
+    - pkg/github/client.go: 10 functions (rate limiting, caching, API wrappers)
+    - All functions include parameters, returns, examples, and behavioral notes
+    - Error handling contracts documented
+    - Performance characteristics explained
+    - Thread safety notes added where applicable
+
+**Phase 6.2 Benefits**:
+- Improved developer onboarding (clear API contracts)
+- Better IDE support (inline parameter hints, return value descriptions)
+- Reduced need for code reading (examples show common usage patterns)
+- Documented edge cases and error handling behavior
+- Foundation for API improvements in Phase 6.1
+
+**Phase 6 Status**: 1/2 complete (6.2 ✅, 6.1 pending)
+
+**All tests passing**: 180 total (97 Go + 83 JS)
+
+---
+
 ## 📋 Comprehensive Code Review
 
 A detailed code review was conducted after Phase 3, identifying 38 issues across 8 categories. See **BACKEND_CODE_REVIEW.md** for complete findings.
