@@ -61,6 +61,11 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 
 **Tech stack**: Modular ES6 JavaScript + highlight.js (no build step)
 
+**Architecture**: Three-layer module organization
+- `app.js` - Application initialization and event setup
+- `appActions.js` - Shared actions to break circular dependencies (filter, render, UI updates)
+- `keyboard.js` - Keyboard shortcuts and navigation (990 lines, extracted for maintainability)
+
 See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design system documentation.
 
 ## Data Schema

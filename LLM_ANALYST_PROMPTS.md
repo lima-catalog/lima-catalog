@@ -375,7 +375,7 @@ Token costs and prompt length:
 - `cmd/prompt-generator/main.go` - CLI tool
 - `cmd/prompt-generator/README.md` - CLI documentation
 - `cmd/prompt-generator/example.sh` - Usage examples
-- `docs/LLM_ANALYST_PROMPTS.md` - This document
+- `LLM_ANALYST_PROMPTS.md` - This document
 
 ## Related Documentation
 

@@ -51,7 +51,7 @@ make test
 
 **This will run all tests (Go + JavaScript):**
 - Go backend tests (blocklist, metadata, combiner, etc.)
-- JavaScript frontend tests (76+ unit tests covering URL helpers, data parsing, filters, etc.)
+- JavaScript frontend tests (URL helpers, data parsing, filters, etc.)
 
 **All tests must pass (exit code 0). If any tests fail, fix them before proceeding.**
 
@@ -76,6 +76,9 @@ make test
 - **[PLAN.md](PLAN.md)** - Current architecture, remaining work, design decisions
 - **[IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md)** - Detailed implementation notes for completed features
 - **[INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)** - Complete UI/UX design system
+- **[SOURCE_INDEX.md](SOURCE_INDEX.md)** - Quick reference for all source files and their purposes
+- **[FINDINGS.md](FINDINGS.md)** - Research findings on GitHub search behavior
+- **[LLM_ANALYST_PROMPTS.md](LLM_ANALYST_PROMPTS.md)** - Documentation for LLM prompt generation system
 
 ## Key Reminders
 

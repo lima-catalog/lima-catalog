@@ -65,7 +65,7 @@ npx serve docs
 
 ### Running Tests
 
-The project includes a comprehensive unit test suite (67+ tests) for the JavaScript modules. Tests can run in Node.js or in the browser, with no build step or dependencies required.
+The project includes a comprehensive test suite for both Go and JavaScript modules. Tests can run in Node.js or in the browser, with no build step or dependencies required.
 
 **Quick test (recommended):**
 ```bash
