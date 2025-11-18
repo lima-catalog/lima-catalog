@@ -982,6 +982,18 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                         <li>Updates the catalog daily with new templates and changes</li>
                         <li>Provides a web interface for browsing and searching templates</li>
                     </ul>
+                    <h4>Template Notability</h4>
+                    <p>
+                        Templates are ranked by a "notability score" that helps surface the most interesting
+                        and useful templates. The score considers several factors:
+                    </p>
+                    <ul>
+                        <li><strong>Reusability:</strong> Templates with message text are designed for sharing</li>
+                        <li><strong>Customization:</strong> Provision scripts, parameters, and environment variables</li>
+                        <li><strong>Documentation:</strong> Comment quality and completeness</li>
+                        <li><strong>Specialization:</strong> Use of non-standard OS images</li>
+                        <li><strong>Popularity:</strong> Repository star count (with balanced weighting)</li>
+                    </ul>
                     <h4>Get Involved</h4>
                     <p>
                         Found a bug or have a suggestion?
