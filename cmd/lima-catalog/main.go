@@ -29,7 +29,6 @@ type appConfig struct {
 	dataDir      string
 	incremental  bool
 	analyze      bool
-	llmAPIKey    string
 	forceAnalyze bool
 }
 
@@ -50,7 +49,6 @@ func setupEnvironment() (*appConfig, error) {
 		dataDir:      dataDir,
 		incremental:  os.Getenv("INCREMENTAL") != "",
 		analyze:      os.Getenv("ANALYZE") != "",
-		llmAPIKey:    os.Getenv("LLM_API_KEY"),
 		forceAnalyze: os.Getenv("FORCE_ANALYZE") != "",
 	}
 
@@ -129,7 +127,7 @@ func checkRateLimits(client *github.Client) error {
 }
 
 // runAnalysisPhase analyzes templates for keywords, categories, and notability
-func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage.Storage, llmAPIKey string, forceAnalyze bool) error {
+func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage.Storage, forceAnalyze bool) error {
 	fmt.Println("=== Phase 3: Template Analysis ===")
 	fmt.Println()
 
@@ -151,7 +149,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 	}
 
 	// Create analyzer
-	analyzer := discovery.NewAnalyzer(llmAPIKey != "", llmAPIKey, forceAnalyze)
+	analyzer := discovery.NewAnalyzer(forceAnalyze)
 
 	// Fetch official images for notability scoring
 	fmt.Println("Fetching official images from lima-vm/lima...")
@@ -506,7 +504,7 @@ func run() error {
 
 	// Phase 3: Template Analysis (optional)
 	if cfg.analyze {
-		if err := runAnalysisPhase(ctx, client, store, cfg.llmAPIKey, cfg.forceAnalyze); err != nil {
+		if err := runAnalysisPhase(ctx, client, store, cfg.forceAnalyze); err != nil {
 			return err
 		}
 	}
