@@ -6,6 +6,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/config"
@@ -98,6 +99,90 @@ func (m *MetadataCollector) CollectOrganizationMetadata(login string) (*types.Or
 	}
 
 	return org, nil
+}
+
+// fetchRepositoriesConcurrent fetches multiple repositories concurrently with controlled concurrency
+// maxConcurrent controls how many API calls run in parallel (respects rate limits)
+func (m *MetadataCollector) fetchRepositoriesConcurrent(repoNames []string, maxConcurrent int) map[string]types.Repository {
+	results := make(map[string]types.Repository)
+	var mu sync.Mutex // Protects results map
+	var wg sync.WaitGroup
+
+	// Semaphore to limit concurrency
+	sem := make(chan struct{}, maxConcurrent)
+
+	for i, repoName := range repoNames {
+		wg.Add(1)
+		go func(name string, index int) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			// Add delay before each fetch to respect rate limits
+			// Stagger initial requests to avoid burst
+			if index > 0 {
+				time.Sleep(config.MetadataAPIDelay)
+			}
+
+			repo, err := m.CollectRepositoryMetadata(name)
+			if err != nil {
+				fmt.Printf("Warning: failed to fetch %s: %v\n", name, err)
+				return
+			}
+
+			// Store result (thread-safe)
+			mu.Lock()
+			results[repo.ID] = *repo
+			mu.Unlock()
+		}(repoName, i)
+	}
+
+	wg.Wait()
+	return results
+}
+
+// fetchOrganizationsConcurrent fetches multiple organizations concurrently with controlled concurrency
+// maxConcurrent controls how many API calls run in parallel (respects rate limits)
+func (m *MetadataCollector) fetchOrganizationsConcurrent(orgNames []string, maxConcurrent int) map[string]types.Organization {
+	results := make(map[string]types.Organization)
+	var mu sync.Mutex // Protects results map
+	var wg sync.WaitGroup
+
+	// Semaphore to limit concurrency
+	sem := make(chan struct{}, maxConcurrent)
+
+	for i, orgName := range orgNames {
+		wg.Add(1)
+		go func(name string, index int) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			// Add delay before each fetch to respect rate limits
+			// Stagger initial requests to avoid burst
+			if index > 0 {
+				time.Sleep(config.MetadataAPIDelay)
+			}
+
+			org, err := m.CollectOrganizationMetadata(name)
+			if err != nil {
+				fmt.Printf("Warning: failed to fetch %s: %v\n", name, err)
+				return
+			}
+
+			// Store result (thread-safe)
+			mu.Lock()
+			results[org.ID] = *org
+			mu.Unlock()
+		}(orgName, i)
+	}
+
+	wg.Wait()
+	return results
 }
 
 // SelectReposToRefresh selects repositories that need metadata refresh
@@ -231,44 +316,30 @@ func (m *MetadataCollector) CollectMetadataIncremental(newTemplates []types.Temp
 		orgMap[org.ID] = org
 	}
 
-	// Collect repository metadata
+	// Collect repository metadata concurrently
 	fmt.Printf("\n=== Collecting Repository Metadata (Incremental) ===\n")
 	fmt.Printf("New templates: %d repos | Stale (>30 days): refreshing up to 5%%\n", len(newTemplates))
-	fmt.Printf("Fetching %d repositories...\n", len(reposToRefresh))
+	fmt.Printf("Fetching %d repositories (concurrent: %d)...\n", len(reposToRefresh), config.MaxMetadataConcurrency)
 
-	count := 0
-	for _, repoName := range reposToRefresh {
-		count++
-		fmt.Printf("Fetching [%d/%d] %s...\n", count, len(reposToRefresh), repoName)
-
-		repo, err := m.CollectRepositoryMetadata(repoName)
-		if err != nil {
-			fmt.Printf("Warning: failed to fetch %s: %v\n", repoName, err)
-			continue
+	if len(reposToRefresh) > 0 {
+		fetchedRepos := m.fetchRepositoriesConcurrent(reposToRefresh, config.MaxMetadataConcurrency)
+		// Merge fetched repos into existing map
+		for id, repo := range fetchedRepos {
+			repoMap[id] = repo
 		}
-
-		repoMap[repo.ID] = *repo
-		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
 	}
 	fmt.Printf("Refreshed %d repositories\n\n", len(reposToRefresh))
 
-	// Collect organization metadata
+	// Collect organization metadata concurrently
 	fmt.Printf("=== Collecting Organization Metadata (Incremental) ===\n")
-	fmt.Printf("Fetching %d organizations...\n", len(orgsToRefresh))
+	fmt.Printf("Fetching %d organizations (concurrent: %d)...\n", len(orgsToRefresh), config.MaxMetadataConcurrency)
 
-	count = 0
-	for _, orgName := range orgsToRefresh {
-		count++
-		fmt.Printf("Fetching [%d/%d] %s...\n", count, len(orgsToRefresh), orgName)
-
-		org, err := m.CollectOrganizationMetadata(orgName)
-		if err != nil {
-			fmt.Printf("Warning: failed to fetch %s: %v\n", orgName, err)
-			continue
+	if len(orgsToRefresh) > 0 {
+		fetchedOrgs := m.fetchOrganizationsConcurrent(orgsToRefresh, config.MaxMetadataConcurrency)
+		// Merge fetched orgs into existing map
+		for id, org := range fetchedOrgs {
+			orgMap[id] = org
 		}
-
-		orgMap[org.ID] = *org
-		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
 	}
 	fmt.Printf("Refreshed %d organizations\n\n", len(orgsToRefresh))
 
@@ -307,43 +378,22 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 		}
 	}
 
-	var repositories []types.Repository
-	var organizations []types.Organization
-
-	// Collect repository metadata
+	// Collect repository metadata concurrently
 	fmt.Printf("\n=== Collecting Repository Metadata ===\n")
-	count := 0
-	for repoName := range repoMap {
-		count++
-		fmt.Printf("Fetching [%d/%d] %s...\n", count, len(repoMap), repoName)
+	repoNames := slices.Collect(maps.Keys(repoMap))
+	fmt.Printf("Fetching %d repositories (concurrent: %d)...\n", len(repoNames), config.MaxMetadataConcurrency)
 
-		repo, err := m.CollectRepositoryMetadata(repoName)
-		if err != nil {
-			fmt.Printf("Warning: failed to fetch %s: %v\n", repoName, err)
-			continue
-		}
-
-		repositories = append(repositories, *repo)
-		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
-	}
+	fetchedRepos := m.fetchRepositoriesConcurrent(repoNames, config.MaxMetadataConcurrency)
+	repositories := slices.Collect(maps.Values(fetchedRepos))
 	fmt.Printf("Collected metadata for %d repositories\n\n", len(repositories))
 
-	// Collect organization metadata
+	// Collect organization metadata concurrently
 	fmt.Printf("=== Collecting Organization Metadata ===\n")
-	count = 0
-	for orgName := range orgMap {
-		count++
-		fmt.Printf("Fetching [%d/%d] %s...\n", count, len(orgMap), orgName)
+	orgNames := slices.Collect(maps.Keys(orgMap))
+	fmt.Printf("Fetching %d organizations (concurrent: %d)...\n", len(orgNames), config.MaxMetadataConcurrency)
 
-		org, err := m.CollectOrganizationMetadata(orgName)
-		if err != nil {
-			fmt.Printf("Warning: failed to fetch %s: %v\n", orgName, err)
-			continue
-		}
-
-		organizations = append(organizations, *org)
-		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
-	}
+	fetchedOrgs := m.fetchOrganizationsConcurrent(orgNames, config.MaxMetadataConcurrency)
+	organizations := slices.Collect(maps.Values(fetchedOrgs))
 	fmt.Printf("Collected metadata for %d organizations\n\n", len(organizations))
 
 	// Sort for stable output
