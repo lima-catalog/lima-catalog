@@ -84,7 +84,18 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
   "keywords": ["ubuntu", "docker", "git"],
   "images": ["ubuntu"],
   "arch": ["x86_64", "aarch64"],
-  "analyzed_at": "2025-01-15T10:05:00Z"
+  "analyzed_at": "2025-01-15T10:05:00Z",
+  "notability": {
+    "message_length": 100,
+    "provision_count": 2,
+    "provision_total_lines": 50,
+    "probe_count": 1,
+    "probe_total_lines": 10,
+    "param_count": 3,
+    "env_count": 5,
+    "comment_line_count": 15,
+    "unusual_images": ["nixos.org"]
+  }
 }
 ```
 
@@ -133,9 +144,56 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
   "updated_at": "2024-03-20",
   "official": true,
   "url": "https://github.com/...",
-  "raw_url": "https://raw.githubusercontent.com/..."
+  "raw_url": "https://raw.githubusercontent.com/...",
+  "notability_score": 285.5
 }
 ```
+
+## Notability Scoring System
+
+**Purpose**: Identify and prioritize the most "interesting" templates for LLM analysis and user discovery.
+
+**Raw Metrics** (stored in `notability` field):
+- `message_length` - Length of user-facing message (>0 indicates template meant for reuse)
+- `provision_count` - Number of provision scripts
+- `provision_total_lines` - Total lines across all provision scripts
+- `probe_count` - Number of probe scripts
+- `probe_total_lines` - Total lines across all probe scripts
+- `param_count` - Number of configurable parameters
+- `env_count` - Number of environment variables
+- `comment_line_count` - Number of YAML comment lines (indicates documentation quality)
+- `unusual_images` - List of unusual image **domains** (not in official templates)
+
+**Official Images Detection** (Domain-Based):
+- Dynamically fetched from `lima-vm/lima/templates/_images/` directory via GitHub API
+- Extracts **domains** from image URLs (e.g., `cloud-images.ubuntu.com`)
+- Domain-based matching handles version updates automatically
+- No hardcoded data - fully autonomous system
+- Fetched once per analyzer run, cached for all template analyses
+
+**Unusual Images** (what gets stored):
+- Template image URLs are parsed to extract their domains
+- Domains not found in official images list are stored in `unusual_images`
+- Example: Template using `https://nixos.org/channels/...` would store `nixos.org`
+- Deduplicates domains (multiple images from same domain counted once)
+- Skips `template://` references (internal template references)
+
+**Score Calculation** (weighted sum):
+1. **Message**: 100 points (strong signal for reusability)
+2. **Provision scripts**: 10 points per script + 1 point per 10 lines
+3. **Parameters**: 20 points per param (indicates configurability)
+4. **Environment vars**: 10 points per var (shows configuration effort)
+5. **Probes**: 5 points per probe + 1 point per 10 lines
+6. **Unusual images**: 30 points if any unusual domains present (Lima uses first available)
+7. **Comment lines**: 2 points per comment line (documentation quality)
+8. **Repository stars**: 1 point per 10 stars (capped at 50 points)
+
+**Usage**:
+- Frontend: Sort templates by `notability_score` to show most interesting first
+- LLM Analysis: Process templates in notability order (highest first) to prioritize valuable templates
+- Rate limiting: With ~20-30 LLM requests/day, notability ensures we analyze the best templates first
+
+**Design Decision**: Store raw metrics, calculate score on-demand. This allows weight tuning without re-analyzing all templates.
 
 ## Remaining Work
 
@@ -169,6 +227,36 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 - Rate limit: Start with 1 description/run (configurable)
 - Use cheapest/fastest LLM (Claude Haiku, GPT-3.5-turbo, etc.)
 - Fallback to analysis-based keywords if LLM unavailable
+
+**Prompt Builder Architecture:**
+
+New package `pkg/prompt` provides comprehensive context gathering for LLM analysis:
+
+Context included in prompts:
+1. **Template YAML content** - Full template with provisioning scripts, probes, messages, env vars, params
+2. **Template comments** - Extracted YAML comments for author intent
+3. **Repository metadata** - Description, topics/keywords, language, stars
+4. **Organization info** - Owner name, type, description, location
+5. **README content** - Repository README (truncated to ~5000 chars)
+6. **Template references** - Shallow clone + grep for template filename with 15 lines context before/after
+
+Standalone CLI tool `cmd/prompt-generator`:
+- Purpose: Test prompts with different LLM models before backend integration
+- Usage: `prompt-generator owner/repo/path/template.yaml`
+- Output: Formatted prompt ready for LLM testing (stdout or file)
+- Configuration: Context lines, max README length, max references, enable/disable sections
+- Token estimation: Shows approximate token count for prompt size planning
+
+Backend integration:
+- Same `pkg/prompt.Builder` will be used by analyzer
+- Configurable via `PromptConfig` (context lines, included sections, limits)
+- Shallow clones are temporary (cleaned up after reference gathering)
+
+**Important caveats in prompts:**
+- Warns LLM that repo purpose may differ from template purpose
+- Repository might be CI scaffolding, docs, or template collection
+- Template itself may make the repo's project available in VM
+- Instructs LLM to prioritize template content over repo metadata
 
 **Environment variables:**
 ```bash

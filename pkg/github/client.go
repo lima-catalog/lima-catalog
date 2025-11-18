@@ -28,6 +28,11 @@ func NewClient(ctx context.Context, token string) *Client {
 	}
 }
 
+// GetClient returns the underlying GitHub client for direct API access
+func (c *Client) GetClient() *github.Client {
+	return c.client
+}
+
 // RateLimit returns the current rate limit status
 func (c *Client) RateLimit() (*github.RateLimits, error) {
 	limits, _, err := c.client.RateLimit.Get(c.ctx)

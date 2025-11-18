@@ -1,10 +1,12 @@
 package discovery
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/google/go-github/v57/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -14,14 +16,34 @@ type Analyzer struct {
 	LLMEnabled bool
 	// LLMAPIKey is the API key for the LLM service
 	LLMAPIKey string
+	// OfficialImages contains the list of official image names from lima-vm/lima
+	OfficialImages map[string]bool
+	// ForceAnalyze forces re-analysis of all templates, even if already analyzed
+	ForceAnalyze bool
 }
 
 // NewAnalyzer creates a new template analyzer
-func NewAnalyzer(llmEnabled bool, apiKey string) *Analyzer {
+func NewAnalyzer(llmEnabled bool, apiKey string, forceAnalyze bool) *Analyzer {
 	return &Analyzer{
-		LLMEnabled: llmEnabled,
-		LLMAPIKey:  apiKey,
+		LLMEnabled:     llmEnabled,
+		LLMAPIKey:      apiKey,
+		OfficialImages: make(map[string]bool),
+		ForceAnalyze:   forceAnalyze,
 	}
+}
+
+// FetchOfficialImagesForAnalyzer fetches official images and stores them in the analyzer
+func (a *Analyzer) FetchOfficialImagesForAnalyzer(ctx context.Context, client *github.Client) error {
+	officialImages, err := FetchOfficialImages(ctx, client)
+	if err != nil {
+		// If fetching fails, use empty map (all images will be considered unusual)
+		fmt.Printf("Warning: failed to fetch official images: %v\n", err)
+		a.OfficialImages = make(map[string]bool)
+		return err
+	}
+	a.OfficialImages = officialImages
+	fmt.Printf("Fetched %d official images from lima-vm/lima\n", len(officialImages))
+	return nil
 }
 
 // AnalyzeTemplate performs full analysis on a template
@@ -46,6 +68,9 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 	template.Images = templateInfo.Images
 	template.Arch = templateInfo.Arch
 	template.Keywords = templateInfo.Keywords
+
+	// Populate notability metrics
+	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialImages)
 
 	// Step 3: Infer basic category and description
 	category, useCase := a.inferCategory(templateInfo, repoInfo)
@@ -168,7 +193,8 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 
 		// Skip if already analyzed and content hasn't changed since analysis
 		// LastUpdated tracks when content (SHA) changed, so if we analyzed after last update, skip
-		if !template.LastUpdated.IsZero() && template.AnalyzedAt.After(template.LastUpdated) {
+		// Unless ForceAnalyze is enabled, which forces re-analysis of all templates
+		if !a.ForceAnalyze && !template.LastUpdated.IsZero() && template.AnalyzedAt.After(template.LastUpdated) {
 			analyzed = append(analyzed, *template)
 			continue
 		}

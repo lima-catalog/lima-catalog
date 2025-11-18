@@ -45,10 +45,14 @@ func run() error {
 	// Check if analysis mode is enabled
 	analyze := os.Getenv("ANALYZE") != ""
 	llmAPIKey := os.Getenv("LLM_API_KEY")
+	forceAnalyze := os.Getenv("FORCE_ANALYZE") != ""
 
 	fmt.Printf("Data directory: %s\n", dataDir)
 	fmt.Printf("Incremental mode: %v\n", incremental)
 	fmt.Printf("Analysis mode: %v\n", analyze)
+	if forceAnalyze {
+		fmt.Printf("Force re-analyze: %v (will re-analyze ALL templates)\n", forceAnalyze)
+	}
 	fmt.Println()
 
 	// Initialize storage
@@ -317,7 +321,15 @@ func run() error {
 		}
 
 		// Create analyzer
-		analyzer := discovery.NewAnalyzer(llmAPIKey != "", llmAPIKey)
+		analyzer := discovery.NewAnalyzer(llmAPIKey != "", llmAPIKey, forceAnalyze)
+
+		// Fetch official images for notability scoring
+		fmt.Println("Fetching official images from lima-vm/lima...")
+		if err := analyzer.FetchOfficialImagesForAnalyzer(ctx, client.GetClient()); err != nil {
+			fmt.Printf("Warning: failed to fetch official images: %v\n", err)
+			fmt.Println("Continuing with analysis (all images will be considered unusual)...")
+		}
+		fmt.Println()
 
 		// Analyze templates
 		analyzedTemplates, err := analyzer.AnalyzeTemplates(templates, repoMap)

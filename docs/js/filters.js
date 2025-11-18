@@ -92,12 +92,14 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
 /**
  * Sort templates by specified criteria
  * @param {Array} templates - Templates to sort
- * @param {string} sortBy - Sort criteria ('name', 'stars', 'updated')
+ * @param {string} sortBy - Sort criteria ('notability', 'name', 'stars', 'updated')
  * @returns {Array} Sorted templates (mutates original array)
  */
 export function sortTemplates(templates, sortBy) {
     return templates.sort((a, b) => {
         switch (sortBy) {
+            case 'notability':
+                return (b.notability_score || 0) - (a.notability_score || 0);
             case 'name':
                 return (a.name || a.path).localeCompare(b.name || b.path);
             case 'stars':

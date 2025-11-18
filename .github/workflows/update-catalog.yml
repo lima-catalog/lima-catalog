@@ -5,6 +5,12 @@ on:
     # Run daily at 00:00 UTC
     - cron: '0 0 * * *'
   workflow_dispatch: # Allow manual trigger
+    inputs:
+      force_analyze:
+        description: 'Force re-analysis of ALL templates (populates new metrics)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -39,6 +45,7 @@ jobs:
           DATA_DIR: ./catalog-data
           INCREMENTAL: "true"
           ANALYZE: "true"
+          FORCE_ANALYZE: ${{ inputs.force_analyze == true && 'true' || '' }}
         run: |
           # Copy existing data from data branch to enable incremental updates
           mkdir -p catalog-data

@@ -15,7 +15,8 @@ const sampleTemplates = [
         keywords: ['alpine', 'linux', 'docker'],
         official: true,
         stars: 100,
-        updated_at: '2024-01-15'
+        updated_at: '2024-01-15',
+        notability_score: 150.5
     },
     {
         name: 'ubuntu',
@@ -25,7 +26,8 @@ const sampleTemplates = [
         keywords: ['ubuntu', 'linux'],
         official: true,
         stars: 100,
-        updated_at: '2024-01-20'
+        updated_at: '2024-01-20',
+        notability_score: 75.3
     },
     {
         name: 'custom',
@@ -35,7 +37,8 @@ const sampleTemplates = [
         keywords: ['docker', 'k8s'],
         official: false,
         stars: 50,
-        updated_at: '2024-01-10'
+        updated_at: '2024-01-10',
+        notability_score: 250.8
     }
 ];
 
@@ -186,6 +189,14 @@ runner.test('sortTemplates: sorts by updated date', () => {
     assert.equal(result[0].name, 'ubuntu'); // 2024-01-20
     assert.equal(result[1].name, 'alpine'); // 2024-01-15
     assert.equal(result[2].name, 'custom'); // 2024-01-10
+});
+
+runner.test('sortTemplates: sorts by notability score', () => {
+    const templates = [...sampleTemplates];
+    const result = sortTemplates(templates, 'notability');
+    assert.equal(result[0].name, 'custom'); // 250.8
+    assert.equal(result[1].name, 'alpine'); // 150.5
+    assert.equal(result[2].name, 'ubuntu'); // 75.3
 });
 
 runner.test('sortTemplates: handles missing stars data', () => {
