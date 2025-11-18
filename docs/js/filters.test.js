@@ -205,3 +205,99 @@ runner.test('sortTemplates: handles missing stars data', () => {
     // Should not throw error
     assert.equal(result.length, 3);
 });
+
+// Test debug mode breakdown sorting
+const templatesWithBreakdown = [
+    {
+        name: 'template1',
+        notability_score_breakdown: {
+            message: 100,
+            provision: 50,
+            parameters: 40,
+            env_vars: 30,
+            probes: 20,
+            unusual_images: 30,
+            comments: 10,
+            stars: 5
+        }
+    },
+    {
+        name: 'template2',
+        notability_score_breakdown: {
+            message: 0,
+            provision: 100,
+            parameters: 60,
+            env_vars: 50,
+            probes: 30,
+            unusual_images: 0,
+            comments: 20,
+            stars: 10
+        }
+    },
+    {
+        name: 'template3',
+        notability_score_breakdown: {
+            message: 100,
+            provision: 25,
+            parameters: 80,
+            env_vars: 10,
+            probes: 15,
+            unusual_images: 30,
+            comments: 50,
+            stars: 15
+        }
+    }
+];
+
+runner.test('sortTemplates: sorts by breakdown-message', () => {
+    const templates = [...templatesWithBreakdown];
+    const result = sortTemplates(templates, 'breakdown-message');
+    // First two have 100, last one has 0
+    assert.equal(result[0].notability_score_breakdown.message, 100);
+    assert.equal(result[1].notability_score_breakdown.message, 100);
+    assert.equal(result[2].notability_score_breakdown.message, 0);
+});
+
+runner.test('sortTemplates: sorts by breakdown-provision', () => {
+    const templates = [...templatesWithBreakdown];
+    const result = sortTemplates(templates, 'breakdown-provision');
+    assert.equal(result[0].name, 'template2'); // 100
+    assert.equal(result[1].name, 'template1'); // 50
+    assert.equal(result[2].name, 'template3'); // 25
+});
+
+runner.test('sortTemplates: sorts by breakdown-parameters', () => {
+    const templates = [...templatesWithBreakdown];
+    const result = sortTemplates(templates, 'breakdown-parameters');
+    assert.equal(result[0].name, 'template3'); // 80
+    assert.equal(result[1].name, 'template2'); // 60
+    assert.equal(result[2].name, 'template1'); // 40
+});
+
+runner.test('sortTemplates: sorts by breakdown-comments', () => {
+    const templates = [...templatesWithBreakdown];
+    const result = sortTemplates(templates, 'breakdown-comments');
+    assert.equal(result[0].name, 'template3'); // 50
+    assert.equal(result[1].name, 'template2'); // 20
+    assert.equal(result[2].name, 'template1'); // 10
+});
+
+runner.test('sortTemplates: sorts by breakdown-unusual_images', () => {
+    const templates = [...templatesWithBreakdown];
+    const result = sortTemplates(templates, 'breakdown-unusual_images');
+    // First two have 30, last one has 0
+    assert.equal(result[0].notability_score_breakdown.unusual_images, 30);
+    assert.equal(result[1].notability_score_breakdown.unusual_images, 30);
+    assert.equal(result[2].notability_score_breakdown.unusual_images, 0);
+});
+
+runner.test('sortTemplates: handles missing breakdown data', () => {
+    const templates = [
+        { name: 'no-breakdown' },
+        { name: 'with-breakdown', notability_score_breakdown: { message: 100 } }
+    ];
+    const result = sortTemplates(templates, 'breakdown-message');
+    // Should not throw error, with-breakdown should be first
+    assert.equal(result[0].name, 'with-breakdown');
+    assert.equal(result[1].name, 'no-breakdown');
+});

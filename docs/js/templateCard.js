@@ -43,14 +43,41 @@ export function formatCategoryName(category) {
 /**
  * Get badge text for debug mode
  * @param {Object} template - Template object
- * @returns {string} Badge text showing notability score
+ * @param {string} sortBy - Current sort field
+ * @returns {Object} Badge info with text and label, or null
  */
-function getDebugBadgeText(template) {
+function getDebugBadgeText(template, sortBy) {
     if (!template.notability_score_breakdown) {
         return null;
     }
+
+    // Map sort field to breakdown component
+    const breakdownMap = {
+        'breakdown-message': { value: template.notability_score_breakdown.message, label: 'Message' },
+        'breakdown-provision': { value: template.notability_score_breakdown.provision, label: 'Provision' },
+        'breakdown-parameters': { value: template.notability_score_breakdown.parameters, label: 'Parameters' },
+        'breakdown-env_vars': { value: template.notability_score_breakdown.env_vars, label: 'Env Vars' },
+        'breakdown-probes': { value: template.notability_score_breakdown.probes, label: 'Probes' },
+        'breakdown-unusual_images': { value: template.notability_score_breakdown.unusual_images, label: 'Unusual Images' },
+        'breakdown-comments': { value: template.notability_score_breakdown.comments, label: 'Comments' },
+        'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' }
+    };
+
+    // If sorting by a specific breakdown component, show that score
+    if (breakdownMap[sortBy]) {
+        const { value, label } = breakdownMap[sortBy];
+        return {
+            text: `${value.toFixed(1)}`,
+            label: label
+        };
+    }
+
+    // Default: show total score
     const score = template.notability_score || 0;
-    return `${score.toFixed(1)}`;
+    return {
+        text: `${score.toFixed(1)}`,
+        label: 'Total'
+    };
 }
 
 /**
@@ -149,9 +176,10 @@ export function deriveDisplayName(template) {
  * Create template card DOM element
  * @param {Object} template - Template object
  * @param {Function} onCardClick - Click handler for card
+ * @param {string} sortBy - Current sort field (optional)
  * @returns {HTMLElement} Card element
  */
-export function createTemplateCard(template, onCardClick) {
+export function createTemplateCard(template, onCardClick, sortBy = 'name') {
     const card = document.createElement('div');
     card.className = 'template-card';
     card.setAttribute('tabindex', '0');
@@ -162,9 +190,10 @@ export function createTemplateCard(template, onCardClick) {
     const description = template.description || 'No description available';
 
     // In debug mode, show score instead of Official/Community
-    const debugBadgeText = isDebugMode() ? getDebugBadgeText(template) : null;
-    const badgeText = debugBadgeText || (template.official ? 'Official' : 'Community');
+    const debugBadgeInfo = isDebugMode() ? getDebugBadgeText(template, sortBy) : null;
+    const badgeText = debugBadgeInfo ? debugBadgeInfo.text : (template.official ? 'Official' : 'Community');
     const badgeClass = template.official ? 'official' : 'community';
+    const badgeTitle = debugBadgeInfo ? `${debugBadgeInfo.label} Score (hover for breakdown)` : '';
 
     card.innerHTML = `
         <div class="template-header">
@@ -172,7 +201,7 @@ export function createTemplateCard(template, onCardClick) {
                 <h3 class="template-name">${escapeHtml(displayName)}</h3>
                 <div class="template-id">${escapeHtml(template.path)}</div>
             </div>
-            <span class="template-badge ${badgeClass}" ${debugBadgeText ? 'title="Hover for breakdown"' : ''}>
+            <span class="template-badge ${badgeClass}" ${badgeTitle ? `title="${badgeTitle}"` : ''}>
                 ${escapeHtml(badgeText)}
             </span>
         </div>
@@ -217,7 +246,7 @@ export function createTemplateCard(template, onCardClick) {
     `;
 
     // Attach debug popup to badge if in debug mode
-    if (debugBadgeText) {
+    if (debugBadgeInfo) {
         const popup = createDebugScorePopup(template);
         if (popup) {
             const badge = card.querySelector('.template-badge');
@@ -342,8 +371,9 @@ export function createTemplateCard(template, onCardClick) {
  * @param {Array} templates - Templates to render
  * @param {HTMLElement} gridElement - Grid container element
  * @param {Function} onCardClick - Click handler for cards
+ * @param {string} sortBy - Current sort field (optional)
  */
-export function renderTemplateGrid(templates, gridElement, onCardClick) {
+export function renderTemplateGrid(templates, gridElement, onCardClick, sortBy = 'name') {
     gridElement.innerHTML = '';
 
     if (templates.length === 0) {
@@ -352,7 +382,7 @@ export function renderTemplateGrid(templates, gridElement, onCardClick) {
     }
 
     templates.forEach(template => {
-        const card = createTemplateCard(template, onCardClick);
+        const card = createTemplateCard(template, onCardClick, sortBy);
         gridElement.appendChild(card);
     });
 }

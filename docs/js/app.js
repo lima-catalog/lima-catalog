@@ -84,7 +84,7 @@ function filterAndRender(options = {}) {
 
     // Render templates
     const gridElement = document.getElementById('templates-grid');
-    renderTemplateGrid(filtered, gridElement, handleTemplateClick);
+    renderTemplateGrid(filtered, gridElement, handleTemplateClick, sortBy);
 }
 
 /**
@@ -619,6 +619,8 @@ const KEYBOARD_SHORTCUTS = {
         preventDefault: true,
         action: (e, ctx) => {
             const newDebugMode = State.toggleDebugMode();
+            // Update sort dropdown to show/hide debug options
+            updateSortDropdown();
             // Re-render templates to show/hide debug info
             filterAndRender();
             // Show a subtle notification
@@ -626,6 +628,55 @@ const KEYBOARD_SHORTCUTS = {
         }
     }
 };
+
+/**
+ * Update sort dropdown options based on debug mode
+ */
+function updateSortDropdown() {
+    const sortDropdown = document.getElementById('sort');
+    if (!sortDropdown) return;
+
+    const currentValue = sortDropdown.value;
+    const debugMode = State.isDebugMode();
+
+    // Base options (always present)
+    const baseOptions = [
+        { value: 'name', label: 'Name' },
+        { value: 'notability', label: 'Notability' },
+        { value: 'stars', label: 'Popularity' },
+        { value: 'updated', label: 'Recently Updated' }
+    ];
+
+    // Debug options (only in debug mode)
+    const debugOptions = [
+        { value: 'breakdown-message', label: '🔍 Message Score' },
+        { value: 'breakdown-provision', label: '🔍 Provision Score' },
+        { value: 'breakdown-parameters', label: '🔍 Parameters Score' },
+        { value: 'breakdown-env_vars', label: '🔍 Env Vars Score' },
+        { value: 'breakdown-probes', label: '🔍 Probes Score' },
+        { value: 'breakdown-unusual_images', label: '🔍 Unusual Images Score' },
+        { value: 'breakdown-comments', label: '🔍 Comments Score' },
+        { value: 'breakdown-stars', label: '🔍 Stars Score' }
+    ];
+
+    // Rebuild options
+    sortDropdown.innerHTML = '';
+    const allOptions = debugMode ? [...baseOptions, ...debugOptions] : baseOptions;
+
+    allOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        sortDropdown.appendChild(option);
+    });
+
+    // Restore previous selection if it still exists, otherwise default to 'name'
+    if (allOptions.some(opt => opt.value === currentValue)) {
+        sortDropdown.value = currentValue;
+    } else {
+        sortDropdown.value = 'name';
+    }
+}
 
 /**
  * Show debug mode notification
@@ -1226,6 +1277,9 @@ async function initialize() {
         setupModalEventListeners();
         setupKeyboardShortcuts();
         setupSidebarNavigation();
+
+        // Initialize sort dropdown (sets base options)
+        updateSortDropdown();
 
         // Initial render
         filterAndRender();
