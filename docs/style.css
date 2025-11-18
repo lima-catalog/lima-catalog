@@ -522,7 +522,7 @@ header {
     padding: 1.25rem;
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid var(--border);
-    overflow: hidden;
+    overflow: visible; /* Allow debug popup to extend outside card */
     scroll-margin: 0.625rem; /* Half the gap (1.25rem) for better visibility when navigating */
     position: relative; /* For debug score positioning */
 }
@@ -1401,30 +1401,11 @@ footer a:hover {
     opacity: 0;
 }
 
-.debug-score {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
-}
-
-.debug-score-value {
-    background: var(--warning);
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: help;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
 .debug-score-popup {
     display: none;
     position: absolute;
-    top: 100%;
+    top: calc(100% + 0.5rem);
     right: 0;
-    margin-top: 0.5rem;
     background: var(--surface-elevated);
     border: 1px solid var(--border-elevated);
     border-radius: 0.5rem;
@@ -1432,6 +1413,7 @@ footer a:hover {
     padding: 0.75rem;
     min-width: 200px;
     z-index: 100;
+    white-space: nowrap;
 }
 
 .debug-popup-title {
