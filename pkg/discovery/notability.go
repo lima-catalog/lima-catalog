@@ -143,8 +143,39 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	return breakdown
 }
 
+// isEmptyComment checks if a comment line is empty (just # with whitespace)
+func isEmptyComment(line string) bool {
+	// Remove the leading # and check if remainder is only whitespace
+	if !strings.HasPrefix(line, "#") {
+		return false
+	}
+	remainder := strings.TrimSpace(line[1:])
+	return remainder == ""
+}
+
+// FilterUniqueComments counts unique comment lines, excluding empty comments and default template comments
+func FilterUniqueComments(commentLines []string, defaultComments map[string]bool) int {
+	uniqueCount := 0
+	for _, line := range commentLines {
+		// Skip empty comments (just # with whitespace)
+		if isEmptyComment(line) {
+			continue
+		}
+		// Skip if this comment exists in default template
+		if defaultComments[line] {
+			continue
+		}
+		uniqueCount++
+	}
+	return uniqueCount
+}
+
 // PopulateNotabilityMetrics creates NotabilityMetrics from TemplateInfo
-func PopulateNotabilityMetrics(info *TemplateInfo, officialImages map[string]bool) *types.NotabilityMetrics {
+// Filters out comments that are in the default template or are empty
+func PopulateNotabilityMetrics(info *TemplateInfo, officialImages map[string]bool, defaultComments map[string]bool) *types.NotabilityMetrics {
+	// Filter out default template comments and empty comments
+	uniqueCommentCount := FilterUniqueComments(info.CommentLines, defaultComments)
+
 	return &types.NotabilityMetrics{
 		MessageLength:       info.MessageLength,
 		ProvisionCount:      info.ProvisionCount,
@@ -153,7 +184,7 @@ func PopulateNotabilityMetrics(info *TemplateInfo, officialImages map[string]boo
 		ProbeTotalLines:     info.ProbeTotalLines,
 		ParamCount:          info.ParamCount,
 		EnvCount:            info.EnvCount,
-		CommentLineCount:    info.CommentLineCount,
+		CommentLineCount:    uniqueCommentCount,
 		UnusualImages:       IdentifyUnusualImages(info.Images, officialImages),
 	}
 }
@@ -222,4 +253,37 @@ func FetchOfficialImages(ctx context.Context, client *github.Client) (map[string
 	}
 
 	return officialDomains, nil
+}
+
+// FetchDefaultTemplateComments fetches and extracts comment lines from lima-vm/lima default.yaml
+func FetchDefaultTemplateComments(ctx context.Context, client *github.Client) (map[string]bool, error) {
+	// Fetch the default.yaml template
+	fileContent, _, _, err := client.Repositories.GetContents(
+		ctx,
+		"lima-vm",
+		"lima",
+		"templates/default.yaml",
+		&github.RepositoryContentGetOptions{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch default.yaml: %w", err)
+	}
+
+	content, err := fileContent.GetContent()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get content: %w", err)
+	}
+
+	// Extract comment lines
+	commentMap := make(map[string]bool)
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			// Store normalized comment line
+			commentMap[trimmed] = true
+		}
+	}
+
+	return commentMap, nil
 }

@@ -331,6 +331,14 @@ func run() error {
 		}
 		fmt.Println()
 
+		// Fetch default template comments for filtering
+		fmt.Println("Fetching default template comments from lima-vm/lima...")
+		if err := analyzer.FetchDefaultTemplateComments(ctx, client.GetClient()); err != nil {
+			fmt.Printf("Warning: failed to fetch default template comments: %v\n", err)
+			fmt.Println("Continuing with analysis (default comments won't be filtered)...")
+		}
+		fmt.Println()
+
 		// Analyze templates
 		analyzedTemplates, err := analyzer.AnalyzeTemplates(templates, repoMap)
 		if err != nil {

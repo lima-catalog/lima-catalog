@@ -220,9 +220,11 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		ParamCount:          5,
 		EnvCount:            3,
 		CommentLineCount:    20,
+		CommentLines:        []string{"# This is a test comment", "# Another comment"},
 	}
 
-	metrics := PopulateNotabilityMetrics(info, officialDomains)
+	defaultComments := make(map[string]bool) // Empty for this test
+	metrics := PopulateNotabilityMetrics(info, officialDomains, defaultComments)
 
 	if metrics.MessageLength != 150 {
 		t.Errorf("MessageLength = %d, want 150", metrics.MessageLength)
@@ -245,8 +247,8 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 	if metrics.EnvCount != 3 {
 		t.Errorf("EnvCount = %d, want 3", metrics.EnvCount)
 	}
-	if metrics.CommentLineCount != 20 {
-		t.Errorf("CommentLineCount = %d, want 20", metrics.CommentLineCount)
+	if metrics.CommentLineCount != 2 {
+		t.Errorf("CommentLineCount = %d, want 2 (unique comments from CommentLines)", metrics.CommentLineCount)
 	}
 
 	// Should identify nixos.org as unusual domain

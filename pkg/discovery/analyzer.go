@@ -18,6 +18,8 @@ type Analyzer struct {
 	LLMAPIKey string
 	// OfficialImages contains the list of official image names from lima-vm/lima
 	OfficialImages map[string]bool
+	// DefaultComments contains normalized comment lines from default.yaml
+	DefaultComments map[string]bool
 	// ForceAnalyze forces re-analysis of all templates, even if already analyzed
 	ForceAnalyze bool
 }
@@ -25,10 +27,11 @@ type Analyzer struct {
 // NewAnalyzer creates a new template analyzer
 func NewAnalyzer(llmEnabled bool, apiKey string, forceAnalyze bool) *Analyzer {
 	return &Analyzer{
-		LLMEnabled:     llmEnabled,
-		LLMAPIKey:      apiKey,
-		OfficialImages: make(map[string]bool),
-		ForceAnalyze:   forceAnalyze,
+		LLMEnabled:      llmEnabled,
+		LLMAPIKey:       apiKey,
+		OfficialImages:  make(map[string]bool),
+		DefaultComments: make(map[string]bool),
+		ForceAnalyze:    forceAnalyze,
 	}
 }
 
@@ -43,6 +46,20 @@ func (a *Analyzer) FetchOfficialImagesForAnalyzer(ctx context.Context, client *g
 	}
 	a.OfficialImages = officialImages
 	fmt.Printf("Fetched %d official images from lima-vm/lima\n", len(officialImages))
+	return nil
+}
+
+// FetchDefaultTemplateComments fetches and extracts comment lines from lima-vm/lima default.yaml
+func (a *Analyzer) FetchDefaultTemplateComments(ctx context.Context, client *github.Client) error {
+	defaultComments, err := FetchDefaultTemplateComments(ctx, client)
+	if err != nil {
+		// If fetching fails, use empty map (won't filter any comments)
+		fmt.Printf("Warning: failed to fetch default template comments: %v\n", err)
+		a.DefaultComments = make(map[string]bool)
+		return err
+	}
+	a.DefaultComments = defaultComments
+	fmt.Printf("Fetched %d unique comment lines from default.yaml\n", len(defaultComments))
 	return nil
 }
 
@@ -69,8 +86,8 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 	template.Arch = templateInfo.Arch
 	template.Keywords = templateInfo.Keywords
 
-	// Populate notability metrics
-	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialImages)
+	// Populate notability metrics (filtering out default template comments)
+	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialImages, a.DefaultComments)
 
 	// Step 3: Infer basic category and description
 	category, useCase := a.inferCategory(templateInfo, repoInfo)

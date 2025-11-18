@@ -67,6 +67,7 @@ type TemplateInfo struct {
 	ParamCount          int
 	EnvCount            int
 	CommentLineCount    int
+	CommentLines        []string // Actual comment lines for filtering
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file
@@ -115,11 +116,13 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	info.ParamCount = len(template.Param)
 	info.EnvCount = len(template.Env)
 
-	// Count comment lines
+	// Extract comment lines
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "#") {
+			// Store the comment line for filtering
+			info.CommentLines = append(info.CommentLines, trimmed)
 			info.CommentLineCount++
 		}
 	}
