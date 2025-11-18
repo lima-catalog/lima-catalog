@@ -84,7 +84,7 @@ function filterAndRender(options = {}) {
 
     // Render templates
     const gridElement = document.getElementById('templates-grid');
-    renderTemplateGrid(filtered, gridElement, handleTemplateClick);
+    renderTemplateGrid(filtered, gridElement, handleTemplateClick, sortBy);
 }
 
 /**
