@@ -458,6 +458,33 @@ After completing all phases:
 
 **Files added**: 1,637 lines of test code across 4 new test files
 
+### Phase 5: Code Quality (NEW - Completed)
+- [x] 5.1. Refactor code duplication
+  - Created `validation.ParseRepoID()` helper function
+  - Eliminated 8+ instances of manual repo ID parsing
+  - Replaced duplicated parsing logic in:
+    - pkg/combiner/combiner.go
+    - pkg/discovery/metadata.go (3 locations)
+    - pkg/discovery/naming.go
+    - pkg/discovery/discovery.go
+  - Added 9 comprehensive test cases for ParseRepoID
+  - Reduced code duplication from ~40 lines to ~15 lines total
+- [x] 5.2. Fix error handling consistency
+  - Fixed ignored error return in main.go:251 (rate limit check)
+  - Fixed inconsistent error propagation in analyzer.go:209 (now skips failed templates)
+  - Added error logging for invalid regex patterns in blocklist.go
+  - All error handling now logs warnings to stderr for visibility
+- [x] 5.3. Performance improvements (regex pattern caching)
+  - Added `Blocklist.CompilePatterns()` method
+  - Pre-compile all regex patterns at load time (fail-fast on invalid patterns)
+  - Updated `IsBlocklisted()` to use pre-compiled patterns
+  - **Performance benefit**: Eliminates O(n) regex compilation per template (thousands of compilations saved for 700+ templates)
+  - Invalid regex patterns now detected at startup, not during processing
+
+**Phase 5 Status**: 3/3 complete ✅
+
+**All tests passing**: 180 total (97 Go + 83 JS)
+
 ---
 
 ## 📋 Comprehensive Code Review
@@ -466,14 +493,13 @@ A detailed code review was conducted after Phase 3, identifying 38 issues across
 
 **Key Findings**:
 - Testing gaps (11 issues) - Addressed in Phase 4 ✅
-- Error handling inconsistencies (8 issues)
-- Code duplication opportunities (6 issues)
-- Performance optimizations (5 issues)
+- Error handling inconsistencies (8 issues) - Addressed in Phase 5.2 ✅
+- Code duplication opportunities (6 issues) - Addressed in Phase 5.1 ✅
+- Performance optimizations (5 issues) - Partially addressed in Phase 5.3 ✅
 - API design improvements (7 issues)
 - Documentation needs (10 issues)
 
 **Recommendations for Future Work**:
-- Phase 5: Code Quality (refactor duplication, fix error handling)
 - Phase 6: Design Improvements (API surfaces, documentation)
 
 ---

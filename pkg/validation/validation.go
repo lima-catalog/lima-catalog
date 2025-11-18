@@ -153,3 +153,28 @@ func ValidateRepoIdentifier(owner, repo string) error {
 
 	return nil
 }
+
+// ParseRepoID parses a repository full name (owner/repo) into owner and repo components
+func ParseRepoID(repoFullName string) (owner, repo string, err error) {
+	if repoFullName == "" {
+		return "", "", fmt.Errorf("repository name cannot be empty")
+	}
+
+	parts := strings.Split(repoFullName, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid repository format: expected 'owner/repo', got '%s'", repoFullName)
+	}
+
+	owner = parts[0]
+	repo = parts[1]
+
+	if owner == "" {
+		return "", "", fmt.Errorf("repository owner cannot be empty in '%s'", repoFullName)
+	}
+
+	if repo == "" {
+		return "", "", fmt.Errorf("repository name cannot be empty in '%s'", repoFullName)
+	}
+
+	return owner, repo, nil
+}

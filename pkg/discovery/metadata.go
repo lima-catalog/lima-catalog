@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 )
 
 // MetadataCollector collects metadata for repositories and organizations
@@ -28,12 +28,10 @@ func NewMetadataCollector(client *github.Client) *MetadataCollector {
 
 // CollectRepositoryMetadata fetches metadata for a repository
 func (m *MetadataCollector) CollectRepositoryMetadata(repoFullName string) (*types.Repository, error) {
-	parts := strings.Split(repoFullName, "/")
-	if len(parts) != 2 {
+	owner, repo, err := validation.ParseRepoID(repoFullName)
+	if err != nil {
 		return nil, fmt.Errorf("invalid repository name: %s", repoFullName)
 	}
-
-	owner, repo := parts[0], parts[1]
 
 	ghRepo, err := m.client.GetRepository(owner, repo)
 	if err != nil {
@@ -246,9 +244,9 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 	// Get orgs from new templates
 	newOrgSet := make(map[string]bool)
 	for _, t := range newTemplates {
-		parts := strings.Split(t.Repo, "/")
-		if len(parts) == 2 {
-			newOrgSet[parts[0]] = true
+		owner, _, err := validation.ParseRepoID(t.Repo)
+		if err == nil {
+			newOrgSet[owner] = true
 		}
 	}
 
@@ -372,9 +370,9 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 		repoMap[template.Repo] = true
 
 		// Extract owner from repo
-		parts := strings.Split(template.Repo, "/")
-		if len(parts) == 2 {
-			orgMap[parts[0]] = true
+		owner, _, err := validation.ParseRepoID(template.Repo)
+		if err == nil {
+			orgMap[owner] = true
 		}
 	}
 

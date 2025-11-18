@@ -25,6 +25,11 @@ func TestIsBlocklisted(t *testing.T) {
 		},
 	}
 
+	// Compile patterns for performance testing
+	if err := blocklist.CompilePatterns(); err != nil {
+		t.Fatalf("failed to compile blocklist patterns: %v", err)
+	}
+
 	tests := []struct {
 		name     string
 		owner    string
@@ -201,6 +206,10 @@ func TestIsBlocklisted(t *testing.T) {
 					Paths: []string{},
 					Repos: []string{},
 				}
+				// Compile empty patterns
+				if err := testBlocklist.CompilePatterns(); err != nil {
+					t.Fatalf("failed to compile empty blocklist: %v", err)
+				}
 			}
 
 			result := IsBlocklisted(tt.owner, tt.repo, tt.path, testBlocklist)
@@ -228,15 +237,9 @@ func TestIsBlocklistedInvalidRegex(t *testing.T) {
 		},
 	}
 
-	// Should not panic on invalid regex, just skip it
-	result := IsBlocklisted("goodorg", "repo", "test.yaml", blocklist)
-	if result != true {
-		t.Errorf("should still match valid repo pattern")
-	}
-
-	// Invalid regex should be skipped
-	result = IsBlocklisted("otherorg", "repo", "test.yaml", blocklist)
-	if result != false {
-		t.Errorf("invalid path regex should be skipped, not block")
+	// CompilePatterns should now fail on invalid regex
+	err := blocklist.CompilePatterns()
+	if err == nil {
+		t.Error("expected error when compiling invalid regex")
 	}
 }

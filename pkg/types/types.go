@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"fmt"
+	"regexp"
+	"time"
+)
 
 // Template represents a Lima template file discovered on GitHub
 type Template struct {
@@ -86,6 +90,10 @@ type Blocklist struct {
 	// Repos contains regex patterns matched against full org/repo/path
 	// Example: "^spamorg/" blocks entire org, "^org/repo$" blocks specific repo
 	Repos []string `yaml:"repos"`
+
+	// Compiled regex patterns for performance (populated after loading)
+	compiledPaths []*regexp.Regexp
+	compiledRepos []*regexp.Regexp
 }
 
 // Progress tracks the state of data collection for resumability
@@ -99,4 +107,40 @@ type Progress struct {
 	RateLimitReset      time.Time `json:"rate_limit_reset"`     // when rate limit resets
 	OfficialTemplates   int       `json:"official_templates"`   // official lima-vm/lima templates
 	CommunityTemplates  int       `json:"community_templates"`  // community templates
+}
+
+// CompilePatterns pre-compiles all regex patterns in the blocklist for performance
+// Returns an error if any pattern is invalid
+func (b *Blocklist) CompilePatterns() error {
+	// Compile path patterns
+	b.compiledPaths = make([]*regexp.Regexp, 0, len(b.Paths))
+	for _, pattern := range b.Paths {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return fmt.Errorf("invalid path pattern %q: %w", pattern, err)
+		}
+		b.compiledPaths = append(b.compiledPaths, re)
+	}
+
+	// Compile repo patterns
+	b.compiledRepos = make([]*regexp.Regexp, 0, len(b.Repos))
+	for _, pattern := range b.Repos {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return fmt.Errorf("invalid repo pattern %q: %w", pattern, err)
+		}
+		b.compiledRepos = append(b.compiledRepos, re)
+	}
+
+	return nil
+}
+
+// GetCompiledPaths returns the pre-compiled path patterns
+func (b *Blocklist) GetCompiledPaths() []*regexp.Regexp {
+	return b.compiledPaths
+}
+
+// GetCompiledRepos returns the pre-compiled repo patterns
+func (b *Blocklist) GetCompiledRepos() []*regexp.Regexp {
+	return b.compiledRepos
 }
