@@ -108,7 +108,7 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 		result, resp, err := d.client.SearchCode(query, page)
 		if err != nil {
 			// Check if it's a rate limit error and handle it
-			if d.client.HandleRateLimitError(resp, "search") {
+			if retryErr := d.client.HandleRateLimitError(resp, "search"); retryErr == github.ErrRateLimitExceeded {
 				continue // Retry the same page after waiting
 			}
 			return nil, fmt.Errorf("code search failed: %w", err)
