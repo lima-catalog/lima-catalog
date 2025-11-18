@@ -78,7 +78,7 @@ make test
 - **[INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)** - Complete UI/UX design system
 - **[SOURCE_INDEX.md](SOURCE_INDEX.md)** - Quick reference for all source files and their purposes
 - **[FINDINGS.md](FINDINGS.md)** - Research findings on GitHub search behavior
-- **[docs/LLM_ANALYST_PROMPTS.md](docs/LLM_ANALYST_PROMPTS.md)** - Documentation for LLM prompt generation system
+- **[LLM_ANALYST_PROMPTS.md](LLM_ANALYST_PROMPTS.md)** - Documentation for LLM prompt generation system
 
 ## Key Reminders
 

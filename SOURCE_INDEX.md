@@ -122,7 +122,7 @@ Quick reference for all source files and their purposes.
 | `FINDINGS.md` | Research findings (GitHub search behavior, scale assessment) |
 | `CLAUDE.md` | Instructions for Claude when working on this project |
 | `SOURCE_INDEX.md` | This file - quick reference for all source files |
-| `docs/LLM_ANALYST_PROMPTS.md` | Documentation for LLM prompt generation system |
+| `LLM_ANALYST_PROMPTS.md` | Documentation for LLM prompt generation system |
 
 ## GitHub Actions
 
@@ -241,7 +241,7 @@ No build step required - uses ES6 modules directly in browser.
 - `cmd/prompt-generator/main.go` - Standalone prompt generation CLI
 - `cmd/prompt-generator/README.md` - Prompt generator documentation
 - `cmd/prompt-generator/example.sh` - Usage examples
-- `docs/LLM_ANALYST_PROMPTS.md` - LLM prompt system documentation
+- `LLM_ANALYST_PROMPTS.md` - LLM prompt system documentation
 - `SOURCE_INDEX.md` - This file
 
 ### Modified Files
@@ -268,4 +268,4 @@ No build step required - uses ES6 modules directly in browser.
 - UI changes → Check `INTERFACE_GUIDELINES.md` for design system
 - Testing → See `Makefile` for test commands
 - Documentation → Update relevant `.md` files
-- LLM integration → See `docs/LLM_ANALYST_PROMPTS.md`
+- LLM integration → See `LLM_ANALYST_PROMPTS.md`
