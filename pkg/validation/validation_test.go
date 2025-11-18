@@ -364,3 +364,93 @@ func TestValidateRepoIdentifier(t *testing.T) {
 		})
 	}
 }
+
+func TestParseRepoID(t *testing.T) {
+	tests := []struct {
+		name          string
+		repoFullName  string
+		wantOwner     string
+		wantRepo      string
+		wantErr       bool
+	}{
+		{
+			name:         "Valid repo ID",
+			repoFullName: "owner/repo",
+			wantOwner:    "owner",
+			wantRepo:     "repo",
+			wantErr:      false,
+		},
+		{
+			name:         "Valid with hyphens",
+			repoFullName: "my-org/my-repo",
+			wantOwner:    "my-org",
+			wantRepo:     "my-repo",
+			wantErr:      false,
+		},
+		{
+			name:         "Valid with underscores",
+			repoFullName: "my_org/my_repo",
+			wantOwner:    "my_org",
+			wantRepo:     "my_repo",
+			wantErr:      false,
+		},
+		{
+			name:         "Empty string",
+			repoFullName: "",
+			wantOwner:    "",
+			wantRepo:     "",
+			wantErr:      true,
+		},
+		{
+			name:         "Missing slash",
+			repoFullName: "ownerrepo",
+			wantOwner:    "",
+			wantRepo:     "",
+			wantErr:      true,
+		},
+		{
+			name:         "Too many slashes",
+			repoFullName: "owner/repo/extra",
+			wantOwner:    "",
+			wantRepo:     "",
+			wantErr:      true,
+		},
+		{
+			name:         "Empty owner",
+			repoFullName: "/repo",
+			wantOwner:    "",
+			wantRepo:     "",
+			wantErr:      true,
+		},
+		{
+			name:         "Empty repo",
+			repoFullName: "owner/",
+			wantOwner:    "",
+			wantRepo:     "",
+			wantErr:      true,
+		},
+		{
+			name:         "Only slash",
+			repoFullName: "/",
+			wantOwner:    "",
+			wantRepo:     "",
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			owner, repo, err := ParseRepoID(tt.repoFullName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseRepoID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if owner != tt.wantOwner {
+				t.Errorf("ParseRepoID() owner = %v, want %v", owner, tt.wantOwner)
+			}
+			if repo != tt.wantRepo {
+				t.Errorf("ParseRepoID() repo = %v, want %v", repo, tt.wantRepo)
+			}
+		})
+	}
+}

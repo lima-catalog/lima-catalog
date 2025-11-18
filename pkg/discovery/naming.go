@@ -3,6 +3,8 @@ package discovery
 import (
 	"path/filepath"
 	"strings"
+
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 )
 
 // DeriveTemplateName generates a descriptive name from the template path and repo
@@ -28,9 +30,8 @@ func DeriveTemplateName(path, repoFullName string) string {
 	}
 
 	// Fall back to repository name
-	parts := strings.Split(repoFullName, "/")
-	if len(parts) == 2 {
-		repoName := parts[1]
+	_, repoName, err := validation.ParseRepoID(repoFullName)
+	if err == nil {
 		return sanitizeName(repoName)
 	}
 

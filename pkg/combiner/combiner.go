@@ -11,6 +11,7 @@ import (
 
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 )
 
 // CombinedTemplate represents the optimized template data for the frontend
@@ -63,13 +64,11 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 
 	for _, template := range templates {
 		// Extract owner from repo for blocklist check
-		parts := strings.Split(template.Repo, "/")
-		if len(parts) != 2 {
+		owner, repoName, err := validation.ParseRepoID(template.Repo)
+		if err != nil {
 			fmt.Printf("Warning: Invalid repo format for template %s: %s\n", template.ID, template.Repo)
 			continue
 		}
-		owner := parts[0]
-		repoName := parts[1]
 
 		// Skip blocklisted templates
 		if discovery.IsBlocklisted(owner, repoName, template.Path, c.blocklist) {

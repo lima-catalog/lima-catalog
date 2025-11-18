@@ -9,6 +9,7 @@ import (
 	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 )
 
 // Discoverer handles template discovery
@@ -91,11 +92,10 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 			path := item.GetPath()
 
 			// Parse owner and repo name
-			parts := strings.SplitN(repoFullName, "/", 2)
-			if len(parts) != 2 {
+			owner, repo, err := validation.ParseRepoID(repoFullName)
+			if err != nil {
 				continue
 			}
-			owner, repo := parts[0], parts[1]
 
 			// Check blocklist BEFORE fetching content (saves API calls)
 			if IsBlocklisted(owner, repo, path, d.blocklist) {
