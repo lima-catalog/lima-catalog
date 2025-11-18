@@ -1,3 +1,36 @@
+// Package discovery implements template discovery, analysis, and metadata collection
+// for Lima VM templates from GitHub repositories.
+//
+// The package provides three main capabilities:
+//
+//  1. Template Discovery: Search GitHub for Lima templates using code search API
+//  2. Template Analysis: Extract metadata, categories, and keywords from templates
+//  3. Metadata Collection: Fetch repository and organization information from GitHub
+//
+// Discovery Process:
+//
+// Templates are discovered through GitHub Code Search using multiple query strategies.
+// The discoverer validates templates by checking for the "images:" key and applies
+// blocklist filtering to exclude unwanted templates (CI configs, test files, etc.).
+//
+// Analysis Process:
+//
+// The analyzer parses YAML templates to extract:
+//   - OS images and architectures
+//   - Container runtime configuration (Docker, Podman, Kubernetes)
+//   - Provisioning scripts and parameters
+//   - Template comments and documentation
+//   - Notability metrics for ranking
+//
+// Metadata Collection:
+//
+// Repository and organization metadata is collected concurrently with rate limiting
+// and caching to minimize API calls. Stale metadata (>30 days) is refreshed incrementally.
+//
+// Error Handling:
+//
+// Functions return errors for recoverable failures (network errors, invalid templates).
+// Templates that fail analysis are skipped to prevent saving incomplete data.
 package discovery
 
 import (

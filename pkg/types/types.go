@@ -1,3 +1,24 @@
+// Package types defines core data structures for the Lima catalog.
+//
+// The package provides types for:
+//   - Template: Lima VM template metadata
+//   - Repository: GitHub repository information
+//   - Organization: GitHub organization/user information
+//   - Progress: Collection state tracking
+//   - Blocklist: Template filtering rules
+//   - NotabilityMetrics: Template quality scoring
+//
+// JSON Tags:
+//
+// All exported fields have JSON tags for serialization to JSON Lines format.
+// Time fields use RFC3339 format for consistent parsing.
+//
+// Validation:
+//
+// The Blocklist type includes pattern compilation methods for performance.
+// Call CompilePatterns() after loading from YAML to pre-compile regex patterns.
+//
+// This package has no external dependencies except the standard library.
 package types
 
 import (

@@ -1,3 +1,21 @@
+// Package validation provides input validation and sanitization functions.
+//
+// The package validates:
+//   - GitHub tokens (format and length)
+//   - Template IDs (owner/repo/path format)
+//   - Repository identifiers (owner/repo format)
+//   - File paths (directory traversal prevention)
+//   - Configuration bounds (context lines, max lengths, max files)
+//
+// Security:
+//
+// Path sanitization prevents directory traversal attacks by:
+//   - Cleaning paths (removing .., .)
+//   - Rejecting absolute paths
+//   - Detecting traversal attempts
+//
+// All validation functions return descriptive errors for debugging.
+// Use these functions at API boundaries before processing user input.
 package validation
 
 import (

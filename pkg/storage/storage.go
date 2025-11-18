@@ -1,3 +1,26 @@
+// Package storage implements JSON Lines-based file storage for Lima catalog data.
+//
+// The package stores catalog data in JSON Lines format (one JSON object per line),
+// which enables:
+//   - Minimal git diffs (line-by-line changes)
+//   - Streaming reads/writes for large datasets
+//   - Easy processing with standard Unix tools (grep, awk, jq)
+//
+// Data Files:
+//
+//   - templates.jsonl: Template metadata (700+ templates)
+//   - repos.jsonl: Repository information
+//   - orgs.jsonl: Organization/user information
+//   - progress.json: Collection state (single JSON object)
+//
+// The Storage type uses the FileSystem interface for testability, allowing
+// file operations to be mocked in tests.
+//
+// Error Handling:
+//
+// Load functions return empty slices for non-existent files (first run).
+// Save functions return errors for I/O failures or JSON marshaling errors.
+// All errors are wrapped with context using fmt.Errorf with %w.
 package storage
 
 import (

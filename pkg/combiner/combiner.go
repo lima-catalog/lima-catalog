@@ -1,3 +1,32 @@
+// Package combiner merges catalog data into frontend-optimized JSON Lines format.
+//
+// The combiner takes templates, repositories, and organizations data and creates
+// a single combined dataset optimized for the frontend GitHub Pages site.
+//
+// Responsibilities:
+//
+//   - Merge template data with repository metadata
+//   - Apply blocklist filtering
+//   - Generate display names and descriptions
+//   - Create GitHub raw URLs for templates
+//   - Sort templates by org/repo/path for stable output
+//
+// Output Format:
+//
+// The combined data is written in JSON Lines format (one JSON object per line)
+// to catalog.jsonl. Each line contains a CombinedTemplate with all data needed
+// by the frontend, minimizing client-side processing.
+//
+// Blocklist Filtering:
+//
+// Templates matching blocklist patterns (CI configs, test files, etc.) are
+// excluded from the combined output. The number of filtered templates is logged.
+//
+// Error Handling:
+//
+// Templates without repository data are skipped (logged).
+// Invalid repository formats are logged and skipped.
+// All errors are wrapped with context using fmt.Errorf with %w.
 package combiner
 
 import (

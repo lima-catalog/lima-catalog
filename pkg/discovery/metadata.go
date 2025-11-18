@@ -19,14 +19,39 @@ type MetadataCollector struct {
 	client *github.Client
 }
 
-// NewMetadataCollector creates a new metadata collector
+// NewMetadataCollector creates a new metadata collector with the provided GitHub client.
+//
+// The collector uses the client to fetch repository and organization information
+// from the GitHub API with caching and rate limit management.
+//
+// Parameters:
+//   - client: GitHub API client with authentication and caching
+//
+// Returns a configured MetadataCollector ready to fetch metadata.
 func NewMetadataCollector(client *github.Client) *MetadataCollector {
 	return &MetadataCollector{
 		client: client,
 	}
 }
 
-// CollectRepositoryMetadata fetches metadata for a repository
+// CollectRepositoryMetadata fetches metadata for a single repository from the GitHub API.
+//
+// Fetches comprehensive repository information including:
+//   - Basic info: description, topics, default branch
+//   - Statistics: stars, forks, watchers
+//   - Timestamps: created, updated, pushed dates
+//   - License and language information
+//   - Fork relationships (parent repo if applicable)
+//
+// Parameters:
+//   - repoFullName: Repository identifier in "owner/repo" format
+//
+// Returns:
+//   - Repository metadata populated from GitHub API response
+//   - Error if repository name is invalid or API call fails
+//
+// The function validates the repository name format and wraps any API errors
+// with additional context for debugging.
 func (m *MetadataCollector) CollectRepositoryMetadata(repoFullName string) (*types.Repository, error) {
 	owner, repo, err := validation.ParseRepoID(repoFullName)
 	if err != nil {
@@ -77,7 +102,23 @@ func (m *MetadataCollector) CollectRepositoryMetadata(repoFullName string) (*typ
 	return repository, nil
 }
 
-// CollectOrganizationMetadata fetches metadata for a user or organization
+// CollectOrganizationMetadata fetches metadata for a GitHub user or organization.
+//
+// Fetches information including:
+//   - Login name and display name
+//   - Type (User or Organization)
+//   - Bio/description
+//   - Location, blog URL, and email
+//
+// Parameters:
+//   - login: GitHub username or organization name
+//
+// Returns:
+//   - Organization metadata populated from GitHub API response
+//   - Error if API call fails
+//
+// The function works for both individual users and organization accounts,
+// as the GitHub API treats them similarly.
 func (m *MetadataCollector) CollectOrganizationMetadata(login string) (*types.Organization, error) {
 	user, err := m.client.GetUser(login)
 	if err != nil {
@@ -99,8 +140,25 @@ func (m *MetadataCollector) CollectOrganizationMetadata(login string) (*types.Or
 	return org, nil
 }
 
-// fetchRepositoriesConcurrent fetches multiple repositories concurrently with controlled concurrency
-// maxConcurrent controls how many API calls run in parallel (respects rate limits)
+// fetchRepositoriesConcurrent fetches multiple repositories concurrently with controlled concurrency.
+//
+// Uses goroutines with a semaphore pattern to limit concurrent API calls and
+// respect GitHub rate limits. Requests are staggered with delays to avoid bursts.
+//
+// Parameters:
+//   - repoNames: List of repository identifiers in "owner/repo" format
+//   - maxConcurrent: Maximum number of simultaneous API calls (semaphore size)
+//
+// Returns a map of repository ID to Repository metadata. Failed fetches are logged
+// as warnings but do not stop other fetches from completing.
+//
+// Thread Safety:
+// The function is safe for concurrent use. Results are protected by a mutex
+// to prevent race conditions when multiple goroutines write to the map.
+//
+// Rate Limiting:
+// Each fetch (after the first) includes a configurable delay to respect GitHub
+// API rate limits. The delay is defined in config.MetadataAPIDelay.
 func (m *MetadataCollector) fetchRepositoriesConcurrent(repoNames []string, maxConcurrent int) map[string]types.Repository {
 	results := make(map[string]types.Repository)
 	var mu sync.Mutex // Protects results map
@@ -141,8 +199,25 @@ func (m *MetadataCollector) fetchRepositoriesConcurrent(repoNames []string, maxC
 	return results
 }
 
-// fetchOrganizationsConcurrent fetches multiple organizations concurrently with controlled concurrency
-// maxConcurrent controls how many API calls run in parallel (respects rate limits)
+// fetchOrganizationsConcurrent fetches multiple organizations concurrently with controlled concurrency.
+//
+// Uses goroutines with a semaphore pattern to limit concurrent API calls and
+// respect GitHub rate limits. Requests are staggered with delays to avoid bursts.
+//
+// Parameters:
+//   - orgNames: List of GitHub usernames or organization names
+//   - maxConcurrent: Maximum number of simultaneous API calls (semaphore size)
+//
+// Returns a map of organization ID (login) to Organization metadata. Failed fetches
+// are logged as warnings but do not stop other fetches from completing.
+//
+// Thread Safety:
+// The function is safe for concurrent use. Results are protected by a mutex
+// to prevent race conditions when multiple goroutines write to the map.
+//
+// Rate Limiting:
+// Each fetch (after the first) includes a configurable delay to respect GitHub
+// API rate limits. The delay is defined in config.MetadataAPIDelay.
 func (m *MetadataCollector) fetchOrganizationsConcurrent(orgNames []string, maxConcurrent int) map[string]types.Organization {
 	results := make(map[string]types.Organization)
 	var mu sync.Mutex // Protects results map
@@ -183,8 +258,28 @@ func (m *MetadataCollector) fetchOrganizationsConcurrent(orgNames []string, maxC
 	return results
 }
 
-// SelectReposToRefresh selects repositories that need metadata refresh
-// Returns repos from new templates + up to 5% of stale repos (>30 days old)
+// SelectReposToRefresh selects repositories that need metadata refresh using incremental strategy.
+//
+// Implements intelligent refresh cycle to minimize API calls while keeping data fresh:
+//  1. Always refresh: repositories from newly discovered templates
+//  2. Incrementally refresh: up to 5% of stale repositories (>30 days old)
+//     prioritizing oldest first
+//
+// Parameters:
+//   - newTemplates: Templates discovered in current run (need fresh repo metadata)
+//   - existingRepos: All repositories currently in the database
+//
+// Returns:
+// List of repository IDs ("owner/repo") that should be refreshed in this run.
+//
+// Refresh Strategy:
+// The 5% incremental refresh ensures all stale metadata is updated over ~20 runs
+// (about 20 days with daily runs), preventing unbounded staleness while keeping
+// API usage low. Minimum 1 stale repo is refreshed per run even if 5% rounds to zero.
+//
+// Example:
+// - 100 existing repos, 30 stale (>30 days), 5 new templates with 3 unique repos
+// - Returns: 3 repos (from new templates) + 5 repos (oldest 5% of stale) = 8 total
 func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.Repository) []string {
 	// Get repos from new templates
 	newRepoSet := make(map[string]bool)
@@ -238,8 +333,28 @@ func SelectReposToRefresh(newTemplates []types.Template, existingRepos []types.R
 	return result
 }
 
-// SelectOrgsToRefresh selects organizations that need metadata refresh
-// Returns orgs from new templates + up to 5% of stale orgs (>30 days old)
+// SelectOrgsToRefresh selects organizations that need metadata refresh using incremental strategy.
+//
+// Implements intelligent refresh cycle to minimize API calls while keeping data fresh:
+//  1. Always refresh: organizations from newly discovered templates
+//  2. Incrementally refresh: up to 5% of stale organizations (>30 days old)
+//     prioritizing oldest first
+//
+// Parameters:
+//   - newTemplates: Templates discovered in current run (extracts unique owners)
+//   - existingOrgs: All organizations currently in the database
+//
+// Returns:
+// List of organization IDs (GitHub logins) that should be refreshed in this run.
+//
+// Refresh Strategy:
+// The 5% incremental refresh ensures all stale metadata is updated over ~20 runs
+// (about 20 days with daily runs), preventing unbounded staleness while keeping
+// API usage low. Minimum 1 stale org is refreshed per run even if 5% rounds to zero.
+//
+// Example:
+// - 50 existing orgs, 15 stale (>30 days), 5 new templates from 2 unique owners
+// - Returns: 2 orgs (from new templates) + 2 orgs (oldest 5% of stale) = 4 total
 func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Organization) []string {
 	// Get orgs from new templates
 	newOrgSet := make(map[string]bool)
@@ -296,8 +411,33 @@ func SelectOrgsToRefresh(newTemplates []types.Template, existingOrgs []types.Org
 	return result
 }
 
-// CollectMetadataIncremental collects metadata for new templates and refreshes stale metadata
-// Uses intelligent refresh cycle: new templates + 5% of stale (>30 days) entries per run
+// CollectMetadataIncremental collects metadata for new templates and refreshes stale metadata.
+//
+// Optimized for incremental mode where only a subset of metadata needs updating.
+// Uses intelligent refresh strategy to balance data freshness with API usage.
+//
+// Parameters:
+//   - newTemplates: Templates discovered in current run (require fresh metadata)
+//   - existingRepos: All repository metadata from previous runs
+//   - existingOrgs: All organization metadata from previous runs
+//
+// Returns:
+//   - Complete list of repository metadata (existing + refreshed)
+//   - Complete list of organization metadata (existing + refreshed)
+//   - Error if critical API failures occur (individual fetch failures are logged but not fatal)
+//
+// Refresh Strategy:
+//  1. Identifies repos/orgs needing refresh (new templates + 5% of stale entries)
+//  2. Fetches metadata concurrently with rate limit protection
+//  3. Merges refreshed metadata with existing data
+//  4. Sorts results for stable output
+//
+// The function prints progress information showing how many entries are being
+// refreshed and the concurrency level being used.
+//
+// Performance:
+// Uses concurrent fetching (controlled by config.MaxMetadataConcurrency) to
+// significantly speed up metadata collection while respecting API rate limits.
 func (m *MetadataCollector) CollectMetadataIncremental(newTemplates []types.Template, existingRepos []types.Repository, existingOrgs []types.Organization) ([]types.Repository, []types.Organization, error) {
 	// Select which repos and orgs need refreshing
 	reposToRefresh := SelectReposToRefresh(newTemplates, existingRepos)
@@ -359,8 +499,37 @@ func (m *MetadataCollector) CollectMetadataIncremental(newTemplates []types.Temp
 	return repositories, organizations, nil
 }
 
-// CollectAllMetadata collects metadata for all unique repositories and organizations
-// Used in non-incremental mode to fetch everything from scratch
+// CollectAllMetadata collects metadata for all unique repositories and organizations from scratch.
+//
+// Used in non-incremental mode (first run or full refresh) to fetch metadata for
+// every repository and organization referenced by the template set.
+//
+// Parameters:
+//   - templates: All templates in the catalog (discovers unique repos/orgs)
+//
+// Returns:
+//   - Complete list of repository metadata (sorted by owner/name)
+//   - Complete list of organization metadata (sorted by ID)
+//   - Error if critical API failures occur (individual fetch failures are logged but not fatal)
+//
+// Process:
+//  1. Extracts unique repository IDs and owner names from templates
+//  2. Fetches all repository metadata concurrently
+//  3. Fetches all organization metadata concurrently
+//  4. Sorts results for stable, deterministic output
+//
+// The function prints progress information showing the total count of unique
+// repos/orgs and the concurrency level being used.
+//
+// Performance:
+// Uses concurrent fetching (controlled by config.MaxMetadataConcurrency) to
+// significantly speed up metadata collection. A full run typically processes
+// 100-200 repos and 50-100 orgs in a few minutes rather than hours.
+//
+// Use Cases:
+//   - Initial catalog setup (no existing metadata)
+//   - Full refresh after schema changes
+//   - Rebuilding catalog from scratch
 func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]types.Repository, []types.Organization, error) {
 	// Track unique repos and orgs
 	repoMap := make(map[string]bool)
