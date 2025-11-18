@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v57/github"
+	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -233,7 +234,7 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 		analyzed = append(analyzed, *template)
 
 		// Rate limiting - be nice to external services
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(config.MetadataAPIDelay)
 	}
 
 	return analyzed, nil

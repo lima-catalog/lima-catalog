@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
@@ -247,7 +248,7 @@ func (m *MetadataCollector) CollectMetadataIncremental(newTemplates []types.Temp
 		}
 
 		repoMap[repo.ID] = *repo
-		time.Sleep(500 * time.Millisecond) // Be nice to the API
+		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
 	}
 	fmt.Printf("Refreshed %d repositories\n\n", len(reposToRefresh))
 
@@ -267,7 +268,7 @@ func (m *MetadataCollector) CollectMetadataIncremental(newTemplates []types.Temp
 		}
 
 		orgMap[org.ID] = *org
-		time.Sleep(500 * time.Millisecond) // Be nice to the API
+		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
 	}
 	fmt.Printf("Refreshed %d organizations\n\n", len(orgsToRefresh))
 
@@ -323,7 +324,7 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 		}
 
 		repositories = append(repositories, *repo)
-		time.Sleep(500 * time.Millisecond) // Be nice to the API
+		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
 	}
 	fmt.Printf("Collected metadata for %d repositories\n\n", len(repositories))
 
@@ -341,7 +342,7 @@ func (m *MetadataCollector) CollectAllMetadata(templates []types.Template) ([]ty
 		}
 
 		organizations = append(organizations, *org)
-		time.Sleep(500 * time.Millisecond) // Be nice to the API
+		time.Sleep(config.MetadataAPIDelay) // Be nice to the API
 	}
 	fmt.Printf("Collected metadata for %d organizations\n\n", len(organizations))
 

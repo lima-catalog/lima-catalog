@@ -465,6 +465,18 @@ See [FINDINGS.md](FINDINGS.md) for detailed research on:
 
 ---
 
+## Backend Refactoring
+
+A comprehensive backend code quality and testing improvement initiative is underway. See [BACKEND_REFACTORING_PLAN.md](BACKEND_REFACTORING_PLAN.md) for:
+- Full codebase analysis (21 Go files, ~4,500 lines)
+- Identified code smells and anti-patterns
+- Three-phase refactoring plan (critical fixes, quality improvements, polish)
+- Testing strategy for untested code paths
+
+**Current Status**: Phase 1 (Critical Fixes) in progress
+
+---
+
 ## Implementation Notes
 
 For detailed implementation notes on completed stages, testing strategy, rollout history, and migration notes, see [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md).
