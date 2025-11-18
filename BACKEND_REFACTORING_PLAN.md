@@ -346,11 +346,23 @@ After completing all phases:
   - Main MergeTemplates function reduced from 89 lines to 59 lines (34% reduction)
   - Each processing path is now clear and testable in isolation
   - All tests pass (83/83)
-- [ ] 2.3. Extract FormatPrompt sections
+- [x] 2.3. Extract FormatPrompt sections
+  - Extracted `writeHeader()` - writes initial prompt header
+  - Extracted `writeTemplateInfo()` - writes template file information
+  - Extracted `writeRepositoryInfo()` - writes repository context (with nil check)
+  - Extracted `writeOrganizationInfo()` - writes organization context (with nil check)
+  - Extracted `writeReadmeContent()` - writes README content (with empty check)
+  - Extracted `writeTemplateContent()` - writes template YAML content
+  - Extracted `writeComments()` - writes extracted YAML comments (with empty check)
+  - Extracted `writeReferences()` - writes template file references (with empty check and truncation)
+  - Extracted `writeInstructions()` - writes analysis instructions
+  - Main FormatPrompt function reduced from 144 lines to 15 lines (90% reduction)
+  - Each section is now independently testable and modifiable
+  - All tests pass (83/83)
 - [ ] 2.4. Add input validation
 - [ ] 2.5. Implement retry logic
 
-**Phase 2 Status**: 2/5 complete
+**Phase 2 Status**: 3/5 complete
 
 ### Phase 3: Polish
 - [ ] 3.1. Remove dead code
