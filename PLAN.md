@@ -145,7 +145,18 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
   "official": true,
   "url": "https://github.com/...",
   "raw_url": "https://raw.githubusercontent.com/...",
-  "notability_score": 285.5
+  "notability_score": 285.5,
+  "notability_score_breakdown": {
+    "message": 100.0,
+    "provision": 25.0,
+    "parameters": 60.0,
+    "env_vars": 50.0,
+    "probes": 10.5,
+    "unusual_images": 30.0,
+    "comments": 8.0,
+    "stars": 12.3,
+    "total": 285.5
+  }
 }
 ```
 
@@ -161,8 +172,16 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 - `probe_total_lines` - Total lines across all probe scripts
 - `param_count` - Number of configurable parameters
 - `env_count` - Number of environment variables
-- `comment_line_count` - Number of YAML comment lines (indicates documentation quality)
+- `comment_line_count` - Number of **unique** YAML comment lines (filtered, see below)
 - `unusual_images` - List of unusual image **domains** (not in official templates)
+
+**Comment Filtering** (prevents score inflation):
+- Fetches `default.yaml` from lima-vm/lima repository
+- Extracts all normalized comment lines from default template
+- Only counts comments that are:
+  1. Not present in default.yaml (prevents derivative templates from inheriting scores)
+  2. Not empty (ignores lines with just `#` and whitespace)
+- Rationale: Many templates start from default.yaml and inherit documentation comments. Without filtering, these templates get artificially inflated scores (default.yaml itself scores 1132 primarily from 541 comment lines).
 
 **Official Images Detection** (Domain-Based):
 - Dynamically fetched from `lima-vm/lima/templates/_images/` directory via GitHub API
