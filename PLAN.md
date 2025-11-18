@@ -170,6 +170,36 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 - Use cheapest/fastest LLM (Claude Haiku, GPT-3.5-turbo, etc.)
 - Fallback to analysis-based keywords if LLM unavailable
 
+**Prompt Builder Architecture:**
+
+New package `pkg/prompt` provides comprehensive context gathering for LLM analysis:
+
+Context included in prompts:
+1. **Template YAML content** - Full template with provisioning scripts, probes, messages, env vars, params
+2. **Template comments** - Extracted YAML comments for author intent
+3. **Repository metadata** - Description, topics/keywords, language, stars
+4. **Organization info** - Owner name, type, description, location
+5. **README content** - Repository README (truncated to ~5000 chars)
+6. **Template references** - Shallow clone + grep for template filename with 15 lines context before/after
+
+Standalone CLI tool `cmd/prompt-generator`:
+- Purpose: Test prompts with different LLM models before backend integration
+- Usage: `prompt-generator owner/repo/path/template.yaml`
+- Output: Formatted prompt ready for LLM testing (stdout or file)
+- Configuration: Context lines, max README length, max references, enable/disable sections
+- Token estimation: Shows approximate token count for prompt size planning
+
+Backend integration:
+- Same `pkg/prompt.Builder` will be used by analyzer
+- Configurable via `PromptConfig` (context lines, included sections, limits)
+- Shallow clones are temporary (cleaned up after reference gathering)
+
+**Important caveats in prompts:**
+- Warns LLM that repo purpose may differ from template purpose
+- Repository might be CI scaffolding, docs, or template collection
+- Template itself may make the repo's project available in VM
+- Instructs LLM to prioritize template content over repo metadata
+
 **Environment variables:**
 ```bash
 LLM_API_KEY=<api-key>
