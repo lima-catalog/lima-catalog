@@ -41,28 +41,30 @@ export function formatCategoryName(category) {
 }
 
 /**
- * Create debug score element with popup
+ * Get badge text for debug mode
  * @param {Object} template - Template object
- * @returns {HTMLElement} Debug score element
+ * @returns {string} Badge text showing notability score
  */
-function createDebugScore(template) {
+function getDebugBadgeText(template) {
+    if (!template.notability_score_breakdown) {
+        return null;
+    }
+    const score = template.notability_score || 0;
+    return `${score.toFixed(1)}`;
+}
+
+/**
+ * Create debug score popup element
+ * @param {Object} template - Template object
+ * @returns {HTMLElement|null} Popup element or null
+ */
+function createDebugScorePopup(template) {
     if (!template.notability_score_breakdown) {
         return null;
     }
 
-    const debugScore = document.createElement('div');
-    debugScore.className = 'debug-score';
-
-    const score = template.notability_score || 0;
     const breakdown = template.notability_score_breakdown;
 
-    debugScore.innerHTML = `
-        <div class="debug-score-value" title="Notability Score (hover for details)">
-            🔍 ${score.toFixed(1)}
-        </div>
-    `;
-
-    // Create popup element
     const popup = document.createElement('div');
     popup.className = 'debug-score-popup';
     popup.innerHTML = `
@@ -107,18 +109,8 @@ function createDebugScore(template) {
             </div>
         </div>
     `;
-    debugScore.appendChild(popup);
 
-    // Show/hide popup on hover
-    const scoreValue = debugScore.querySelector('.debug-score-value');
-    scoreValue.addEventListener('mouseenter', () => {
-        popup.style.display = 'block';
-    });
-    scoreValue.addEventListener('mouseleave', () => {
-        popup.style.display = 'none';
-    });
-
-    return debugScore;
+    return popup;
 }
 
 /**
@@ -169,7 +161,10 @@ export function createTemplateCard(template, onCardClick) {
     const displayName = deriveDisplayName(template);
     const description = template.description || 'No description available';
 
-    const debugScoreElement = isDebugMode() ? createDebugScore(template) : null;
+    // In debug mode, show score instead of Official/Community
+    const debugBadgeText = isDebugMode() ? getDebugBadgeText(template) : null;
+    const badgeText = debugBadgeText || (template.official ? 'Official' : 'Community');
+    const badgeClass = template.official ? 'official' : 'community';
 
     card.innerHTML = `
         <div class="template-header">
@@ -177,8 +172,8 @@ export function createTemplateCard(template, onCardClick) {
                 <h3 class="template-name">${escapeHtml(displayName)}</h3>
                 <div class="template-id">${escapeHtml(template.path)}</div>
             </div>
-            <span class="template-badge ${template.official ? 'official' : 'community'}">
-                ${template.official ? 'Official' : 'Community'}
+            <span class="template-badge ${badgeClass}" ${debugBadgeText ? 'title="Hover for breakdown"' : ''}>
+                ${escapeHtml(badgeText)}
             </span>
         </div>
 
@@ -221,9 +216,23 @@ export function createTemplateCard(template, onCardClick) {
         </div>
     `;
 
-    // Append debug score if in debug mode
-    if (debugScoreElement) {
-        card.appendChild(debugScoreElement);
+    // Attach debug popup to badge if in debug mode
+    if (debugBadgeText) {
+        const popup = createDebugScorePopup(template);
+        if (popup) {
+            const badge = card.querySelector('.template-badge');
+            badge.style.position = 'relative';
+            badge.style.cursor = 'help';
+            badge.appendChild(popup);
+
+            // Show/hide popup on hover
+            badge.addEventListener('mouseenter', () => {
+                popup.style.display = 'block';
+            });
+            badge.addEventListener('mouseleave', () => {
+                popup.style.display = 'none';
+            });
+        }
     }
 
     // Make card clickable - open preview modal

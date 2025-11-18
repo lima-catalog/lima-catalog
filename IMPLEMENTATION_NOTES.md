@@ -295,3 +295,67 @@ INCREMENTAL=1    # Enable incremental mode
 - `docs/js/app.js` - Refactored `setupKeyboardShortcuts()` function
 
 **No functional changes** - all existing shortcuts work exactly the same way.
+
+---
+
+## Debug Mode for Notability Score Tuning (2025-01-18)
+
+**Motivation:** Need a way to visualize notability scores on the frontend while tuning the scoring weights, without cluttering the normal user interface.
+
+**Implementation:**
+- Added hidden debug mode toggled by `@` keyboard shortcut
+- Debug mode replaces "Official"/"Community" badge text with notability score
+- Badge color remains unchanged (official=blue, community=gray)
+- Hover over debug badge shows detailed score breakdown popup
+- Added `notability_score_breakdown` field to catalog.jsonl with individual components
+
+**Backend Changes:**
+- Created `NotabilityScoreBreakdown` struct with individual score components (message, provision, parameters, env_vars, probes, unusual_images, comments, stars, total)
+- Modified `CalculateNotabilityScoreWithBreakdown()` to return breakdown
+- Added breakdown to `CombinedTemplate` struct in combiner
+- Breakdown field uses `omitempty` JSON tag (optional field)
+
+**Frontend Changes:**
+- Added debug mode state management to `state.js`
+- Added `@` keyboard shortcut to toggle debug mode
+- Modified `templateCard.js` to replace badge text in debug mode
+- Created `createDebugScorePopup()` to generate hover popup with breakdown
+- Added CSS for debug popup styling and notification
+- Added "Notability" option to sort dropdown
+
+**Files Changed:**
+- `pkg/discovery/notability.go` - Added NotabilityScoreBreakdown struct and calculation
+- `pkg/combiner/combiner.go` - Added breakdown field to CombinedTemplate
+- `docs/js/state.js` - Added debug mode state
+- `docs/js/app.js` - Added @ keyboard shortcut and notification
+- `docs/js/templateCard.js` - Badge replacement and popup rendering
+- `docs/index.html` - Added "Notability" to sort dropdown
+- `docs/style.css` - Debug mode styling
+
+**Comment Filtering Enhancement (2025-01-18):**
+
+**Problem:** default.yaml scored 1132 primarily from 541 comment lines. Derivative templates inherited these comments, getting artificially inflated scores.
+
+**Solution:** Implemented comment filtering during analysis:
+1. Fetch default.yaml from lima-vm/lima repository
+2. Extract and normalize all comment lines
+3. Filter out comments present in default.yaml
+4. Filter out empty comments (just `#` with whitespace)
+5. Only count unique, meaningful comments
+
+**Implementation:**
+- Added `DefaultComments map[string]bool` to Analyzer struct
+- Created `FetchDefaultTemplateComments()` to fetch and parse default.yaml
+- Modified parser to store `CommentLines []string` (not just count)
+- Created `isEmptyComment()` to detect empty comments
+- Created `FilterUniqueComments()` to count filtered comments
+- Updated `PopulateNotabilityMetrics()` to accept defaultComments parameter
+
+**Files Changed:**
+- `pkg/discovery/notability.go` - Added FilterUniqueComments, isEmptyComment, FetchDefaultTemplateComments
+- `pkg/discovery/analyzer.go` - Added DefaultComments field and method
+- `pkg/discovery/parser.go` - Store CommentLines array
+- `cmd/lima-catalog/main.go` - Call FetchDefaultTemplateComments during analysis
+- `pkg/discovery/notability_test.go` - Updated test expectations
+
+**Impact:** Templates will be re-analyzed with new comment filtering, significantly reducing scores for derivative templates while preserving scores for templates with unique documentation.
