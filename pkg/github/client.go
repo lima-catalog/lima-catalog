@@ -6,17 +6,19 @@ import (
 	"time"
 
 	"github.com/google/go-github/v57/github"
+	"github.com/lima-catalog/lima-catalog/pkg/cache"
 	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"golang.org/x/oauth2"
 )
 
-// Client wraps the GitHub API client with rate limit management
+// Client wraps the GitHub API client with rate limit management and caching
 type Client struct {
 	client *github.Client
 	ctx    context.Context
+	cache  *cache.Cache
 }
 
-// NewClient creates a new GitHub API client with authentication
+// NewClient creates a new GitHub API client with authentication and caching
 func NewClient(ctx context.Context, token string) *Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -26,6 +28,7 @@ func NewClient(ctx context.Context, token string) *Client {
 	return &Client{
 		client: github.NewClient(tc),
 		ctx:    ctx,
+		cache:  cache.New(1 * time.Hour), // Cache API responses for 1 hour
 	}
 }
 
@@ -119,16 +122,50 @@ func (c *Client) SearchCode(query string, page int) (*github.CodeSearchResult, *
 	return result, resp, err
 }
 
-// GetRepository fetches repository information
+// GetRepository fetches repository information (with caching)
 func (c *Client) GetRepository(owner, repo string) (*github.Repository, error) {
+	cacheKey := fmt.Sprintf("repo:%s/%s", owner, repo)
+
+	// Check cache first
+	if cached, ok := c.cache.Get(cacheKey); ok {
+		if repository, ok := cached.(*github.Repository); ok {
+			return repository, nil
+		}
+	}
+
+	// Fetch from API
 	repository, _, err := c.client.Repositories.Get(c.ctx, owner, repo)
-	return repository, err
+	if err != nil {
+		return nil, err
+	}
+
+	// Store in cache
+	c.cache.Set(cacheKey, repository)
+
+	return repository, nil
 }
 
-// GetUser fetches user or organization information
+// GetUser fetches user or organization information (with caching)
 func (c *Client) GetUser(login string) (*github.User, error) {
+	cacheKey := fmt.Sprintf("user:%s", login)
+
+	// Check cache first
+	if cached, ok := c.cache.Get(cacheKey); ok {
+		if user, ok := cached.(*github.User); ok {
+			return user, nil
+		}
+	}
+
+	// Fetch from API
 	user, _, err := c.client.Users.Get(c.ctx, login)
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+
+	// Store in cache
+	c.cache.Set(cacheKey, user)
+
+	return user, nil
 }
 
 // ListRepositoryContents lists contents of a directory in a repository
