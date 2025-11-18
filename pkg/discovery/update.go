@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -18,8 +19,55 @@ type UpdateResult struct {
 	RemovedTemplates []string         // Template IDs that were removed
 }
 
+// backfillLastUpdated initializes LastUpdated for templates that don't have it set
+// This handles migration for old data before the LastUpdated field was added
+func backfillLastUpdated(template *types.Template) {
+	if template.LastUpdated.IsZero() {
+		// Set to a time definitely before AnalyzedAt to avoid re-analysis
+		if !template.AnalyzedAt.IsZero() {
+			// Set to 1 hour before AnalyzedAt (or DiscoveredAt if that's earlier)
+			template.LastUpdated = template.DiscoveredAt
+			if template.AnalyzedAt.Add(-1 * time.Hour).After(template.DiscoveredAt) {
+				template.LastUpdated = template.AnalyzedAt.Add(-1 * time.Hour)
+			}
+		} else {
+			template.LastUpdated = template.DiscoveredAt
+		}
+	}
+}
+
+// processUpdatedTemplate handles a template whose SHA has changed
+func processUpdatedTemplate(oldTemplate types.Template, newTemplate types.Template, clock interfaces.Clock) types.Template {
+	newTemplate.DiscoveredAt = oldTemplate.DiscoveredAt // Preserve original discovery time
+	newTemplate.LastChecked = clock.Now()                // We checked it
+	newTemplate.LastUpdated = clock.Now()                // Content changed
+	return newTemplate
+}
+
+// processUnchangedTemplate handles a template whose SHA hasn't changed but was checked
+func processUnchangedTemplate(template types.Template, clock interfaces.Clock) types.Template {
+	template.LastChecked = clock.Now() // We checked it
+	// Don't update LastUpdated - content didn't change
+	backfillLastUpdated(&template)
+	return template
+}
+
+// processNewTemplate handles a newly discovered template
+func processNewTemplate(template types.Template, clock interfaces.Clock) types.Template {
+	template.LastChecked = clock.Now() // First check
+	template.LastUpdated = clock.Now() // New content
+	return template
+}
+
+// processUncheckedTemplate handles a template that wasn't checked this run
+func processUncheckedTemplate(template types.Template) types.Template {
+	// Template wasn't checked this run - preserve unchanged, don't update LastChecked
+	backfillLastUpdated(&template)
+	return template
+}
+
 // MergeTemplates performs an incremental update by merging existing templates with newly discovered ones
-func MergeTemplates(existing, discovered []types.Template) UpdateResult {
+func MergeTemplates(existing, discovered []types.Template, clock interfaces.Clock) UpdateResult {
 	result := UpdateResult{
 		AllTemplates:     []types.Template{},
 		NewTemplates:     []types.Template{},
@@ -45,41 +93,24 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 	// Find new and updated templates
 	for id, newTemplate := range discoveredMap {
 		if oldTemplate, exists := existingMap[id]; exists {
-			// Check if template changed (different SHA)
+			// Template already exists - check if it changed
 			if oldTemplate.SHA != newTemplate.SHA {
-				// Template was updated (SHA changed)
-				newTemplate.DiscoveredAt = oldTemplate.DiscoveredAt // Preserve original discovery time
-				newTemplate.LastChecked = time.Now()                 // We checked it
-				newTemplate.LastUpdated = time.Now()                 // Content changed
-				result.UpdatedTemplates = append(result.UpdatedTemplates, newTemplate)
-				result.AllTemplates = append(result.AllTemplates, newTemplate)
+				// SHA changed - template was updated
+				updated := processUpdatedTemplate(oldTemplate, newTemplate, clock)
+				result.UpdatedTemplates = append(result.UpdatedTemplates, updated)
+				result.AllTemplates = append(result.AllTemplates, updated)
 			} else {
-				// Template unchanged (same SHA) but we checked it
-				oldTemplate.LastChecked = time.Now() // We checked it
-				// Don't update LastUpdated - content didn't change
-				// But if LastUpdated is zero (old data before field was added), initialize it
-				if oldTemplate.LastUpdated.IsZero() {
-					// For migration: Set to a time definitely before AnalyzedAt to avoid re-analysis
-					if !oldTemplate.AnalyzedAt.IsZero() {
-						// Set to 1 hour before AnalyzedAt (or DiscoveredAt if that's earlier)
-						oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
-						if oldTemplate.AnalyzedAt.Add(-1 * time.Hour).After(oldTemplate.DiscoveredAt) {
-							oldTemplate.LastUpdated = oldTemplate.AnalyzedAt.Add(-1 * time.Hour)
-						}
-					} else {
-						oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
-					}
-				}
+				// SHA unchanged - template is the same but we checked it
+				unchanged := processUnchangedTemplate(oldTemplate, clock)
 				result.UnchangedCount++
-				result.AllTemplates = append(result.AllTemplates, oldTemplate)
+				result.AllTemplates = append(result.AllTemplates, unchanged)
 			}
 			preservedTemplates[id] = true
 		} else {
 			// New template
-			newTemplate.LastChecked = time.Now() // First check
-			newTemplate.LastUpdated = time.Now() // New content
-			result.NewTemplates = append(result.NewTemplates, newTemplate)
-			result.AllTemplates = append(result.AllTemplates, newTemplate)
+			new := processNewTemplate(newTemplate, clock)
+			result.NewTemplates = append(result.NewTemplates, new)
+			result.AllTemplates = append(result.AllTemplates, new)
 			preservedTemplates[id] = true
 		}
 	}
@@ -89,22 +120,10 @@ func MergeTemplates(existing, discovered []types.Template) UpdateResult {
 	// (Template deletion detection is Stage 7, not implemented yet)
 	for id, oldTemplate := range existingMap {
 		if !preservedTemplates[id] {
-			// Template wasn't checked this run - preserve unchanged, don't update LastChecked
-			// But if LastUpdated is zero (old data before field was added), initialize it
-			if oldTemplate.LastUpdated.IsZero() {
-				// For migration: Set to a time definitely before AnalyzedAt to avoid re-analysis
-				if !oldTemplate.AnalyzedAt.IsZero() {
-					// Set to 1 hour before AnalyzedAt (or DiscoveredAt if that's earlier)
-					oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
-					if oldTemplate.AnalyzedAt.Add(-1 * time.Hour).After(oldTemplate.DiscoveredAt) {
-						oldTemplate.LastUpdated = oldTemplate.AnalyzedAt.Add(-1 * time.Hour)
-					}
-				} else {
-					oldTemplate.LastUpdated = oldTemplate.DiscoveredAt
-				}
-			}
+			// Template wasn't checked this run - preserve as-is
+			unchecked := processUncheckedTemplate(oldTemplate)
 			result.UnchangedCount++
-			result.AllTemplates = append(result.AllTemplates, oldTemplate)
+			result.AllTemplates = append(result.AllTemplates, unchecked)
 		}
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/storage"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
@@ -405,7 +406,7 @@ func runDiscoveryPhase(ctx context.Context, client *github.Client, store *storag
 
 		// If incremental mode, merge with existing templates
 		if incremental && len(existingTemplates) > 0 {
-			updateResult = discovery.MergeTemplates(existingTemplates, discoveredTemplates)
+			updateResult = discovery.MergeTemplates(existingTemplates, discoveredTemplates, interfaces.NewDefaultClock())
 			discovery.PrintUpdateSummary(updateResult)
 
 			// Use all templates (new + updated + unchanged)

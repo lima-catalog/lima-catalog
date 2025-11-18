@@ -3,9 +3,9 @@ package discovery
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"gopkg.in/yaml.v3"
 )
 
@@ -71,7 +71,7 @@ type TemplateInfo struct {
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file
-func ParseTemplate(url string) (*TemplateInfo, error) {
+func ParseTemplate(url string, httpClient interfaces.HTTPClient) (*TemplateInfo, error) {
 	// Convert GitHub blob URL to raw URL
 	// Pattern: https://github.com/owner/repo/blob/commit/path
 	// Target: https://raw.githubusercontent.com/owner/repo/commit/path
@@ -79,7 +79,7 @@ func ParseTemplate(url string) (*TemplateInfo, error) {
 	rawURL = strings.Replace(rawURL, "/blob/", "/", 1)
 
 	// Download template content
-	resp, err := http.Get(rawURL)
+	resp, err := httpClient.Get(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download template: %w", err)
 	}

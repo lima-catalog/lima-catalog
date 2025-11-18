@@ -327,11 +327,66 @@ After completing all phases:
 **Phase 1 Status**: 4/7 complete - Core refactoring done, deferred items moved to future phases
 
 ### Phase 2: Improve Quality
-- [ ] 2.1. Introduce interfaces for testability
-- [ ] 2.2. Simplify MergeTemplates logic
-- [ ] 2.3. Extract FormatPrompt sections
-- [ ] 2.4. Add input validation
-- [ ] 2.5. Implement retry logic
+- [x] 2.1. Introduce interfaces for testability (HTTPClient, FileSystem, Clock)
+  - Created `pkg/interfaces/interfaces.go` with HTTPClient, FileSystem, Clock interfaces
+  - Added default implementations: DefaultHTTPClient, DefaultFileSystem, DefaultClock
+  - Updated `ParseTemplate()` to accept HTTPClient parameter for testability
+  - Updated `Analyzer` struct to include HTTPClient and Clock fields
+  - Updated `Analyzer.AnalyzeTemplate()` to use Clock.Now() instead of time.Now()
+  - Updated `MergeTemplates()` to accept Clock parameter
+  - Updated `Storage` to use FileSystem interface for all file operations
+  - Added `NewStorageWithFS()` constructor for dependency injection in tests
+  - All tests pass (83/83)
+- [x] 2.2. Simplify MergeTemplates logic
+  - Extracted `backfillLastUpdated()` - eliminates duplicated timestamp migration logic
+  - Extracted `processUpdatedTemplate()` - handles SHA-changed templates
+  - Extracted `processUnchangedTemplate()` - handles SHA-same templates that were checked
+  - Extracted `processNewTemplate()` - handles newly discovered templates
+  - Extracted `processUncheckedTemplate()` - handles templates not checked this run
+  - Main MergeTemplates function reduced from 89 lines to 59 lines (34% reduction)
+  - Each processing path is now clear and testable in isolation
+  - All tests pass (83/83)
+- [x] 2.3. Extract FormatPrompt sections
+  - Extracted `writeHeader()` - writes initial prompt header
+  - Extracted `writeTemplateInfo()` - writes template file information
+  - Extracted `writeRepositoryInfo()` - writes repository context (with nil check)
+  - Extracted `writeOrganizationInfo()` - writes organization context (with nil check)
+  - Extracted `writeReadmeContent()` - writes README content (with empty check)
+  - Extracted `writeTemplateContent()` - writes template YAML content
+  - Extracted `writeComments()` - writes extracted YAML comments (with empty check)
+  - Extracted `writeReferences()` - writes template file references (with empty check and truncation)
+  - Extracted `writeInstructions()` - writes analysis instructions
+  - Main FormatPrompt function reduced from 144 lines to 15 lines (90% reduction)
+  - Each section is now independently testable and modifiable
+  - All tests pass (83/83)
+- [x] 2.4. Add input validation
+  - Created `pkg/validation/validation.go` with comprehensive validation functions
+  - `ValidateGitHubToken()` - validates token format (classic, PAT, hex)
+  - `ValidateTemplateID()` - validates owner/repo/path format
+  - `SanitizePath()` - prevents directory traversal attacks
+  - `ValidateContextLines()` - validates context line bounds (0-100)
+  - `ValidateMaxLength()` - validates max length parameters (0-10MB)
+  - `ValidateMaxFiles()` - validates max files bounds (0-1000)
+  - `ValidateRepoIdentifier()` - validates owner/repo names
+  - Added `PromptConfig.Validate()` method to validate configuration
+  - Updated `NewBuilder()` to return error and validate token + config
+  - Updated `BuildPrompt()` to validate and sanitize inputs
+  - Updated `cmd/prompt-generator/main.go` to handle errors
+  - All tests pass (131/131) including 48 new validation tests
+- [x] 2.5. Implement retry logic with exponential backoff
+  - Created `pkg/retry/retry.go` with comprehensive retry functionality
+  - `WithExponentialBackoff()` - simple retry with exponential backoff
+  - `WithExponentialBackoffContext()` - context-aware retry
+  - `WithConfig()` / `WithConfigContext()` - custom retry configuration
+  - `Do()` / `DoWithContext()` - generic retry with return values
+  - `Config` struct with customizable parameters (MaxRetries, InitialDelay, MaxDelay, Multiplier, ShouldRetry)
+  - `DefaultConfig()` - sensible defaults (3 retries, 1s initial, 30s max, 2.0 multiplier)
+  - `CalculateDelay()` - calculate delay for any attempt
+  - `IsRetryable()` - determine if error should be retried
+  - Context cancellation support throughout
+  - All tests pass (143/143) including 12 new retry tests
+
+**Phase 2 Status**: 5/5 complete ✅
 
 ### Phase 3: Polish
 - [ ] 3.1. Remove dead code

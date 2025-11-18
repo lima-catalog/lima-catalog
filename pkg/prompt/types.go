@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"github.com/lima-catalog/lima-catalog/pkg/types"
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 )
 
 // TemplateContext contains all context needed for LLM prompt generation
@@ -78,4 +79,21 @@ func DefaultPromptConfig() *PromptConfig {
 		MaxReadmeLength:   5000, // ~1000 tokens
 		MaxReferenceFiles: 10,   // Limit to avoid prompt bloat
 	}
+}
+
+// Validate validates the prompt configuration
+func (c *PromptConfig) Validate() error {
+	if err := validation.ValidateContextLines(c.ContextLines); err != nil {
+		return err
+	}
+
+	if err := validation.ValidateMaxLength(c.MaxReadmeLength, "MaxReadmeLength"); err != nil {
+		return err
+	}
+
+	if err := validation.ValidateMaxFiles(c.MaxReferenceFiles); err != nil {
+		return err
+	}
+
+	return nil
 }

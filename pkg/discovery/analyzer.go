@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-github/v57/github"
 	"github.com/lima-catalog/lima-catalog/pkg/config"
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -23,6 +24,10 @@ type Analyzer struct {
 	DefaultComments map[string]bool
 	// ForceAnalyze forces re-analysis of all templates, even if already analyzed
 	ForceAnalyze bool
+	// HTTPClient for making HTTP requests (allows mocking in tests)
+	HTTPClient interfaces.HTTPClient
+	// Clock for time operations (allows mocking in tests)
+	Clock interfaces.Clock
 }
 
 // NewAnalyzer creates a new template analyzer
@@ -33,6 +38,8 @@ func NewAnalyzer(llmEnabled bool, apiKey string, forceAnalyze bool) *Analyzer {
 		OfficialImages:  make(map[string]bool),
 		DefaultComments: make(map[string]bool),
 		ForceAnalyze:    forceAnalyze,
+		HTTPClient:      interfaces.NewDefaultHTTPClient(),
+		Clock:           interfaces.NewDefaultClock(),
 	}
 }
 
@@ -71,7 +78,7 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 	template.DisplayName = GenerateDisplayName(template.Name)
 
 	// Step 2: Parse template content
-	templateInfo, err := ParseTemplate(template.URL)
+	templateInfo, err := ParseTemplate(template.URL, a.HTTPClient)
 	if err != nil {
 		// If parsing fails, use basic info
 		fmt.Printf("Warning: failed to parse template %s: %v\n", template.ID, err)
@@ -106,7 +113,7 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 		}
 	}
 
-	template.AnalyzedAt = time.Now()
+	template.AnalyzedAt = a.Clock.Now()
 
 	return nil
 }

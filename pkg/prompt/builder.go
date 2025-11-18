@@ -14,6 +14,7 @@ import (
 
 	ghclient "github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 	"github.com/google/go-github/v57/github"
 )
 
@@ -25,22 +26,44 @@ type Builder struct {
 }
 
 // NewBuilder creates a new prompt builder
-func NewBuilder(ctx context.Context, githubToken string, config *PromptConfig) *Builder {
+func NewBuilder(ctx context.Context, githubToken string, config *PromptConfig) (*Builder, error) {
+	// Validate GitHub token
+	if err := validation.ValidateGitHubToken(githubToken); err != nil {
+		return nil, fmt.Errorf("invalid GitHub token: %w", err)
+	}
+
+	// Use default config if not provided
 	if config == nil {
 		config = DefaultPromptConfig()
+	}
+
+	// Validate config
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	return &Builder{
 		githubClient: ghclient.NewClient(ctx, githubToken),
 		config:       config,
 		ctx:          ctx,
-	}
+	}, nil
 }
 
 // BuildPrompt generates an LLM prompt for a given template
 func (b *Builder) BuildPrompt(owner, repo, templatePath string) (string, error) {
+	// Validate inputs
+	if err := validation.ValidateRepoIdentifier(owner, repo); err != nil {
+		return "", fmt.Errorf("invalid repository: %w", err)
+	}
+
+	// Sanitize template path
+	sanitizedPath, err := validation.SanitizePath(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("invalid template path: %w", err)
+	}
+
 	// Build the context
-	ctx, err := b.GatherContext(owner, repo, templatePath)
+	ctx, err := b.GatherContext(owner, repo, sanitizedPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to gather context: %w", err)
 	}
@@ -121,123 +144,163 @@ func (b *Builder) GatherContext(owner, repo, templatePath string) (*TemplateCont
 func (b *Builder) FormatPrompt(ctx *TemplateContext) string {
 	var buf bytes.Buffer
 
+	writeHeader(&buf)
+	writeTemplateInfo(&buf, ctx)
+	writeRepositoryInfo(&buf, ctx)
+	writeOrganizationInfo(&buf, ctx)
+	writeReadmeContent(&buf, ctx)
+	writeTemplateContent(&buf, ctx)
+	writeComments(&buf, ctx)
+	writeReferences(&buf, ctx, b.config)
+	writeInstructions(&buf)
+
+	return buf.String()
+}
+
+// writeHeader writes the initial prompt header
+func writeHeader(buf *bytes.Buffer) {
 	buf.WriteString("# Lima Template Analysis Request\n\n")
 	buf.WriteString("Please analyze the following Lima VM template and provide:\n")
 	buf.WriteString("1. A short description (max 100 characters) - Brief one-liner suitable for search results\n")
 	buf.WriteString("2. A long description (max 500 characters) - Detailed explanation of what this template provides\n")
 	buf.WriteString("3. A list of relevant keywords (5-10 keywords) - Technologies, use cases, and key features\n\n")
-
 	buf.WriteString("## Context\n\n")
+}
 
-	// Template file information
+// writeTemplateInfo writes template file information
+func writeTemplateInfo(buf *bytes.Buffer, ctx *TemplateContext) {
 	buf.WriteString("### Template File\n\n")
 	buf.WriteString(fmt.Sprintf("- **Repository**: %s\n", ctx.Template.Repo))
 	buf.WriteString(fmt.Sprintf("- **Path**: %s\n", ctx.Template.Path))
 	buf.WriteString("\n")
+}
 
-	// Repository context
-	if ctx.Repository != nil {
-		buf.WriteString("### Repository Information\n\n")
-		buf.WriteString(fmt.Sprintf("- **Name**: %s\n", ctx.Repository.Name))
-		if ctx.Repository.Description != "" {
-			buf.WriteString(fmt.Sprintf("- **Description**: %s\n", ctx.Repository.Description))
-		}
-		if len(ctx.Repository.Topics) > 0 {
-			buf.WriteString(fmt.Sprintf("- **Topics**: %s\n", strings.Join(ctx.Repository.Topics, ", ")))
-		}
-		if ctx.Repository.Language != "" {
-			buf.WriteString(fmt.Sprintf("- **Primary Language**: %s\n", ctx.Repository.Language))
-		}
-		buf.WriteString(fmt.Sprintf("- **Stars**: %d\n", ctx.Repository.Stars))
-		buf.WriteString("\n")
-
-		buf.WriteString("**IMPORTANT CAVEAT**: The repository's purpose may differ from the template's purpose. ")
-		buf.WriteString("For example, the repository might be a CI/CD scaffolding project, a documentation repo, ")
-		buf.WriteString("or a collection of templates, while the template itself provisions a specific VM environment. ")
-		buf.WriteString("Use the repository context as helpful background, but prioritize the template content itself ")
-		buf.WriteString("when determining the template's description and keywords. In some cases, the template makes ")
-		buf.WriteString("the repository's project available in a VM - use your judgment.\n\n")
+// writeRepositoryInfo writes repository context
+func writeRepositoryInfo(buf *bytes.Buffer, ctx *TemplateContext) {
+	if ctx.Repository == nil {
+		return
 	}
 
-	// Organization context
-	if ctx.Organization != nil {
-		buf.WriteString("### Organization/Owner Information\n\n")
-		buf.WriteString(fmt.Sprintf("- **Login**: %s\n", ctx.Organization.Login))
-		buf.WriteString(fmt.Sprintf("- **Type**: %s\n", ctx.Organization.Type))
-		if ctx.Organization.Name != "" {
-			buf.WriteString(fmt.Sprintf("- **Name**: %s\n", ctx.Organization.Name))
-		}
-		if ctx.Organization.Description != "" {
-			buf.WriteString(fmt.Sprintf("- **Description**: %s\n", ctx.Organization.Description))
-		}
-		if ctx.Organization.Location != "" {
-			buf.WriteString(fmt.Sprintf("- **Location**: %s\n", ctx.Organization.Location))
-		}
-		buf.WriteString("\n")
+	buf.WriteString("### Repository Information\n\n")
+	buf.WriteString(fmt.Sprintf("- **Name**: %s\n", ctx.Repository.Name))
+	if ctx.Repository.Description != "" {
+		buf.WriteString(fmt.Sprintf("- **Description**: %s\n", ctx.Repository.Description))
+	}
+	if len(ctx.Repository.Topics) > 0 {
+		buf.WriteString(fmt.Sprintf("- **Topics**: %s\n", strings.Join(ctx.Repository.Topics, ", ")))
+	}
+	if ctx.Repository.Language != "" {
+		buf.WriteString(fmt.Sprintf("- **Primary Language**: %s\n", ctx.Repository.Language))
+	}
+	buf.WriteString(fmt.Sprintf("- **Stars**: %d\n", ctx.Repository.Stars))
+	buf.WriteString("\n")
+
+	buf.WriteString("**IMPORTANT CAVEAT**: The repository's purpose may differ from the template's purpose. ")
+	buf.WriteString("For example, the repository might be a CI/CD scaffolding project, a documentation repo, ")
+	buf.WriteString("or a collection of templates, while the template itself provisions a specific VM environment. ")
+	buf.WriteString("Use the repository context as helpful background, but prioritize the template content itself ")
+	buf.WriteString("when determining the template's description and keywords. In some cases, the template makes ")
+	buf.WriteString("the repository's project available in a VM - use your judgment.\n\n")
+}
+
+// writeOrganizationInfo writes organization/owner context
+func writeOrganizationInfo(buf *bytes.Buffer, ctx *TemplateContext) {
+	if ctx.Organization == nil {
+		return
 	}
 
-	// README content
-	if ctx.ReadmeContent != "" {
-		buf.WriteString("### README Content\n\n")
-		buf.WriteString("```\n")
-		buf.WriteString(ctx.ReadmeContent)
-		buf.WriteString("\n```\n\n")
+	buf.WriteString("### Organization/Owner Information\n\n")
+	buf.WriteString(fmt.Sprintf("- **Login**: %s\n", ctx.Organization.Login))
+	buf.WriteString(fmt.Sprintf("- **Type**: %s\n", ctx.Organization.Type))
+	if ctx.Organization.Name != "" {
+		buf.WriteString(fmt.Sprintf("- **Name**: %s\n", ctx.Organization.Name))
+	}
+	if ctx.Organization.Description != "" {
+		buf.WriteString(fmt.Sprintf("- **Description**: %s\n", ctx.Organization.Description))
+	}
+	if ctx.Organization.Location != "" {
+		buf.WriteString(fmt.Sprintf("- **Location**: %s\n", ctx.Organization.Location))
+	}
+	buf.WriteString("\n")
+}
+
+// writeReadmeContent writes README content if available
+func writeReadmeContent(buf *bytes.Buffer, ctx *TemplateContext) {
+	if ctx.ReadmeContent == "" {
+		return
 	}
 
-	// Template content
+	buf.WriteString("### README Content\n\n")
+	buf.WriteString("```\n")
+	buf.WriteString(ctx.ReadmeContent)
+	buf.WriteString("\n```\n\n")
+}
+
+// writeTemplateContent writes the template YAML content
+func writeTemplateContent(buf *bytes.Buffer, ctx *TemplateContext) {
 	buf.WriteString("### Template YAML Content\n\n")
 	buf.WriteString("```yaml\n")
 	buf.WriteString(ctx.TemplateContent)
 	buf.WriteString("\n```\n\n")
+}
 
-	// YAML comments (if extracted)
-	if len(ctx.Comments) > 0 {
-		buf.WriteString("### Template Comments\n\n")
-		buf.WriteString("Key comments found in the template:\n\n")
-		for _, comment := range ctx.Comments {
-			buf.WriteString(fmt.Sprintf("- %s\n", comment))
-		}
-		buf.WriteString("\n")
+// writeComments writes extracted YAML comments
+func writeComments(buf *bytes.Buffer, ctx *TemplateContext) {
+	if len(ctx.Comments) == 0 {
+		return
 	}
 
-	// Template references
-	if len(ctx.References) > 0 {
-		buf.WriteString("### References to Template in Repository\n\n")
-		buf.WriteString("The following files reference this template (showing context):\n\n")
+	buf.WriteString("### Template Comments\n\n")
+	buf.WriteString("Key comments found in the template:\n\n")
+	for _, comment := range ctx.Comments {
+		buf.WriteString(fmt.Sprintf("- %s\n", comment))
+	}
+	buf.WriteString("\n")
+}
 
-		count := 0
-		for _, ref := range ctx.References {
-			if b.config.MaxReferenceFiles > 0 && count >= b.config.MaxReferenceFiles {
-				buf.WriteString(fmt.Sprintf("... and %d more references (truncated)\n\n", len(ctx.References)-count))
-				break
-			}
+// writeReferences writes template file references
+func writeReferences(buf *bytes.Buffer, ctx *TemplateContext, config *PromptConfig) {
+	if len(ctx.References) == 0 {
+		return
+	}
 
-			buf.WriteString(fmt.Sprintf("#### %s (line %d)\n\n", ref.FilePath, ref.LineNumber))
-			buf.WriteString("```\n")
+	buf.WriteString("### References to Template in Repository\n\n")
+	buf.WriteString("The following files reference this template (showing context):\n\n")
 
-			// Before context
-			for _, line := range ref.BeforeContext {
-				buf.WriteString(line)
-				buf.WriteString("\n")
-			}
+	count := 0
+	for _, ref := range ctx.References {
+		if config.MaxReferenceFiles > 0 && count >= config.MaxReferenceFiles {
+			buf.WriteString(fmt.Sprintf("... and %d more references (truncated)\n\n", len(ctx.References)-count))
+			break
+		}
 
-			// Match line
-			buf.WriteString(">>> ")
-			buf.WriteString(ref.MatchLine)
+		buf.WriteString(fmt.Sprintf("#### %s (line %d)\n\n", ref.FilePath, ref.LineNumber))
+		buf.WriteString("```\n")
+
+		// Before context
+		for _, line := range ref.BeforeContext {
+			buf.WriteString(line)
 			buf.WriteString("\n")
-
-			// After context
-			for _, line := range ref.AfterContext {
-				buf.WriteString(line)
-				buf.WriteString("\n")
-			}
-
-			buf.WriteString("```\n\n")
-			count++
 		}
-	}
 
-	// Instructions
+		// Match line
+		buf.WriteString(">>> ")
+		buf.WriteString(ref.MatchLine)
+		buf.WriteString("\n")
+
+		// After context
+		for _, line := range ref.AfterContext {
+			buf.WriteString(line)
+			buf.WriteString("\n")
+		}
+
+		buf.WriteString("```\n\n")
+		count++
+	}
+}
+
+// writeInstructions writes the analysis instructions
+func writeInstructions(buf *bytes.Buffer) {
 	buf.WriteString("## Analysis Instructions\n\n")
 	buf.WriteString("Based on the above context, please provide:\n\n")
 	buf.WriteString("1. **Short Description** (max 100 chars): A concise one-liner that captures the essence of this template\n")
@@ -260,8 +323,6 @@ func (b *Builder) FormatPrompt(ctx *TemplateContext) string {
 	buf.WriteString("  \"keywords\": [\"keyword1\", \"keyword2\", ...]\n")
 	buf.WriteString("}\n")
 	buf.WriteString("```\n")
-
-	return buf.String()
 }
 
 // fetchTemplateContent downloads the template YAML content
