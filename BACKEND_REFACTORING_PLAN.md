@@ -373,9 +373,20 @@ After completing all phases:
   - Updated `BuildPrompt()` to validate and sanitize inputs
   - Updated `cmd/prompt-generator/main.go` to handle errors
   - All tests pass (131/131) including 48 new validation tests
-- [ ] 2.5. Implement retry logic
+- [x] 2.5. Implement retry logic with exponential backoff
+  - Created `pkg/retry/retry.go` with comprehensive retry functionality
+  - `WithExponentialBackoff()` - simple retry with exponential backoff
+  - `WithExponentialBackoffContext()` - context-aware retry
+  - `WithConfig()` / `WithConfigContext()` - custom retry configuration
+  - `Do()` / `DoWithContext()` - generic retry with return values
+  - `Config` struct with customizable parameters (MaxRetries, InitialDelay, MaxDelay, Multiplier, ShouldRetry)
+  - `DefaultConfig()` - sensible defaults (3 retries, 1s initial, 30s max, 2.0 multiplier)
+  - `CalculateDelay()` - calculate delay for any attempt
+  - `IsRetryable()` - determine if error should be retried
+  - Context cancellation support throughout
+  - All tests pass (143/143) including 12 new retry tests
 
-**Phase 2 Status**: 4/5 complete
+**Phase 2 Status**: 5/5 complete ✅
 
 ### Phase 3: Polish
 - [ ] 3.1. Remove dead code
