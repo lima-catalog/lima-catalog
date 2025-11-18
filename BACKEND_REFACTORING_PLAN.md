@@ -337,12 +337,20 @@ After completing all phases:
   - Updated `Storage` to use FileSystem interface for all file operations
   - Added `NewStorageWithFS()` constructor for dependency injection in tests
   - All tests pass (83/83)
-- [ ] 2.2. Simplify MergeTemplates logic
+- [x] 2.2. Simplify MergeTemplates logic
+  - Extracted `backfillLastUpdated()` - eliminates duplicated timestamp migration logic
+  - Extracted `processUpdatedTemplate()` - handles SHA-changed templates
+  - Extracted `processUnchangedTemplate()` - handles SHA-same templates that were checked
+  - Extracted `processNewTemplate()` - handles newly discovered templates
+  - Extracted `processUncheckedTemplate()` - handles templates not checked this run
+  - Main MergeTemplates function reduced from 89 lines to 59 lines (34% reduction)
+  - Each processing path is now clear and testable in isolation
+  - All tests pass (83/83)
 - [ ] 2.3. Extract FormatPrompt sections
 - [ ] 2.4. Add input validation
 - [ ] 2.5. Implement retry logic
 
-**Phase 2 Status**: 1/5 complete
+**Phase 2 Status**: 2/5 complete
 
 ### Phase 3: Polish
 - [ ] 3.1. Remove dead code
