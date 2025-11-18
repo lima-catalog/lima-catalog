@@ -138,10 +138,21 @@ Each file uses JSON Lines format (one JSON object per line) for minimal diffs an
 
 ## Documentation
 
+### Project Documentation
 - **[PLAN.md](PLAN.md)** - Project architecture and implementation details
 - **[FINDINGS.md](FINDINGS.md)** - Research findings on GitHub search behavior
 - **[CLAUDE.md](CLAUDE.md)** - Development workflow and session instructions
 - **[experiments/](experiments/)** - Historical research scripts
+
+### Backend Refactoring
+- **[BACKEND_REFACTORING_PLAN.md](BACKEND_REFACTORING_PLAN.md)** - Backend refactoring roadmap and progress (Phases 1-4 complete)
+- **[BACKEND_CODE_REVIEW.md](BACKEND_CODE_REVIEW.md)** - Comprehensive code review findings and recommendations
+
+### Additional Documentation
+- **[SOURCE_INDEX.md](SOURCE_INDEX.md)** - Quick reference for all source files
+- **[INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)** - UI/UX design system
+- **[IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md)** - Detailed implementation notes
+- **[LLM_ANALYST_PROMPTS.md](LLM_ANALYST_PROMPTS.md)** - LLM prompt generation system
 
 ## How It Works
 

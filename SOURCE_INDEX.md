@@ -23,24 +23,32 @@ Quick reference for all source files and their purposes.
 #### `pkg/github/`
 | File | Purpose |
 |------|---------|
-| `client.go` | GitHub API wrapper with rate limit management |
+| `client.go` | GitHub API wrapper with rate limit management and caching |
+| `client_test.go` | Tests for GitHub client (caching, rate limiting, error handling) |
 
 #### `pkg/storage/`
 | File | Purpose |
 |------|---------|
 | `storage.go` | JSON Lines storage for templates, repos, orgs (data branch) |
+| `storage_test.go` | Tests for storage (save/load, JSON Lines format, error handling) |
 
 #### `pkg/discovery/`
 | File | Purpose |
 |------|---------|
 | `discovery.go` | Main discovery orchestration |
 | `parser.go` | YAML template parsing and technology detection |
-| `analyzer.go` | Template analysis and categorization (with LLM hooks) |
-| `metadata.go` | Repository and organization metadata fetching |
+| `parser_test.go` | Tests for parser |
+| `analyzer.go` | Template analysis and categorization |
+| `analyzer_test.go` | Tests for analyzer (category inference, description generation) |
+| `metadata.go` | Repository and organization metadata fetching with concurrent batching |
+| `metadata_test.go` | Tests for metadata collection |
 | `naming.go` | Template name derivation from path |
+| `naming_test.go` | Tests for naming (derivation, sanitization, display names) |
 | `blocklist.go` | Blocklist filtering logic |
+| `blocklist_test.go` | Tests for blocklist |
+| `notability.go` | Template notability scoring |
+| `notability_test.go` | Tests for notability scoring |
 | `update.go` | Incremental update logic with timestamp-based discovery |
-| `*_test.go` | Tests for each module |
 
 #### `pkg/combiner/`
 | File | Purpose |
@@ -48,12 +56,40 @@ Quick reference for all source files and their purposes.
 | `combiner.go` | Combines templates/repos/orgs into frontend-optimized catalog.jsonl |
 | `combiner_test.go` | Tests for combiner |
 
-#### `pkg/prompt/` *(NEW)*
+#### `pkg/prompt/`
 | File | Purpose |
 |------|---------|
 | `types.go` | Data structures for LLM prompt generation (TemplateContext, PromptConfig) |
 | `builder.go` | Core prompt builder: gathers context, formats prompts for LLM analysis |
 | `builder_test.go` | Tests for prompt builder |
+
+#### `pkg/cache/` *(Phase 3.3)*
+| File | Purpose |
+|------|---------|
+| `cache.go` | Thread-safe in-memory cache with TTL support for API response caching |
+| `cache_test.go` | Tests for cache (TTL, cleanup, concurrency) |
+
+#### `pkg/interfaces/` *(Phase 2.1)*
+| File | Purpose |
+|------|---------|
+| `interfaces.go` | Dependency injection interfaces (HTTPClient, FileSystem, Clock) for testability |
+
+#### `pkg/validation/` *(Phase 2.4)*
+| File | Purpose |
+|------|---------|
+| `validation.go` | Input validation functions (tokens, paths, template IDs) |
+| `validation_test.go` | Tests for validation |
+
+#### `pkg/retry/` *(Phase 2.5)*
+| File | Purpose |
+|------|---------|
+| `retry.go` | Exponential backoff retry logic for resilient API calls |
+| `retry_test.go` | Tests for retry logic |
+
+#### `pkg/config/`
+| File | Purpose |
+|------|---------|
+| `constants.go` | Configuration constants (delays, timeouts, limits) |
 
 ### Configuration
 
@@ -124,6 +160,8 @@ Quick reference for all source files and their purposes.
 | `CLAUDE.md` | Instructions for Claude when working on this project |
 | `SOURCE_INDEX.md` | This file - quick reference for all source files |
 | `LLM_ANALYST_PROMPTS.md` | Documentation for LLM prompt generation system |
+| **`BACKEND_REFACTORING_PLAN.md`** | Backend refactoring roadmap and progress (Phases 1-4 complete) |
+| **`BACKEND_CODE_REVIEW.md`** | Comprehensive code review findings (38 issues across 8 categories) |
 
 ## GitHub Actions
 
@@ -211,12 +249,16 @@ No build step required - uses ES6 modules directly in browser.
 - **discovery**: Find and validate Lima templates via GitHub Code Search
 - **parser**: Parse YAML templates and detect technologies
 - **analyzer**: Categorize templates and extract keywords
-- **metadata**: Fetch repository and organization metadata from GitHub
+- **metadata**: Fetch repository and organization metadata from GitHub (with concurrent batching)
 - **storage**: Read/write JSON Lines files to data branch
 - **combiner**: Merge data into frontend-optimized format
-- **github**: Wrap GitHub API with rate limiting
+- **github**: Wrap GitHub API with rate limiting and caching
+- **cache**: Thread-safe in-memory cache with TTL support *(Phase 3.3)*
+- **interfaces**: Dependency injection interfaces for testability *(Phase 2.1)*
+- **validation**: Input validation functions *(Phase 2.4)*
+- **retry**: Exponential backoff retry logic *(Phase 2.5)*
 - **types**: Shared data structures
-- **prompt**: Generate LLM prompts for template analysis *(NEW)*
+- **prompt**: Generate LLM prompts for template analysis
 
 ### Frontend Modules
 
