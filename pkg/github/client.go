@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v57/github"
+	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"golang.org/x/oauth2"
 )
 
@@ -55,6 +56,54 @@ func (c *Client) CheckRateLimit(minimumRemaining int) error {
 	}
 
 	return nil
+}
+
+// HandleRateLimitError checks if a response indicates a rate limit error and waits if needed.
+// Returns true if it handled a rate limit error (caller should retry), false otherwise.
+func (c *Client) HandleRateLimitError(resp *github.Response, limitType string) bool {
+	// Check if response indicates rate limiting (403 Forbidden or 429 Too Many Requests)
+	if resp == nil || (resp.StatusCode != 403 && resp.StatusCode != 429) {
+		return false
+	}
+
+	// Get rate limit information
+	limits, err := c.RateLimit()
+	if err != nil {
+		fmt.Printf("  Warning: failed to check rate limit: %v\n", err)
+		return false
+	}
+
+	// Determine which rate limit to check based on type
+	var resetTime time.Time
+	switch limitType {
+	case "search":
+		if limits.Search != nil {
+			resetTime = limits.Search.Reset.Time
+		}
+	case "core":
+		if limits.Core != nil {
+			resetTime = limits.Core.Reset.Time
+		}
+	default:
+		fmt.Printf("  Warning: unknown rate limit type: %s\n", limitType)
+		return false
+	}
+
+	if resetTime.IsZero() {
+		return false
+	}
+
+	// Wait until rate limit resets
+	waitDuration := time.Until(resetTime)
+	if waitDuration > 0 {
+		fmt.Printf("  Rate limit exceeded, waiting %v until reset at %s\n",
+			waitDuration.Round(time.Second), resetTime.Format(time.RFC3339))
+		time.Sleep(waitDuration + config.SearchAPIQueryDelay) // Add buffer
+		fmt.Println("  Retrying after rate limit reset...")
+		return true
+	}
+
+	return false
 }
 
 // SearchCode searches for code on GitHub

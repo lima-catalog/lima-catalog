@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
@@ -72,21 +73,9 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 
 		result, resp, err := d.client.SearchCode(query, page)
 		if err != nil {
-			// Check if it's a rate limit error
-			if resp != nil && (resp.StatusCode == 403 || resp.StatusCode == 429) {
-				// Check rate limit to get reset time
-				limits, _ := d.client.RateLimit()
-				if limits != nil && limits.Search != nil {
-					resetTime := limits.Search.Reset.Time
-					waitDuration := time.Until(resetTime)
-					if waitDuration > 0 {
-						fmt.Printf("  Rate limit exceeded, waiting %v until reset at %s\n",
-							waitDuration.Round(time.Second), resetTime.Format(time.RFC3339))
-						time.Sleep(waitDuration + 5*time.Second) // Add 5s buffer
-						fmt.Println("  Retrying after rate limit reset...")
-						continue // Retry the same page
-					}
-				}
+			// Check if it's a rate limit error and handle it
+			if d.client.HandleRateLimitError(resp, "search") {
+				continue // Retry the same page after waiting
 			}
 			return nil, fmt.Errorf("code search failed: %w", err)
 		}
@@ -143,7 +132,7 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 
 		// Add delay between pagination requests to avoid hitting search rate limits
 		// Search API has a limit of 30 requests/minute
-		time.Sleep(3 * time.Second) // 3 seconds = max 20 requests/minute
+		time.Sleep(config.SearchAPIPaginationDelay) // Max 20 requests/minute
 	}
 
 	if blocklistedCount > 0 {
@@ -183,8 +172,8 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 	}
 
 	// Wait before next query to avoid rate limits
-	fmt.Println("Waiting 5 seconds before next query...")
-	time.Sleep(5 * time.Second)
+	fmt.Printf("Waiting %v before next query...\n", config.SearchAPIQueryDelay)
+	time.Sleep(config.SearchAPIQueryDelay)
 
 	// Also search for .yml extension
 	query1b := "minimumLimaVersion extension:yml -repo:lima-vm/lima" + dateQualifier
@@ -205,8 +194,8 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 	fmt.Printf("Query 1b added %d new templates (duplicates: %d)\n", newFromQuery1b, len(templates1b)-newFromQuery1b)
 
 	// Wait before next query to avoid rate limits
-	fmt.Println("Waiting 5 seconds before next query...")
-	time.Sleep(5 * time.Second)
+	fmt.Printf("Waiting %v before next query...\n", config.SearchAPIQueryDelay)
+	time.Sleep(config.SearchAPIQueryDelay)
 
 	// Query 2: Search for files with images: and provision: fields (supplementary query)
 	query2 := "images: provision: extension:yaml -repo:lima-vm/lima" + dateQualifier
@@ -228,8 +217,8 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 	fmt.Printf("Query 2 added %d new templates (duplicates: %d)\n", newFromQuery2, len(templates2)-newFromQuery2)
 
 	// Wait before next query to avoid rate limits
-	fmt.Println("Waiting 5 seconds before next query...")
-	time.Sleep(5 * time.Second)
+	fmt.Printf("Waiting %v before next query...\n", config.SearchAPIQueryDelay)
+	time.Sleep(config.SearchAPIQueryDelay)
 
 	// Also search for .yml extension
 	query2b := "images: provision: extension:yml -repo:lima-vm/lima" + dateQualifier

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v57/github"
+	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 	"gopkg.in/yaml.v3"
 )
@@ -102,36 +103,41 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 		return breakdown
 	}
 
+	// Get default weights (can be made configurable in the future)
+	weights := config.DefaultNotabilityWeights()
+
 	// Message presence (strong signal for reusability)
 	if metrics.MessageLength > 0 {
-		breakdown.Message = 100.0
+		breakdown.Message = weights.Message
 	}
 
 	// Provision scripts (indicates customization/setup)
-	breakdown.Provision = float64(metrics.ProvisionCount)*10.0 + float64(metrics.ProvisionTotalLines)/10.0
+	breakdown.Provision = float64(metrics.ProvisionCount)*weights.ProvisionBase +
+		float64(metrics.ProvisionTotalLines)*weights.ProvisionLine
 
 	// Parameters (indicates configurability)
-	breakdown.Parameters = float64(metrics.ParamCount) * 20.0
+	breakdown.Parameters = float64(metrics.ParamCount) * weights.Parameter
 
 	// Environment variables (shows configuration effort)
-	breakdown.EnvVars = float64(metrics.EnvCount) * 10.0
+	breakdown.EnvVars = float64(metrics.EnvCount) * weights.EnvVar
 
 	// Probes (less important than provision)
-	breakdown.Probes = float64(metrics.ProbeCount)*5.0 + float64(metrics.ProbeTotalLines)/10.0
+	breakdown.Probes = float64(metrics.ProbeCount)*weights.ProbeBase +
+		float64(metrics.ProbeTotalLines)*weights.ProbeLine
 
 	// Unusual images (indicates specialized use case)
 	// Award bonus once if any unusual domains (Lima uses first available image)
 	if len(metrics.UnusualImages) > 0 {
-		breakdown.UnusualImages = 30.0
+		breakdown.UnusualImages = weights.UnusualImage
 	}
 
 	// Comment lines (indicates documentation quality)
-	breakdown.Comments = float64(metrics.CommentLineCount) * 2.0
+	breakdown.Comments = float64(metrics.CommentLineCount) * weights.CommentLine
 
 	// Repository stars (capped to avoid dominating other factors)
-	starsScore := float64(repoStars) / 10.0
-	if starsScore > 50.0 {
-		starsScore = 50.0
+	starsScore := float64(repoStars) / weights.StarsPerPoint
+	if starsScore > weights.MaxStarsPoints {
+		starsScore = weights.MaxStarsPoints
 	}
 	breakdown.Stars = starsScore
 
