@@ -18,14 +18,17 @@ type Analyzer struct {
 	LLMAPIKey string
 	// OfficialImages contains the list of official image names from lima-vm/lima
 	OfficialImages map[string]bool
+	// ForceAnalyze forces re-analysis of all templates, even if already analyzed
+	ForceAnalyze bool
 }
 
 // NewAnalyzer creates a new template analyzer
-func NewAnalyzer(llmEnabled bool, apiKey string) *Analyzer {
+func NewAnalyzer(llmEnabled bool, apiKey string, forceAnalyze bool) *Analyzer {
 	return &Analyzer{
 		LLMEnabled:     llmEnabled,
 		LLMAPIKey:      apiKey,
 		OfficialImages: make(map[string]bool),
+		ForceAnalyze:   forceAnalyze,
 	}
 }
 
@@ -190,7 +193,8 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 
 		// Skip if already analyzed and content hasn't changed since analysis
 		// LastUpdated tracks when content (SHA) changed, so if we analyzed after last update, skip
-		if !template.LastUpdated.IsZero() && template.AnalyzedAt.After(template.LastUpdated) {
+		// Unless ForceAnalyze is enabled, which forces re-analysis of all templates
+		if !a.ForceAnalyze && !template.LastUpdated.IsZero() && template.AnalyzedAt.After(template.LastUpdated) {
 			analyzed = append(analyzed, *template)
 			continue
 		}
