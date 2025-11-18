@@ -1,3 +1,37 @@
+// Package github provides a wrapper around the GitHub API client with
+// rate limit management and response caching.
+//
+// Features:
+//
+//   - Automatic rate limit checking and waiting
+//   - In-memory response caching with TTL (reduces API calls)
+//   - Centralized error handling for rate limit errors
+//   - OAuth2 authentication
+//
+// Usage:
+//
+//	client := github.NewClient(ctx, token)
+//	repo, err := client.GetRepository("owner", "repo")
+//	if err != nil {
+//	    return err
+//	}
+//
+// Rate Limiting:
+//
+// The client automatically checks rate limits before making requests.
+// When rate limits are exhausted, operations will fail rather than waiting
+// indefinitely. Use HandleRateLimitError to check responses for rate limit errors.
+//
+// Caching:
+//
+// Repository and user responses are cached for 1 hour by default.
+// This significantly reduces API calls when processing multiple templates
+// from the same repository.
+//
+// Error Handling:
+//
+// All errors are wrapped with context using fmt.Errorf with %w.
+// Network errors and API errors are returned to the caller.
 package github
 
 import (
