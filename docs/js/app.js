@@ -4,130 +4,12 @@
 
 import { loadAllData } from './data.js';
 import * as State from './state.js';
-import { applyFilters, sortTemplates } from './filters.js';
-import { updateSidebar, setupSidebarNavigation } from './sidebar.js';
-import { renderTemplateGrid } from './templateCard.js';
-import { openPreviewModal, setupModalEventListeners } from './modal.js';
-import { debounce } from './utils.js';
+import { filterAndRender, updateSortDropdown } from './appActions.js';
+import { setupSidebarNavigation } from './sidebar.js';
+import { setupModalEventListeners } from './modal.js';
 import { initializeTheme } from './theme.js';
 import { setupKeyboardShortcuts, showKeyboardHelp } from './keyboard.js';
-
-/**
- * Update statistics display
- */
-function updateStats() {
-    const templates = State.getTemplates();
-    const filteredTemplates = State.getFilteredTemplates();
-
-    document.getElementById('total-count').textContent = templates.length;
-    document.getElementById('visible-count').textContent = filteredTemplates.length;
-}
-
-/**
- * Update clear keywords button visibility
- */
-function updateClearButtons() {
-    // Clear keywords button
-    const selectedKeywords = State.getSelectedKeywords();
-    const clearKeywordsBtn = document.getElementById('clear-keywords');
-    if (selectedKeywords.size > 0) {
-        clearKeywordsBtn.style.display = 'block';
-    } else {
-        clearKeywordsBtn.style.display = 'none';
-    }
-}
-
-/**
- * Filter and render templates based on current state
- */
-export function filterAndRender(options = {}) {
-    const templates = State.getTemplates();
-    const selectedKeywords = State.getSelectedKeywords();
-    const selectedCategory = State.getSelectedCategory();
-
-    // Get filter values from UI
-    const searchTerm = document.getElementById('search').value;
-    const showOfficial = document.getElementById('show-official').checked;
-    const showCommunity = document.getElementById('show-community').checked;
-    const sortBy = document.getElementById('sort').value;
-
-    // Determine type filter based on checkboxes
-    let typeFilter = '';
-    if (showOfficial && !showCommunity) {
-        typeFilter = 'official';
-    } else if (!showOfficial && showCommunity) {
-        typeFilter = 'community';
-    }
-    // If both or neither checked, typeFilter remains '' (show all)
-
-    // Apply filters
-    let filtered = applyFilters(templates, {
-        searchTerm,
-        typeFilter,
-        selectedCategory,
-        selectedKeywords
-    });
-
-    // Sort templates
-    filtered = sortTemplates(filtered, sortBy);
-
-    // Update state
-    State.setFilteredTemplates(filtered);
-
-    // Update UI
-    updateStats();
-    updateSidebar({
-        filteredTemplates: filtered,
-        selectedKeywords,
-        selectedCategory
-    }, handleKeywordToggle, handleCategoryToggle, options);
-    updateClearButtons();
-
-    // Render templates
-    const gridElement = document.getElementById('templates-grid');
-    renderTemplateGrid(filtered, gridElement, handleTemplateClick, sortBy);
-}
-
-/**
- * Handle keyword toggle
- */
-function handleKeywordToggle(keyword) {
-    const wasSelected = State.getSelectedKeywords().has(keyword);
-    const wasLastSelected = wasSelected && State.getSelectedKeywords().size === 1;
-    State.toggleKeywordSelection(keyword);
-    // If we just added a keyword, focus should move to first keyword in cloud
-    // If we just removed the last selected keyword, focus should move to first unselected keyword
-    filterAndRender({
-        focusFirstKeyword: !wasSelected,
-        focusFirstUnselected: wasLastSelected
-    });
-}
-
-/**
- * Handle category toggle
- */
-function handleCategoryToggle(category) {
-    State.toggleCategorySelection(category);
-    filterAndRender();
-}
-
-/**
- * Handle template card click
- */
-function handleTemplateClick(template) {
-    openPreviewModal(template);
-}
-
-/**
- * Clear search field
- */
-export function clearSearch() {
-    const searchInput = document.getElementById('search');
-    searchInput.value = '';
-    filterAndRender();
-    // Restore focus to search input for continued keyboard navigation
-    searchInput.focus();
-}
+import { debounce } from './utils.js';
 
 /**
  * Clear all selected keywords
@@ -172,8 +54,6 @@ function setupEventListeners() {
             }
         });
     }
-}
-
 }
 
 /**

@@ -2,7 +2,7 @@
  * Keyboard shortcuts and navigation
  */
 
-import { clearSearch, filterAndRender, updateSortDropdown, showDebugModeNotification } from './app.js';
+import { clearSearch, filterAndRender, updateSortDropdown, showDebugModeNotification } from './appActions.js';
 import * as State from './state.js';
 
 function getFirstVisibleTemplateCard() {

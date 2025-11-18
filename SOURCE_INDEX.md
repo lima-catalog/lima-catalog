@@ -83,7 +83,8 @@ Quick reference for all source files and their purposes.
 
 | File | Purpose |
 |------|---------|
-| `docs/js/app.js` | Main application orchestration and event handlers |
+| `docs/js/app.js` | Main application initialization and event listener setup |
+| `docs/js/appActions.js` | Core application actions (filter, render, UI updates) - shared by app.js and keyboard.js |
 | `docs/js/config.js` | Configuration (data URL, cache keys) |
 | `docs/js/state.js` | Application state management |
 | `docs/js/data.js` | Fetch and parse catalog data from data branch (JSONL format) |
@@ -219,7 +220,8 @@ No build step required - uses ES6 modules directly in browser.
 
 ### Frontend Modules
 
-- **app**: Main orchestration and event handling
+- **app**: Main initialization and event listener setup
+- **appActions**: Core application actions (filter, render, UI updates) - shared module to break circular dependencies
 - **config**: Configuration constants
 - **state**: Centralized application state
 - **data**: Fetch and parse catalog data (JSONL)
