@@ -6,8 +6,8 @@
 paths:
   - '^\.github/workflows/'                      # GitHub Actions
   - '(^|/)lima\.REJECTED\.yaml$'                # Rejected templates (any directory or root)
-  - '/rancher-desktop/lima/0/lima\.yaml$'       # Rancher Desktop old config
-  - '/rancher-desktop/lima/_config/0\.yaml$'    # Rancher Desktop newer config
+  - '(^|/)rancher-desktop/lima/0/lima\.yaml$'       # Rancher Desktop old config
+  - '(^|/)rancher-desktop/lima/_config/0\.yaml$'    # Rancher Desktop newer config
 
 # Repo patterns (regex) - matched against full org/repo/path
 # Provides fine-grained control for specific repos, orgs, or templates

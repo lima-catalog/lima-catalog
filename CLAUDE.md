@@ -55,6 +55,13 @@ make test
 
 **All tests must pass (exit code 0). If any tests fail, fix them before proceeding.**
 
+**⚠️ NEVER IGNORE FAILING TESTS:**
+- It is NEVER acceptable to ignore failing tests, even if they appear unrelated to your changes
+- If tests fail due to missing dependencies (e.g., GITHUB_TOKEN), make them skip gracefully with a warning, not fail
+- If tests are genuinely failing, investigate and fix them
+- Tests that require external resources should use `t.Skip()` when resources are unavailable
+- Always run `make test` before committing to ensure all tests pass
+
 ### Step 4: Build/test additional components if applicable
 
 - Go changes: `go build -o lima-catalog ./cmd/lima-catalog`

@@ -14,8 +14,8 @@ func TestIsBlocklisted(t *testing.T) {
 			`(^|/)tests?/`,  // Match /test/ or /tests/ or starting with test/ or tests/
 			`^kubernetes/`,
 			`(^|/)lima\.REJECTED\.yaml$`,           // Rejected templates
-			`/rancher-desktop/lima/0/lima\.yaml$`,  // Rancher Desktop old config (never at root)
-			`/rancher-desktop/lima/_config/0\.yaml$`,  // Rancher Desktop newer config (never at root)
+			`(^|/)rancher-desktop/lima/0/lima\.yaml$`,  // Rancher Desktop old config
+			`(^|/)rancher-desktop/lima/_config/0\.yaml$`,  // Rancher Desktop newer config
 		},
 		Repos: []string{
 			`^spamorg/`,
