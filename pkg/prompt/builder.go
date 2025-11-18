@@ -14,6 +14,7 @@ import (
 
 	ghclient "github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
+	"github.com/lima-catalog/lima-catalog/pkg/validation"
 	"github.com/google/go-github/v57/github"
 )
 
@@ -25,22 +26,44 @@ type Builder struct {
 }
 
 // NewBuilder creates a new prompt builder
-func NewBuilder(ctx context.Context, githubToken string, config *PromptConfig) *Builder {
+func NewBuilder(ctx context.Context, githubToken string, config *PromptConfig) (*Builder, error) {
+	// Validate GitHub token
+	if err := validation.ValidateGitHubToken(githubToken); err != nil {
+		return nil, fmt.Errorf("invalid GitHub token: %w", err)
+	}
+
+	// Use default config if not provided
 	if config == nil {
 		config = DefaultPromptConfig()
+	}
+
+	// Validate config
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	return &Builder{
 		githubClient: ghclient.NewClient(ctx, githubToken),
 		config:       config,
 		ctx:          ctx,
-	}
+	}, nil
 }
 
 // BuildPrompt generates an LLM prompt for a given template
 func (b *Builder) BuildPrompt(owner, repo, templatePath string) (string, error) {
+	// Validate inputs
+	if err := validation.ValidateRepoIdentifier(owner, repo); err != nil {
+		return "", fmt.Errorf("invalid repository: %w", err)
+	}
+
+	// Sanitize template path
+	sanitizedPath, err := validation.SanitizePath(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("invalid template path: %w", err)
+	}
+
 	// Build the context
-	ctx, err := b.GatherContext(owner, repo, templatePath)
+	ctx, err := b.GatherContext(owner, repo, sanitizedPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to gather context: %w", err)
 	}

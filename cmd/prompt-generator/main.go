@@ -142,7 +142,11 @@ func main() {
 
 	// Create builder
 	ctx := context.Background()
-	builder := prompt.NewBuilder(ctx, githubToken, config)
+	builder, err := prompt.NewBuilder(ctx, githubToken, config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to create builder: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Generate prompt
 	fmt.Fprintf(os.Stderr, "Generating prompt for %s/%s/%s...\n", owner, repo, path)

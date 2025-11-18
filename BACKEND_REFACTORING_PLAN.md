@@ -359,10 +359,23 @@ After completing all phases:
   - Main FormatPrompt function reduced from 144 lines to 15 lines (90% reduction)
   - Each section is now independently testable and modifiable
   - All tests pass (83/83)
-- [ ] 2.4. Add input validation
+- [x] 2.4. Add input validation
+  - Created `pkg/validation/validation.go` with comprehensive validation functions
+  - `ValidateGitHubToken()` - validates token format (classic, PAT, hex)
+  - `ValidateTemplateID()` - validates owner/repo/path format
+  - `SanitizePath()` - prevents directory traversal attacks
+  - `ValidateContextLines()` - validates context line bounds (0-100)
+  - `ValidateMaxLength()` - validates max length parameters (0-10MB)
+  - `ValidateMaxFiles()` - validates max files bounds (0-1000)
+  - `ValidateRepoIdentifier()` - validates owner/repo names
+  - Added `PromptConfig.Validate()` method to validate configuration
+  - Updated `NewBuilder()` to return error and validate token + config
+  - Updated `BuildPrompt()` to validate and sanitize inputs
+  - Updated `cmd/prompt-generator/main.go` to handle errors
+  - All tests pass (131/131) including 48 new validation tests
 - [ ] 2.5. Implement retry logic
 
-**Phase 2 Status**: 3/5 complete
+**Phase 2 Status**: 4/5 complete
 
 ### Phase 3: Polish
 - [ ] 3.1. Remove dead code
