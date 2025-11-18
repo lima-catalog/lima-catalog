@@ -248,8 +248,10 @@ func printFinalSummary(progress *types.Progress, dataDir string, client *github.
 	fmt.Println()
 
 	// Final rate limit check
-	limits, _ := client.RateLimit()
-	if limits != nil {
+	limits, err := client.RateLimit()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to check rate limit: %v\n", err)
+	} else if limits != nil {
 		fmt.Printf("API calls used: %d core, %d search\n",
 			5000-limits.Core.Remaining,
 			30-limits.Search.Remaining)

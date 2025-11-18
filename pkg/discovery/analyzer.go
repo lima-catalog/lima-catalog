@@ -207,8 +207,9 @@ func (a *Analyzer) AnalyzeTemplates(templates []types.Template, repoMap map[stri
 
 		// Analyze template
 		if err := a.AnalyzeTemplate(template, repoInfo); err != nil {
-			fmt.Printf("Warning: failed to analyze %s: %v\n", template.ID, err)
-			// Continue with other templates
+			fmt.Printf("Warning: failed to analyze %s: %v (skipping)\n", template.ID, err)
+			// Skip templates that fail analysis to avoid saving incomplete data
+			continue
 		}
 
 		analyzed = append(analyzed, *template)
