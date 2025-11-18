@@ -78,7 +78,7 @@ export function updateSortDropdown() {
     if (!sortDropdown) return;
 
     const currentValue = sortDropdown.value;
-    const debugMode = State.getDebugMode();
+    const debugMode = State.isDebugMode();
 
     // Base options (always available)
     const baseOptions = [
