@@ -365,26 +365,15 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         }
     });
 
-    // Update focused template on hover/focus to show dynamic keywords
-    const updateFocusedTemplate = () => {
+    // Update focused template on keyboard focus to show dynamic keywords
+    // (Keyboard-only feature - hover causes issues when moving mouse to sidebar)
+    // Note: We only set on focus, not clear on blur, so keywords persist while
+    // navigating to sidebar. Keywords clear when a different card gets focus.
+    card.addEventListener('focus', () => {
         console.log('[templateCard] Setting focused template:', template.id);
         State.setFocusedTemplate(template);
         updateSidebarOnly();
-    };
-
-    const clearFocusedTemplate = () => {
-        console.log('[templateCard] Clearing focused template');
-        State.setFocusedTemplate(null);
-        updateSidebarOnly();
-    };
-
-    // On mouse hover
-    card.addEventListener('mouseenter', updateFocusedTemplate);
-    card.addEventListener('mouseleave', clearFocusedTemplate);
-
-    // On keyboard focus
-    card.addEventListener('focus', updateFocusedTemplate);
-    card.addEventListener('blur', clearFocusedTemplate);
+    });
 
     return card;
 }
