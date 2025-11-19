@@ -119,6 +119,13 @@ func UpdateOfficialKnowledge(ctx context.Context, repoPath, outputPath string) (
 	// Update timestamp
 	ok.LastUpdate = time.Now().UTC()
 
+	// Sort all slices alphabetically for better readability and faster lookups
+	sort.Strings(ok.KnownLines.Comments)
+	sort.Strings(ok.KnownLines.Provision)
+	sort.Strings(ok.KnownLines.Probes)
+	sort.Strings(ok.KnownLines.Messages)
+	sort.Strings(ok.Images)
+
 	// Save updated knowledge
 	if err := SaveOfficialKnowledge(outputPath, ok); err != nil {
 		return nil, err
