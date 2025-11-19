@@ -165,53 +165,81 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 }
 
 // isCodeComment checks if a normalized comment line looks like commented-out code
-// rather than actual documentation. Code comments typically contain:
-// - Shell metacharacters: $ & @ [ ] { } | ; > < `
-// - Assignment patterns: VAR=value
-// - Common shell commands at the start
-// - File paths: /path/to/something
+// rather than actual documentation. Uses conservative heuristics to avoid false positives.
+// Strong indicators: shell variables ($VAR), pipes (|), redirects (>, <), command chaining (&&, ||)
 func isCodeComment(line string) bool {
 	// Skip empty lines
 	if line == "" {
 		return false
 	}
 
-	// Check for shell metacharacters (strong indicator of code)
-	codeChars := []string{"$", "&", "@", "[", "]", "{", "}", "|", ";", ">", "<", "`", "\\"}
-	for _, char := range codeChars {
-		if strings.Contains(line, char) {
+	// Check for shell variable expansion (strong indicator)
+	// $VAR, ${VAR}, $(...), or backticks
+	if strings.Contains(line, "$") {
+		// Make sure it's not just a price ($5) by checking for variable patterns
+		if strings.Contains(line, "${") || strings.Contains(line, "$(") {
 			return true
 		}
-	}
-
-	// Check for assignment pattern (VAR=value)
-	if strings.Contains(line, "=") && !strings.Contains(line, "==") {
-		// Simple heuristic: if it has = but not ==, and no spaces before =, likely assignment
-		parts := strings.Split(line, "=")
-		if len(parts) >= 2 && !strings.Contains(parts[0], " ") {
-			return true
-		}
-	}
-
-	// Check for common shell commands at start of line
-	commonCommands := []string{
-		"apt", "yum", "dnf", "pacman", "brew", "apk",
-		"curl", "wget", "git", "docker", "kubectl", "systemctl",
-		"echo", "export", "cd", "mkdir", "chmod", "chown",
-		"sudo", "source", ".", "ln", "cp", "mv", "rm",
-	}
-	firstWord := strings.Fields(line)
-	if len(firstWord) > 0 {
-		cmd := strings.ToLower(firstWord[0])
-		for _, knownCmd := range commonCommands {
-			if cmd == knownCmd {
+		// Check for $WORD pattern (not just $ followed by number)
+		for i := strings.Index(line, "$"); i >= 0; i = strings.Index(line[i+1:], "$") {
+			if i+1 < len(line) && (line[i+1] >= 'A' && line[i+1] <= 'Z' || line[i+1] >= 'a' && line[i+1] <= 'z' || line[i+1] == '_') {
 				return true
+			}
+			if i+1 >= len(line) {
+				break
 			}
 		}
 	}
 
-	// Check for file paths (starts with / or ~/)
-	if strings.HasPrefix(line, "/") || strings.HasPrefix(line, "~/") {
+	// Check for backticks (command substitution)
+	if strings.Contains(line, "`") {
+		return true
+	}
+
+	// Check for pipe (likely command chaining, not markdown table)
+	// Markdown tables have multiple pipes in a pattern like "| cell | cell |"
+	pipeCount := strings.Count(line, "|")
+	if pipeCount == 1 || (pipeCount > 1 && !strings.Contains(line, "| ")) {
+		return true
+	}
+
+	// Check for command chaining operators
+	if strings.Contains(line, "&&") || strings.Contains(line, "||") {
+		return true
+	}
+
+	// Check for shell redirects (strong indicator)
+	if strings.Contains(line, " > ") || strings.Contains(line, " >> ") ||
+		strings.Contains(line, " < ") || strings.Contains(line, " 2>&1") ||
+		strings.HasSuffix(line, ">") || strings.HasSuffix(line, ">>") {
+		return true
+	}
+
+	// Check for assignment pattern (VAR=value without spaces, but not ==)
+	if strings.Contains(line, "=") && !strings.Contains(line, "==") && !strings.Contains(line, "!=") {
+		// Look for pattern: WORD=value with no spaces around =
+		// But avoid URLs (http://) and explanatory text (key = value)
+		if !strings.Contains(line, "://") && !strings.Contains(line, " = ") {
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				before := strings.TrimSpace(parts[0])
+				// Check if before looks like a variable name (no spaces, starts with letter/underscore)
+				if len(before) > 0 && !strings.Contains(before, " ") {
+					if (before[0] >= 'A' && before[0] <= 'Z') ||
+						(before[0] >= 'a' && before[0] <= 'z') ||
+						before[0] == '_' {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	// Check if line starts with absolute file path
+	if strings.HasPrefix(line, "/etc/") || strings.HasPrefix(line, "/usr/") ||
+		strings.HasPrefix(line, "/var/") || strings.HasPrefix(line, "/opt/") ||
+		strings.HasPrefix(line, "/tmp/") || strings.HasPrefix(line, "/home/") ||
+		strings.HasPrefix(line, "~/") {
 		return true
 	}
 
