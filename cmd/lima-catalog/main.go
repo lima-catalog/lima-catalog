@@ -149,7 +149,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 	}
 
 	// Create analyzer
-	analyzer := discovery.NewAnalyzer(forceAnalyze)
+	analyzer := discovery.NewAnalyzer(discovery.WithForceAnalyze(forceAnalyze))
 
 	// Fetch official images for notability scoring
 	fmt.Println("Fetching official images from lima-vm/lima...")
@@ -168,7 +168,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 	fmt.Println()
 
 	// Analyze templates
-	analyzedTemplates, err := analyzer.AnalyzeTemplates(templates, repoMap)
+	analyzedTemplates, err := analyzer.AnalyzeTemplates(ctx, templates, repoMap)
 	if err != nil {
 		return fmt.Errorf("analysis failed: %w", err)
 	}
@@ -392,7 +392,7 @@ func runDiscoveryPhase(ctx context.Context, client *github.Client, store *storag
 			}
 		}
 
-		discoveredTemplates, err := discoverer.DiscoverAll(sinceDate, existingTemplates)
+		discoveredTemplates, err := discoverer.DiscoverAll(ctx, sinceDate, existingTemplates)
 		if err != nil {
 			return nil, updateResult, fmt.Errorf("discovery failed: %w", err)
 		}

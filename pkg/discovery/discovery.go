@@ -34,6 +34,7 @@
 package discovery
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -96,19 +97,26 @@ func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
 }
 
 // searchWithQuery performs a GitHub code search with pagination
-func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
+func (d *Discoverer) searchWithQuery(ctx context.Context, query string) ([]types.Template, error) {
 	var templates []types.Template
 	excludedCount := 0
 	blocklistedCount := 0
 
 	page := 1
 	for {
+		// Check for context cancellation before each page
+		select {
+		case <-ctx.Done():
+			return templates, ctx.Err()
+		default:
+		}
+
 		fmt.Printf("  Searching page %d...\n", page)
 
 		result, resp, err := d.client.SearchCode(query, page)
 		if err != nil {
 			// Check if it's a rate limit error and handle it
-			if d.client.HandleRateLimitError(resp, "search") {
+			if retryErr := d.client.HandleRateLimitError(resp, "search"); retryErr == github.ErrRateLimitExceeded {
 				continue // Retry the same page after waiting
 			}
 			return nil, fmt.Errorf("code search failed: %w", err)
@@ -180,7 +188,13 @@ func (d *Discoverer) searchWithQuery(query string) ([]types.Template, error) {
 
 // DiscoverCommunityTemplates discovers community templates
 // If sinceDate is provided (non-zero), only searches for templates pushed since that date
-func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Template, error) {
+func (d *Discoverer) DiscoverCommunityTemplates(ctx context.Context, sinceDate time.Time) ([]types.Template, error) {
+	// Check for context cancellation before starting
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
 	// Use a map to deduplicate templates found by multiple queries
 	templateMap := make(map[string]types.Template)
 
@@ -194,7 +208,7 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 	// Use simpler syntax - search for .yaml files only (most common)
 	query1 := "minimumLimaVersion extension:yaml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("Query 1: %s\n", query1)
-	templates1, err := d.searchWithQuery(query1)
+	templates1, err := d.searchWithQuery(ctx, query1)
 	if err != nil {
 		return nil, fmt.Errorf("query 1 failed: %w", err)
 	}
@@ -204,14 +218,23 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 		templateMap[t.ID] = t
 	}
 
-	// Wait before next query to avoid rate limits
+	// Wait before next query to avoid rate limits (with context cancellation support)
 	fmt.Printf("Waiting %v before next query...\n", config.SearchAPIQueryDelay)
-	time.Sleep(config.SearchAPIQueryDelay)
+	select {
+	case <-ctx.Done():
+		// Return what we have so far if context is cancelled
+		var templates []types.Template
+		for _, t := range templateMap {
+			templates = append(templates, t)
+		}
+		return templates, ctx.Err()
+	case <-time.After(config.SearchAPIQueryDelay):
+	}
 
 	// Also search for .yml extension
 	query1b := "minimumLimaVersion extension:yml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("\nQuery 1b: %s\n", query1b)
-	templates1b, err := d.searchWithQuery(query1b)
+	templates1b, err := d.searchWithQuery(ctx, query1b)
 	if err != nil {
 		return nil, fmt.Errorf("query 1b failed: %w", err)
 	}
@@ -228,12 +251,20 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 
 	// Wait before next query to avoid rate limits
 	fmt.Printf("Waiting %v before next query...\n", config.SearchAPIQueryDelay)
-	time.Sleep(config.SearchAPIQueryDelay)
+	select {
+	case <-ctx.Done():
+		var templates []types.Template
+		for _, t := range templateMap {
+			templates = append(templates, t)
+		}
+		return templates, ctx.Err()
+	case <-time.After(config.SearchAPIQueryDelay):
+	}
 
 	// Query 2: Search for files with images: and provision: fields (supplementary query)
 	query2 := "images: provision: extension:yaml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("\nQuery 2: %s\n", query2)
-	templates2, err := d.searchWithQuery(query2)
+	templates2, err := d.searchWithQuery(ctx, query2)
 	if err != nil {
 		return nil, fmt.Errorf("query 2 failed: %w", err)
 	}
@@ -251,12 +282,20 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 
 	// Wait before next query to avoid rate limits
 	fmt.Printf("Waiting %v before next query...\n", config.SearchAPIQueryDelay)
-	time.Sleep(config.SearchAPIQueryDelay)
+	select {
+	case <-ctx.Done():
+		var templates []types.Template
+		for _, t := range templateMap {
+			templates = append(templates, t)
+		}
+		return templates, ctx.Err()
+	case <-time.After(config.SearchAPIQueryDelay):
+	}
 
 	// Also search for .yml extension
 	query2b := "images: provision: extension:yml -repo:lima-vm/lima" + dateQualifier
 	fmt.Printf("\nQuery 2b: %s\n", query2b)
-	templates2b, err := d.searchWithQuery(query2b)
+	templates2b, err := d.searchWithQuery(ctx, query2b)
 	if err != nil {
 		return nil, fmt.Errorf("query 2b failed: %w", err)
 	}
@@ -286,8 +325,15 @@ func (d *Discoverer) DiscoverCommunityTemplates(sinceDate time.Time) ([]types.Te
 // DiscoverOfficialTemplates fetches templates from lima-vm/lima repository
 // DiscoverOfficialTemplates discovers official templates from lima-vm/lima
 // If sinceDate is provided and existingTemplates is not empty, only returns templates that are new or changed
-func (d *Discoverer) DiscoverOfficialTemplates(sinceDate time.Time, existingTemplates []types.Template) ([]types.Template, error) {
+func (d *Discoverer) DiscoverOfficialTemplates(ctx context.Context, sinceDate time.Time, existingTemplates []types.Template) ([]types.Template, error) {
 	var templates []types.Template
+
+	// Check for context cancellation before starting
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
 
 	// If incremental mode, check if lima-vm/lima repo was updated since sinceDate
 	if !sinceDate.IsZero() && len(existingTemplates) > 0 {
@@ -391,24 +437,38 @@ func (d *Discoverer) DiscoverOfficialTemplates(sinceDate time.Time, existingTemp
 // DiscoverAll discovers all templates (community + official)
 // If sinceDate is provided (non-zero), only discovers templates pushed since that date
 // If existingTemplates is provided, uses incremental mode (only returns new/changed templates)
-func (d *Discoverer) DiscoverAll(sinceDate time.Time, existingTemplates []types.Template) ([]types.Template, error) {
+func (d *Discoverer) DiscoverAll(ctx context.Context, sinceDate time.Time, existingTemplates []types.Template) ([]types.Template, error) {
 	var allTemplates []types.Template
+
+	// Check for context cancellation before starting
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
 
 	// Discover community templates
 	fmt.Println("=== Discovering Community Templates ===")
 	if !sinceDate.IsZero() {
 		fmt.Printf("Incremental mode: searching for templates pushed since %s\n", sinceDate.Format("2006-01-02"))
 	}
-	communityTemplates, err := d.DiscoverCommunityTemplates(sinceDate)
+	communityTemplates, err := d.DiscoverCommunityTemplates(ctx, sinceDate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover community templates: %w", err)
 	}
 	fmt.Printf("Discovered %d community templates\n\n", len(communityTemplates))
 	allTemplates = append(allTemplates, communityTemplates...)
 
+	// Check for context cancellation between phases
+	select {
+	case <-ctx.Done():
+		return allTemplates, ctx.Err()
+	default:
+	}
+
 	// Discover official templates (with incremental mode if sinceDate provided)
 	fmt.Println("=== Discovering Official Templates ===")
-	officialTemplates, err := d.DiscoverOfficialTemplates(sinceDate, existingTemplates)
+	officialTemplates, err := d.DiscoverOfficialTemplates(ctx, sinceDate, existingTemplates)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover official templates: %w", err)
 	}

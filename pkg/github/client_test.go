@@ -282,16 +282,16 @@ func TestHandleRateLimitError(t *testing.T) {
 	client := NewClient(ctx, "test-token")
 
 	tests := []struct {
-		name       string
-		resp       *github.Response
-		limitType  string
-		expectBool bool
+		name        string
+		resp        *github.Response
+		limitType   string
+		expectError error
 	}{
 		{
-			name:       "Nil response",
-			resp:       nil,
-			limitType:  "core",
-			expectBool: false,
+			name:        "Nil response",
+			resp:        nil,
+			limitType:   "core",
+			expectError: nil,
 		},
 		{
 			name: "Non-rate-limit error (200 OK)",
@@ -300,8 +300,8 @@ func TestHandleRateLimitError(t *testing.T) {
 					StatusCode: 200,
 				},
 			},
-			limitType:  "core",
-			expectBool: false,
+			limitType:   "core",
+			expectError: nil,
 		},
 		{
 			name: "Non-rate-limit error (404)",
@@ -310,16 +310,16 @@ func TestHandleRateLimitError(t *testing.T) {
 					StatusCode: 404,
 				},
 			},
-			limitType:  "core",
-			expectBool: false,
+			limitType:   "core",
+			expectError: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := client.HandleRateLimitError(tt.resp, tt.limitType)
-			if result != tt.expectBool {
-				t.Errorf("expected HandleRateLimitError to return %v, got %v", tt.expectBool, result)
+			err := client.HandleRateLimitError(tt.resp, tt.limitType)
+			if err != tt.expectError {
+				t.Errorf("expected HandleRateLimitError to return %v, got %v", tt.expectError, err)
 			}
 		})
 	}

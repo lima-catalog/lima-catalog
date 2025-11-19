@@ -33,12 +33,12 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 	"github.com/lima-catalog/lima-catalog/pkg/validation"
 )
@@ -65,12 +65,20 @@ type CombinedTemplate struct {
 // Combiner combines templates with repo/org metadata for frontend consumption
 type Combiner struct {
 	blocklist *types.Blocklist
+	fs        interfaces.FileSystem
 }
 
-// NewCombiner creates a new combiner with blocklist
+// NewCombiner creates a new combiner with blocklist and default FileSystem
 func NewCombiner(blocklist *types.Blocklist) *Combiner {
+	return NewCombinerWithFS(blocklist, interfaces.NewDefaultFileSystem())
+}
+
+// NewCombinerWithFS creates a new combiner with blocklist and custom FileSystem
+// This allows mocking file I/O for testing
+func NewCombinerWithFS(blocklist *types.Blocklist, fs interfaces.FileSystem) *Combiner {
 	return &Combiner{
 		blocklist: blocklist,
+		fs:        fs,
 	}
 }
 
@@ -149,8 +157,8 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 		)
 	})
 
-	// Write to file
-	file, err := os.Create(outputPath)
+	// Write to file using FileSystem interface
+	file, err := c.fs.Create(outputPath)
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}

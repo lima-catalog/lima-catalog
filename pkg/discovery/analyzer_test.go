@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ func (m *mockClock) Now() time.Time {
 
 func TestNewAnalyzer(t *testing.T) {
 	t.Run("Creates analyzer with default values", func(t *testing.T) {
-		a := NewAnalyzer(false)
+		a := NewAnalyzer()
 
 		if a == nil {
 			t.Fatal("expected non-nil analyzer")
@@ -52,7 +53,7 @@ func TestNewAnalyzer(t *testing.T) {
 	})
 
 	t.Run("Creates analyzer with ForceAnalyze enabled", func(t *testing.T) {
-		a := NewAnalyzer(true)
+		a := NewAnalyzer(WithForceAnalyze(true))
 
 		if !a.ForceAnalyze {
 			t.Error("expected ForceAnalyze to be true")
@@ -161,7 +162,7 @@ func TestInferCategory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := NewAnalyzer(false)
+			a := NewAnalyzer()
 			category, useCase := a.inferCategory(tt.info, tt.repo)
 
 			if category != tt.expectedCategory {
@@ -258,7 +259,7 @@ func TestGenerateBasicDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := NewAnalyzer(false)
+			a := NewAnalyzer()
 			desc := a.generateBasicDescription(tt.template, tt.info, tt.repo)
 
 			if desc == "" {
@@ -350,18 +351,18 @@ func TestAnalyzeTemplatesSkipLogic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			a := NewAnalyzer(tt.forceAnalyze)
-			// Use mock clock to avoid actual time dependency
-			a.Clock = &mockClock{now: fixedTime}
-			// Use mock HTTP client to avoid actual network calls
-			a.HTTPClient = &mockHTTPClient{
-				response: nil,
-				err:      http.ErrContentLength, // Will trigger parse failure, which is fine for this test
-			}
+			a := NewAnalyzer(
+				WithForceAnalyze(tt.forceAnalyze),
+				WithClock(&mockClock{now: fixedTime}),
+				WithHTTPClient(&mockHTTPClient{
+					response: nil,
+					err:      http.ErrContentLength, // Will trigger parse failure, which is fine for this test
+				}),
+			)
 
 			repoMap := make(map[string]*types.Repository)
 
-			analyzed, err := a.AnalyzeTemplates(tt.templates, repoMap)
+			analyzed, err := a.AnalyzeTemplates(context.Background(), tt.templates, repoMap)
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -391,12 +392,13 @@ func TestAnalyzeTemplate(t *testing.T) {
 	fixedTime := time.Date(2024, 1, 15, 12, 0, 0, 0, time.UTC)
 
 	t.Run("Basic template analysis", func(t *testing.T) {
-		a := NewAnalyzer(false)
-		a.Clock = &mockClock{now: fixedTime}
-		a.HTTPClient = &mockHTTPClient{
-			response: nil,
-			err:      http.ErrContentLength, // Parse will fail, but that's OK for this test
-		}
+		a := NewAnalyzer(
+			WithClock(&mockClock{now: fixedTime}),
+			WithHTTPClient(&mockHTTPClient{
+				response: nil,
+				err:      http.ErrContentLength, // Parse will fail, but that's OK for this test
+			}),
+		)
 
 		template := &types.Template{
 			ID:   "test/repo/example.yaml",
@@ -411,7 +413,7 @@ func TestAnalyzeTemplate(t *testing.T) {
 			Topics:      []string{"testing"},
 		}
 
-		err := a.AnalyzeTemplate(template, repo)
+		err := a.AnalyzeTemplate(context.Background(), template, repo)
 
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -436,15 +438,17 @@ func TestAnalyzeTemplate(t *testing.T) {
 	})
 
 	t.Run("Analysis with official images", func(t *testing.T) {
-		a := NewAnalyzer(false)
+		a := NewAnalyzer(
+			WithClock(&mockClock{now: fixedTime}),
+			WithHTTPClient(&mockHTTPClient{
+				response: nil,
+				err:      http.ErrContentLength,
+			}),
+		)
+		// Set official images after creation (no option for this as it's populated by FetchOfficialImagesForAnalyzer)
 		a.OfficialImages = map[string]bool{
 			"ubuntu": true,
 			"alpine": true,
-		}
-		a.Clock = &mockClock{now: fixedTime}
-		a.HTTPClient = &mockHTTPClient{
-			response: nil,
-			err:      http.ErrContentLength,
 		}
 
 		template := &types.Template{
@@ -454,7 +458,7 @@ func TestAnalyzeTemplate(t *testing.T) {
 			URL:  "http://example.com/template.yaml",
 		}
 
-		err := a.AnalyzeTemplate(template, nil)
+		err := a.AnalyzeTemplate(context.Background(), template, nil)
 
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)

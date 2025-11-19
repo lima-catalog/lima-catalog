@@ -150,6 +150,10 @@ func (c *Client) CheckRateLimit(minimumRemaining int) error {
 	return nil
 }
 
+// ErrRateLimitExceeded is returned when rate limit has been exceeded and handled.
+// Callers should retry the request after receiving this error.
+var ErrRateLimitExceeded = fmt.Errorf("rate limit exceeded, waited for reset")
+
 // HandleRateLimitError checks if a response indicates a rate limit error and waits if needed.
 //
 // Detects rate limit errors (403 Forbidden or 429 Too Many Requests) and automatically
@@ -160,8 +164,9 @@ func (c *Client) CheckRateLimit(minimumRemaining int) error {
 //   - limitType: Type of rate limit to check ("search" or "core")
 //
 // Returns:
-//   - true: Rate limit error detected and handled (caller should retry the request)
-//   - false: Not a rate limit error or unable to handle (caller should NOT retry)
+//   - nil: Not a rate limit error, caller should NOT retry
+//   - ErrRateLimitExceeded: Rate limit detected and handled, caller SHOULD retry
+//   - Other error: Unable to handle rate limit, caller should NOT retry
 //
 // Behavior when rate limit detected:
 //  1. Fetches current rate limit status
@@ -169,29 +174,31 @@ func (c *Client) CheckRateLimit(minimumRemaining int) error {
 //  3. Calculates wait duration until reset
 //  4. Sleeps until reset time (plus small buffer)
 //  5. Prints progress messages to stderr
-//  6. Returns true to signal retry
+//  6. Returns ErrRateLimitExceeded to signal retry
 //
 // The function is fail-safe: if it can't determine rate limit status or reset time,
-// it returns false rather than waiting indefinitely.
+// it returns nil rather than waiting indefinitely.
 //
 // Example usage:
 //
 //	result, resp, err := client.SearchCode(query, page)
-//	if client.HandleRateLimitError(resp, "search") {
-//	    // Retry the same request after waiting
-//	    result, resp, err = client.SearchCode(query, page)
+//	if err != nil {
+//	    if retryErr := client.HandleRateLimitError(resp, "search"); retryErr == ErrRateLimitExceeded {
+//	        // Retry the same request after waiting
+//	        result, resp, err = client.SearchCode(query, page)
+//	    }
 //	}
-func (c *Client) HandleRateLimitError(resp *github.Response, limitType string) bool {
+func (c *Client) HandleRateLimitError(resp *github.Response, limitType string) error {
 	// Check if response indicates rate limiting (403 Forbidden or 429 Too Many Requests)
 	if resp == nil || (resp.StatusCode != 403 && resp.StatusCode != 429) {
-		return false
+		return nil
 	}
 
 	// Get rate limit information
 	limits, err := c.RateLimit()
 	if err != nil {
 		fmt.Printf("  Warning: failed to check rate limit: %v\n", err)
-		return false
+		return nil
 	}
 
 	// Determine which rate limit to check based on type
@@ -207,11 +214,11 @@ func (c *Client) HandleRateLimitError(resp *github.Response, limitType string) b
 		}
 	default:
 		fmt.Printf("  Warning: unknown rate limit type: %s\n", limitType)
-		return false
+		return nil
 	}
 
 	if resetTime.IsZero() {
-		return false
+		return nil
 	}
 
 	// Wait until rate limit resets
@@ -221,10 +228,10 @@ func (c *Client) HandleRateLimitError(resp *github.Response, limitType string) b
 			waitDuration.Round(time.Second), resetTime.Format(time.RFC3339))
 		time.Sleep(waitDuration + config.SearchAPIQueryDelay) // Add buffer
 		fmt.Println("  Retrying after rate limit reset...")
-		return true
+		return ErrRateLimitExceeded
 	}
 
-	return false
+	return nil
 }
 
 // SearchCode searches for code on GitHub using the Code Search API.
@@ -251,8 +258,9 @@ func (c *Client) HandleRateLimitError(resp *github.Response, limitType string) b
 //
 //	result, resp, err := client.SearchCode("minimumLimaVersion extension:yaml", 1)
 //	if err != nil {
-//	    if client.HandleRateLimitError(resp, "search") {
+//	    if retryErr := client.HandleRateLimitError(resp, "search"); retryErr == ErrRateLimitExceeded {
 //	        // Retry after rate limit reset
+//	        result, resp, err = client.SearchCode("minimumLimaVersion extension:yaml", 1)
 //	    }
 //	}
 func (c *Client) SearchCode(query string, page int) (*github.CodeSearchResult, *github.Response, error) {
