@@ -135,6 +135,8 @@ func processDirectory(ctx context.Context, repoPath, dir string, ok *OfficialKno
 		return err
 	}
 
+	fmt.Printf("Found %d total commits for %s/\n", len(commits), dir)
+
 	// Filter commits newer than lastUpdate
 	var newCommits []commitInfo
 	for _, c := range commits {
@@ -144,8 +146,11 @@ func processDirectory(ctx context.Context, repoPath, dir string, ok *OfficialKno
 	}
 
 	if len(newCommits) == 0 {
+		fmt.Printf("All %d commits already processed (last update: %s)\n", len(commits), ok.LastUpdate.Format("2006-01-02"))
 		return nil // No new commits to process
 	}
+
+	fmt.Printf("Processing %d new commits (last update: %s)...\n", len(newCommits), ok.LastUpdate.Format("2006-01-02"))
 
 	// Process each commit
 	for _, commit := range newCommits {

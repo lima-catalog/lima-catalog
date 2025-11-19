@@ -128,7 +128,7 @@ func checkRateLimits(client *github.Client) error {
 
 // runAnalysisPhase analyzes templates for keywords, categories, and notability
 func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage.Storage, dataDir string, forceAnalyze bool) error {
-	fmt.Println("=== Phase 3: Template Analysis ===")
+	fmt.Printf("=== Phase 3: Template Analysis === [%s]\n", time.Now().Format("15:04:05"))
 	fmt.Println()
 
 	// Load templates and repositories
@@ -150,7 +150,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 
 	// Load or update official knowledge
 	officialKnowledgePath := filepath.Join(dataDir, "official.json")
-	fmt.Println("Loading official knowledge from lima-vm/lima...")
+	fmt.Printf("Loading official knowledge from lima-vm/lima... [%s]\n", time.Now().Format("15:04:05"))
 
 	var officialKnowledge *discovery.OfficialKnowledge
 	limaRepoPath := os.Getenv("LIMA_REPO_PATH")
@@ -178,12 +178,13 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 				}
 			}
 		}
-		fmt.Printf("Loaded %d known comment lines, %d provision lines, %d probe lines, %d message lines, %d image domains\n",
+		fmt.Printf("Loaded %d known comment lines, %d provision lines, %d probe lines, %d message lines, %d image domains [%s]\n",
 			len(officialKnowledge.KnownLines.Comments),
 			len(officialKnowledge.KnownLines.Provision),
 			len(officialKnowledge.KnownLines.Probes),
 			len(officialKnowledge.KnownLines.Messages),
-			len(officialKnowledge.Images))
+			len(officialKnowledge.Images),
+			time.Now().Format("15:04:05"))
 	} else {
 		// Load existing official knowledge
 		fmt.Println("LIMA_REPO_PATH not set, loading existing official knowledge...")
@@ -202,12 +203,13 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 				Images: []string{},
 			}
 		} else {
-			fmt.Printf("Loaded %d known comment lines, %d provision lines, %d probe lines, %d message lines, %d image domains\n",
+			fmt.Printf("Loaded %d known comment lines, %d provision lines, %d probe lines, %d message lines, %d image domains [%s]\n",
 				len(officialKnowledge.KnownLines.Comments),
 				len(officialKnowledge.KnownLines.Provision),
 				len(officialKnowledge.KnownLines.Probes),
 				len(officialKnowledge.KnownLines.Messages),
-				len(officialKnowledge.Images))
+				len(officialKnowledge.Images),
+				time.Now().Format("15:04:05"))
 		}
 	}
 	fmt.Println()
@@ -237,7 +239,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 
 // runCombinePhase combines all data for the frontend
 func runCombinePhase(store *storage.Storage, dataDir string) error {
-	fmt.Println("=== Phase 4: Frontend Data Combination ===")
+	fmt.Printf("=== Phase 4: Frontend Data Combination === [%s]\n", time.Now().Format("15:04:05"))
 	fmt.Println()
 
 	// Load all data files
@@ -319,7 +321,7 @@ func runMetadataPhase(ctx context.Context, client *github.Client, store *storage
 		return nil
 	}
 
-	fmt.Println("=== Phase 2: Metadata Collection ===")
+	fmt.Printf("=== Phase 2: Metadata Collection === [%s]\n", time.Now().Format("15:04:05"))
 	fmt.Println()
 
 	collector := discovery.NewMetadataCollector(client)
@@ -405,7 +407,7 @@ func runDiscoveryPhase(ctx context.Context, client *github.Client, store *storag
 	shouldDiscover := incremental || progress.Phase == "discovery"
 
 	if shouldDiscover {
-		fmt.Println("=== Phase 1: Template Discovery ===")
+		fmt.Printf("=== Phase 1: Template Discovery === [%s]\n", time.Now().Format("15:04:05"))
 		fmt.Println()
 
 		// Load blocklist
