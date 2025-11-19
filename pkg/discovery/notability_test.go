@@ -70,6 +70,14 @@ func TestIdentifyUnusualImages(t *testing.T) {
 			},
 			expected: []string{"nixos.org"},
 		},
+		{
+			name: "Detects gardenlinux.io as unusual",
+			images: []string{
+				"https://images.gardenlinux.io/gardenlinux-amd64-today.qcow2",
+				"https://images.gardenlinux.io/gardenlinux-arm64-today.qcow2",
+			},
+			expected: []string{"gardenlinux.io"},
+		},
 	}
 
 	for _, tt := range tests {
