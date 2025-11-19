@@ -35,7 +35,15 @@ export function getKeywordCounts(templateList, excludeKeywords = new Set()) {
  * @returns {Array} Array of [keyword, count, isDynamic] tuples
  */
 export function getDynamicKeywords(allTemplates, focusedTemplate) {
+    console.log('[getDynamicKeywords] Called with:', {
+        focusedTemplate,
+        hasOrg: focusedTemplate?.org,
+        hasRepo: focusedTemplate?.repo,
+        templateCount: allTemplates.length
+    });
+
     if (!focusedTemplate || !focusedTemplate.org || !focusedTemplate.repo) {
+        console.log('[getDynamicKeywords] Returning empty - missing data');
         return [];
     }
 
@@ -83,6 +91,13 @@ export function getDynamicKeywords(allTemplates, focusedTemplate) {
         // Only one repo from this org, but multiple templates: add ORG/REPO keyword
         dynamicKeywords.push([`org/repo:${focusedRepo}`, templatesInFocusedRepo, true]);
     }
+
+    console.log('[getDynamicKeywords] Returning:', {
+        count: dynamicKeywords.length,
+        keywords: dynamicKeywords.map(k => k[0]),
+        repoCount,
+        templatesInFocusedRepo
+    });
 
     return dynamicKeywords;
 }

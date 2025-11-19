@@ -20,10 +20,19 @@ let previouslyFocusedElement = null;
 export function openPreviewModal(template) {
     currentTemplate = template;
 
+    console.log('[openPreviewModal] Opening modal for template:', {
+        id: template.id,
+        org: template.org,
+        repo: template.repo
+    });
+
     // Set focused template in global state and trigger sidebar update
     State.setFocusedTemplate(template);
     // Use setTimeout to avoid blocking modal rendering
-    setTimeout(() => filterAndRender(), 0);
+    setTimeout(() => {
+        console.log('[openPreviewModal] Calling filterAndRender');
+        filterAndRender();
+    }, 0);
 
     // Store the currently focused element to restore later
     previouslyFocusedElement = document.activeElement;
