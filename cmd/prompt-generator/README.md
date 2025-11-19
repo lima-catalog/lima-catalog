@@ -125,6 +125,9 @@ The LLM is asked to return JSON:
   - Needed to fetch repository metadata, README, and template content
   - Create at: https://github.com/settings/tokens
   - Needs `public_repo` scope for public repos
+- `PROMPT_TEMPLATE` - Optional. Path to custom prompt template file
+  - Can be overridden by `-template` flag
+  - Allows testing different prompt structures
 
 ## Flags
 
@@ -133,6 +136,7 @@ The LLM is asked to return JSON:
 | `-owner` | string | - | GitHub repository owner |
 | `-repo` | string | - | GitHub repository name |
 | `-path` | string | - | Path to template file in repo |
+| `-template` | string | (embedded) | Path to custom prompt template file |
 | `-context` | int | 15 | Context lines around references |
 | `-no-comments` | bool | false | Exclude YAML comments |
 | `-no-references` | bool | false | Exclude template file references |
@@ -167,6 +171,51 @@ for template in templates/*.yaml; do
   ./prompt-generator lima-vm/lima/$template -output=prompts/$name.txt
 done
 ```
+
+### Custom Prompt Templates
+
+The tool uses Go templates for flexible prompt customization:
+
+```bash
+# Create a custom template file (my-template.tmpl)
+cat > my-template.tmpl <<'EOF'
+# Analyze This Lima Template
+
+## Template Content
+{{.TemplateContent}}
+
+{{- if .Repository}}
+Repository: {{.Repository.Name}} (⭐ {{.Repository.Stars}})
+{{- end}}
+
+Provide:
+- Short description (max 100 chars)
+- Keywords (5-10)
+EOF
+
+# Use custom template via flag
+./prompt-generator lima-vm/lima/templates/ubuntu.yaml -template=my-template.tmpl
+
+# Or via environment variable
+export PROMPT_TEMPLATE=my-template.tmpl
+./prompt-generator lima-vm/lima/templates/ubuntu.yaml
+```
+
+**Template data available:**
+- `.Template` - Template metadata (Repo, Path, ID)
+- `.Repository` - Repo info (Name, Description, Topics, Stars, etc.)
+- `.Organization` - Owner info (Login, Type, Name, etc.)
+- `.TemplateContent` - Raw YAML content
+- `.Comments` - Extracted YAML comments
+- `.ReadmeContent` - README content
+- `.References` - File references with context
+- `.Config` - Config options
+
+**Template functions:**
+- `join` - Join arrays: `{{join .Repository.Topics ", "}}`
+- `sub` - Subtract: `{{sub (len .References) .Config.MaxReferenceFiles}}`
+
+See `pkg/prompt/default_template.tmpl` for the default template structure.
 
 ## Use in Backend
 

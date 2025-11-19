@@ -181,12 +181,13 @@ The generated prompt has a clear structure:
 
 ```go
 type PromptConfig struct {
-    ContextLines      int  // Lines before/after references (default: 15)
-    IncludeComments   bool // Include YAML comments (default: true)
-    IncludeReferences bool // Include file references (default: true)
-    IncludeReadme     bool // Include README (default: true)
-    MaxReadmeLength   int  // Max README chars (default: 5000)
-    MaxReferenceFiles int  // Max reference files (default: 10)
+    ContextLines      int    // Lines before/after references (default: 15)
+    IncludeComments   bool   // Include YAML comments (default: true)
+    IncludeReferences bool   // Include file references (default: true)
+    IncludeReadme     bool   // Include README (default: true)
+    MaxReadmeLength   int    // Max README chars (default: 5000)
+    MaxReferenceFiles int    // Max reference files (default: 10)
+    TemplatePath      string // Path to custom prompt template (default: embedded template)
 }
 ```
 
@@ -195,12 +196,101 @@ type PromptConfig struct {
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-context` | 15 | Context lines around references |
+| `-template` | (embedded) | Path to custom prompt template file |
 | `-no-comments` | false | Exclude YAML comments |
 | `-no-references` | false | Exclude template references |
 | `-no-readme` | false | Exclude README |
 | `-max-readme` | 5000 | Max README length |
 | `-max-refs` | 10 | Max reference files |
 | `-output` | stdout | Output file path |
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `GITHUB_TOKEN` | GitHub API token (required) |
+| `PROMPT_TEMPLATE` | Path to custom prompt template (can be overridden by `-template` flag) |
+
+## Custom Prompt Templates
+
+The prompt builder uses Go templates, allowing you to customize the prompt structure without modifying code.
+
+### Using Custom Templates
+
+**Via CLI flag:**
+```bash
+prompt-generator lima-vm/lima/templates/ubuntu.yaml -template=my-template.tmpl
+```
+
+**Via environment variable:**
+```bash
+export PROMPT_TEMPLATE=my-template.tmpl
+prompt-generator lima-vm/lima/templates/ubuntu.yaml
+```
+
+### Template Data Structure
+
+Your custom template receives a `TemplateData` object with these fields:
+
+```go
+type TemplateData struct {
+    // Template context
+    Template         *types.Template      // Template metadata (Repo, Path, ID)
+    Repository       *types.Repository    // Repo info (Name, Description, Topics, Stars, etc.)
+    Organization     *types.Organization  // Owner info (Login, Type, Name, Description, etc.)
+    TemplateContent  string               // Raw YAML content
+    Comments         []string             // Extracted YAML comments
+    ReadmeContent    string               // README content (truncated if needed)
+    References       []TemplateReference  // File references with context
+
+    // Configuration
+    Config           *PromptConfig        // Access to config options
+}
+```
+
+### Available Template Functions
+
+- `join` - Join string array with separator (e.g., `{{join .Repository.Topics ", "}}`)
+- `sub` - Subtract integers (e.g., `{{sub (len .References) .Config.MaxReferenceFiles}}`)
+
+### Default Template
+
+The default template is embedded in the binary at `pkg/prompt/default_template.tmpl`. Use it as a reference when creating custom templates.
+
+**Key features of the default template:**
+- Conditional sections (only shown if data exists)
+- Proper markdown formatting
+- Context-aware instructions
+- Repository purpose caveat
+
+### Example Custom Template
+
+Create a minimal custom template:
+
+```go
+# Analyze This Template
+
+## Template Content
+{{.TemplateContent}}
+
+{{- if .Repository}}
+## Repository
+Name: {{.Repository.Name}}
+Stars: {{.Repository.Stars}}
+{{- end}}
+
+Provide a short description and keywords.
+```
+
+### Testing Custom Templates
+
+1. Create your template file (`.tmpl` extension recommended)
+2. Test with a known template:
+   ```bash
+   prompt-generator lima-vm/lima/templates/ubuntu.yaml -template=test.tmpl
+   ```
+3. Verify output structure matches expectations
+4. If template parsing fails, error messages will indicate syntax issues
 
 ## Expected Output
 
@@ -362,7 +452,7 @@ Token costs and prompt length:
 2. **Parallel processing:** Generate multiple prompts concurrently
 3. **Private repos:** Add SSH key support for private repositories
 4. **Direct LLM integration:** Optional API calls from CLI tool
-5. **Prompt templates:** Multiple prompt styles for different models
+5. ~~**Prompt templates:** Multiple prompt styles for different models~~ ✅ **Implemented** - Custom templates via `-template` flag or `PROMPT_TEMPLATE` env var
 6. **Response validation:** Check JSON format and content constraints
 7. **Batch mode:** Process multiple templates in one run
 8. **Diff mode:** Compare prompts before/after changes
@@ -371,6 +461,7 @@ Token costs and prompt length:
 
 - `pkg/prompt/types.go` - Data structures and configuration
 - `pkg/prompt/builder.go` - Core prompt building logic
+- `pkg/prompt/default_template.tmpl` - Default embedded prompt template
 - `pkg/prompt/builder_test.go` - Unit tests
 - `cmd/prompt-generator/main.go` - CLI tool
 - `cmd/prompt-generator/README.md` - CLI documentation

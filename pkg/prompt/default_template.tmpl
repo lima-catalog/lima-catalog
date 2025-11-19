@@ -1,0 +1,130 @@
+# Lima Template Analysis Request
+
+Please analyze the following Lima VM template and provide:
+1. A short description (max 100 characters) - Brief one-liner suitable for search results
+2. A long description (max 500 characters) - Detailed explanation of what this template provides
+3. A list of relevant keywords (5-10 keywords) - Technologies, use cases, and key features
+
+## Context
+
+### Template File
+
+- **Repository**: {{.Template.Repo}}
+- **Path**: {{.Template.Path}}
+
+{{- if .Repository}}
+
+### Repository Information
+
+- **Name**: {{.Repository.Name}}
+{{- if .Repository.Description}}
+- **Description**: {{.Repository.Description}}
+{{- end}}
+{{- if .Repository.Topics}}
+- **Topics**: {{join .Repository.Topics ", "}}
+{{- end}}
+{{- if .Repository.Language}}
+- **Primary Language**: {{.Repository.Language}}
+{{- end}}
+- **Stars**: {{.Repository.Stars}}
+
+**IMPORTANT CAVEAT**: The repository's purpose may differ from the template's purpose. For example, the repository might be a CI/CD scaffolding project, a documentation repo, or a collection of templates, while the template itself provisions a specific VM environment. Use the repository context as helpful background, but prioritize the template content itself when determining the template's description and keywords. In some cases, the template makes the repository's project available in a VM - use your judgment.
+{{- end}}
+
+{{- if .Organization}}
+
+### Organization/Owner Information
+
+- **Login**: {{.Organization.Login}}
+- **Type**: {{.Organization.Type}}
+{{- if .Organization.Name}}
+- **Name**: {{.Organization.Name}}
+{{- end}}
+{{- if .Organization.Description}}
+- **Description**: {{.Organization.Description}}
+{{- end}}
+{{- if .Organization.Location}}
+- **Location**: {{.Organization.Location}}
+{{- end}}
+{{- end}}
+
+{{- if .ReadmeContent}}
+
+### README Content
+
+```
+{{.ReadmeContent}}
+```
+{{- end}}
+
+### Template YAML Content
+
+```yaml
+{{.TemplateContent}}
+```
+
+{{- if .Comments}}
+
+### Template Comments
+
+Key comments found in the template:
+
+{{- range .Comments}}
+- {{.}}
+{{- end}}
+{{- end}}
+
+{{- if .References}}
+
+### References to Template in Repository
+
+The following files reference this template (showing context):
+
+{{- range $index, $ref := .References}}
+{{- if lt $index $.Config.MaxReferenceFiles}}
+
+#### {{$ref.FilePath}} (line {{$ref.LineNumber}})
+
+```
+{{- range $ref.BeforeContext}}
+{{.}}
+{{- end}}
+>>> {{$ref.MatchLine}}
+{{- range $ref.AfterContext}}
+{{.}}
+{{- end}}
+```
+{{- else}}
+{{- if eq $index $.Config.MaxReferenceFiles}}
+
+... and {{sub (len $.References) $.Config.MaxReferenceFiles}} more references (truncated)
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+
+## Analysis Instructions
+
+Based on the above context, please provide:
+
+1. **Short Description** (max 100 chars): A concise one-liner that captures the essence of this template
+2. **Long Description** (max 500 chars): A detailed explanation of:
+   - What this template provides
+   - What technologies/tools are included
+   - What use cases it's designed for
+   - Any notable features or configurations
+3. **Keywords** (5-10 keywords): Relevant tags including:
+   - Operating system(s)
+   - Technologies and frameworks
+   - Use cases (development, testing, security, etc.)
+   - Key features (kubernetes, docker, etc.)
+
+Please format your response as:
+
+```json
+{
+  "short_description": "...",
+  "long_description": "...",
+  "keywords": ["keyword1", "keyword2", ...]
+}
+```
