@@ -50,6 +50,7 @@ func main() {
 	fmt.Printf("  - %d provision lines\n", len(info.ProvisionLines))
 	fmt.Printf("  - %d probe lines\n", len(info.ProbeLines))
 	fmt.Printf("  - %d message lines\n", len(info.MessageLines))
+	fmt.Printf("  - %d images\n", len(info.Images))
 
 	// Build lookup maps
 	knownComments := make(map[string]bool)
@@ -71,6 +72,23 @@ func main() {
 	for _, line := range ok.KnownLines.Messages {
 		knownMessages[line] = true
 	}
+
+	// Build official domains map
+	officialDomains := make(map[string]bool)
+	for _, domain := range ok.Images {
+		officialDomains[domain] = true
+	}
+
+	// Debug: Show all images found
+	if len(info.Images) > 0 {
+		fmt.Printf("\nAll images found in template:\n")
+		for _, img := range info.Images {
+			fmt.Printf("  - %s\n", img)
+		}
+	}
+
+	// Identify unusual images
+	unusualImages := discovery.IdentifyUnusualImages(info.Images, officialDomains)
 
 	// Filter and show unique lines
 	fmt.Println("\n" + strings.Repeat("=", 80))
@@ -143,6 +161,23 @@ func main() {
 	}
 	fmt.Printf("\nUnique message lines: %d\n", uniqueMessages)
 
+	fmt.Println("\n" + strings.Repeat("=", 80))
+	fmt.Println("UNUSUAL IMAGES (not in official templates):")
+	fmt.Println(strings.Repeat("=", 80))
+	if len(unusualImages) == 0 {
+		fmt.Println("       (none - all images use official domains)")
+	} else {
+		for _, domain := range unusualImages {
+			fmt.Printf("       %s\n", domain)
+		}
+	}
+	fmt.Printf("\nUnusual image domains: %d\n", len(unusualImages))
+	if len(unusualImages) > 0 {
+		fmt.Println("Template gets unusual_images bonus: YES (30 points)")
+	} else {
+		fmt.Println("Template gets unusual_images bonus: NO")
+	}
+
 	// Summary
 	fmt.Println("\n" + strings.Repeat("=", 80))
 	fmt.Println("SUMMARY:")
@@ -151,4 +186,9 @@ func main() {
 	fmt.Printf("Unique provision lines: %d\n", uniqueProvision)
 	fmt.Printf("Unique probe lines:     %d\n", uniqueProbes)
 	fmt.Printf("Unique message lines:   %d\n", uniqueMessages)
+	fmt.Printf("Unusual image domains:  %d", len(unusualImages))
+	if len(unusualImages) > 0 {
+		fmt.Printf(" (bonus: YES)")
+	}
+	fmt.Println()
 }

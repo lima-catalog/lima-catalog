@@ -157,11 +157,11 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	// Extract images
 	for _, img := range template.Images {
 		if img.Location != "" {
-			// Extract image name (e.g., "ubuntu:22.04" from URL)
-			imageName := extractImageName(img.Location)
-			info.Images = append(info.Images, imageName)
+			// Store full location for unusual image detection
+			info.Images = append(info.Images, img.Location)
 
-			// Add OS as keyword
+			// Extract image name for keywords/OS detection
+			imageName := extractImageName(img.Location)
 			if os := extractOS(imageName); os != "" {
 				info.Keywords = appendUnique(info.Keywords, os)
 			}

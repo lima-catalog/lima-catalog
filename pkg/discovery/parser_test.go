@@ -26,7 +26,7 @@ provision:
       apt-get install -y docker
 `,
 			want: &TemplateInfo{
-				Images:              []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords:            []string{"ubuntu", "docker"},
 				Categories:          []string{"containers"},
 				HasDocker:           true,
@@ -49,7 +49,7 @@ images:
   - location: https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img
 `,
 			want: &TemplateInfo{
-				Images:        []string{"ubuntu"},
+				Images:        []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords:      []string{"ubuntu"},
 				MessageLength: 29, // "This template includes Docker" is 29 chars
 				ParamCount:    2,
@@ -69,7 +69,7 @@ provision:
       kubectl get nodes
 `,
 			want: &TemplateInfo{
-				Images:              []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords:            []string{"ubuntu", "k3s", "node"}, // "node" detected from "nodes"
 				Categories:          []string{"orchestration", "development"}, // "development" from node keyword
 				HasK8s:              true,
@@ -89,7 +89,7 @@ probes:
       systemctl is-active docker
 `,
 			want: &TemplateInfo{
-				Images:          []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords:        []string{"ubuntu"},
 				ProbeCount:      1,
 				ProbeTotalLines: 1, // Changed from 2: only non-empty lines count now
@@ -107,7 +107,7 @@ provision:
       apt-get install -y git python3 pip nodejs npm go rust cargo
 `,
 			want: &TemplateInfo{
-				Images:     []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords:   []string{"ubuntu", "git", "python", "pip", "node", "npm", "go", "rust", "cargo"},
 				Categories: []string{"development"},
 				HasDocker:  false,
@@ -126,7 +126,7 @@ provision:
       apt-get install -y postgresql mysql redis mongodb
 `,
 			want: &TemplateInfo{
-				Images:     []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords:   []string{"ubuntu", "go", "postgres", "mysql", "mongodb", "redis"}, // "go" from "mongodb"
 				Categories: []string{"development", "database"}, // "development" from "go"
 			},
@@ -142,7 +142,7 @@ containerd:
   user: false
 `,
 			want: &TemplateInfo{
-				Images:   []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords: []string{"ubuntu", "containerd"},
 			},
 			wantErr: false,
@@ -155,7 +155,7 @@ images:
 arch: "x86_64"
 `,
 			want: &TemplateInfo{
-				Images:   []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords: []string{"ubuntu"},
 				Arch:     []string{"x86_64"},
 			},
@@ -171,7 +171,7 @@ arch:
   - "aarch64"
 `,
 			want: &TemplateInfo{
-				Images:   []string{"ubuntu"},
+				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords: []string{"ubuntu"},
 				Arch:     []string{"x86_64", "aarch64"},
 			},
