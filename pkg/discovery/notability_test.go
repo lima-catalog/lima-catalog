@@ -1,19 +1,20 @@
 package discovery
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
 func TestIdentifyUnusualImages(t *testing.T) {
-	// Create a test official domains map (domains from official Lima images)
+	// Create a test official domains map (top-level domains from official Lima images)
 	officialDomains := map[string]bool{
-		"cloud-images.ubuntu.com":    true,
-		"dl-cdn.alpinelinux.org":     true,
-		"cloud.debian.org":           true,
-		"download.fedoraproject.org": true,
-		"geo.mirror.pkgbuild.com":    true, // Arch Linux
+		"ubuntu.com":        true, // cloud-images.ubuntu.com -> ubuntu.com
+		"alpinelinux.org":   true, // dl-cdn.alpinelinux.org -> alpinelinux.org
+		"debian.org":        true, // cloud.debian.org -> debian.org
+		"fedoraproject.org": true, // download.fedoraproject.org -> fedoraproject.org
+		"pkgbuild.com":      true, // geo.mirror.pkgbuild.com -> pkgbuild.com (Arch Linux)
 	}
 
 	tests := []struct {
@@ -45,7 +46,7 @@ func TestIdentifyUnusualImages(t *testing.T) {
 				"https://custom.example.com/image.img",
 				"https://special.domain.org/system.qcow2",
 			},
-			expected: []string{"custom.example.com", "special.domain.org"},
+			expected: []string{"example.com", "domain.org"}, // Now using top-level domains
 		},
 		{
 			name:     "Empty list",
@@ -214,6 +215,18 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		},
 	}
 
+	// Create dummy provision lines (non-empty)
+	provisionLines := make([]string, 75)
+	for i := range provisionLines {
+		provisionLines[i] = fmt.Sprintf("provision line %d", i+1)
+	}
+
+	// Create dummy probe lines (non-empty)
+	probeLines := make([]string, 10)
+	for i := range probeLines {
+		probeLines[i] = fmt.Sprintf("probe line %d", i+1)
+	}
+
 	info := &TemplateInfo{
 		Images: []string{
 			"https://cloud-images.ubuntu.com/releases/22.04/ubuntu.img",
@@ -229,8 +242,8 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		EnvCount:            3,
 		CommentLineCount:    20,
 		CommentLines:        []string{"This is a test comment", "Another comment"}, // Normalized (no # prefix)
-		ProvisionLines:      make([]string, 75), // Fill with dummy lines for the test
-		ProbeLines:          make([]string, 10),
+		ProvisionLines:      provisionLines, // Fill with real non-empty lines
+		ProbeLines:          probeLines,
 		MessageLines:        []string{"Line 1", "Line 2"},
 	}
 

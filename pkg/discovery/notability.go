@@ -12,31 +12,46 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// extractDomain extracts the domain from a URL or location string
+// extractDomain extracts the top-level domain from a URL or location string
+// e.g., "downloads.ubuntu.com" -> "ubuntu.com", "nixos.org" -> "nixos.org"
 func extractDomain(location string) string {
 	// Handle template:// references (these are references to local templates)
 	if strings.HasPrefix(location, "template://") {
 		return "" // Not a real domain, skip
 	}
 
+	var host string
+
 	// Try to parse as URL
 	if strings.HasPrefix(location, "http://") || strings.HasPrefix(location, "https://") {
 		parsedURL, err := url.Parse(location)
 		if err == nil && parsedURL.Host != "" {
-			return strings.ToLower(parsedURL.Host)
+			host = parsedURL.Host
 		}
-	}
-
-	// If it looks like a domain (contains dots but no slashes before first dot)
-	if strings.Contains(location, ".") {
+	} else if strings.Contains(location, ".") {
+		// If it looks like a domain (contains dots but no slashes before first dot)
 		parts := strings.Split(location, "/")
-		domain := parts[0]
-		if strings.Contains(domain, ".") {
-			return strings.ToLower(domain)
+		if len(parts) > 0 && strings.Contains(parts[0], ".") {
+			host = parts[0]
 		}
 	}
 
-	return ""
+	if host == "" {
+		return ""
+	}
+
+	// Remove port if present
+	host = strings.Split(host, ":")[0]
+	host = strings.ToLower(host)
+
+	// Extract registrable domain (last 2 parts)
+	domainParts := strings.Split(host, ".")
+	if len(domainParts) < 2 {
+		return host // Already a simple domain
+	}
+
+	// Return last 2 parts (e.g., ubuntu.com from downloads.ubuntu.com)
+	return strings.Join(domainParts[len(domainParts)-2:], ".")
 }
 
 // IdentifyUnusualImages returns a list of image domains not in the official template set
@@ -149,7 +164,62 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	return breakdown
 }
 
-// FilterUniqueLines counts unique lines, excluding empty lines and lines in the known set
+// isCodeComment checks if a normalized comment line looks like commented-out code
+// rather than actual documentation. Code comments typically contain:
+// - Shell metacharacters: $ & @ [ ] { } | ; > < `
+// - Assignment patterns: VAR=value
+// - Common shell commands at the start
+// - File paths: /path/to/something
+func isCodeComment(line string) bool {
+	// Skip empty lines
+	if line == "" {
+		return false
+	}
+
+	// Check for shell metacharacters (strong indicator of code)
+	codeChars := []string{"$", "&", "@", "[", "]", "{", "}", "|", ";", ">", "<", "`", "\\"}
+	for _, char := range codeChars {
+		if strings.Contains(line, char) {
+			return true
+		}
+	}
+
+	// Check for assignment pattern (VAR=value)
+	if strings.Contains(line, "=") && !strings.Contains(line, "==") {
+		// Simple heuristic: if it has = but not ==, and no spaces before =, likely assignment
+		parts := strings.Split(line, "=")
+		if len(parts) >= 2 && !strings.Contains(parts[0], " ") {
+			return true
+		}
+	}
+
+	// Check for common shell commands at start of line
+	commonCommands := []string{
+		"apt", "yum", "dnf", "pacman", "brew", "apk",
+		"curl", "wget", "git", "docker", "kubectl", "systemctl",
+		"echo", "export", "cd", "mkdir", "chmod", "chown",
+		"sudo", "source", ".", "ln", "cp", "mv", "rm",
+	}
+	firstWord := strings.Fields(line)
+	if len(firstWord) > 0 {
+		cmd := strings.ToLower(firstWord[0])
+		for _, knownCmd := range commonCommands {
+			if cmd == knownCmd {
+				return true
+			}
+		}
+	}
+
+	// Check for file paths (starts with / or ~/)
+	if strings.HasPrefix(line, "/") || strings.HasPrefix(line, "~/") {
+		return true
+	}
+
+	return false
+}
+
+// FilterUniqueLines counts unique lines, excluding empty lines, known lines, and code-like comments
+// For comment lines, also filters out commented-out code (e.g., "# apt-get install foo")
 func FilterUniqueLines(lines []string, knownLines map[string]bool) int {
 	uniqueCount := 0
 	for _, line := range lines {
@@ -159,6 +229,27 @@ func FilterUniqueLines(lines []string, knownLines map[string]bool) int {
 		}
 		// Skip if this line exists in known lines
 		if knownLines[line] {
+			continue
+		}
+		uniqueCount++
+	}
+	return uniqueCount
+}
+
+// FilterUniqueComments counts unique comment lines, excluding empty lines, known lines, and code-like comments
+func FilterUniqueComments(commentLines []string, knownLines map[string]bool) int {
+	uniqueCount := 0
+	for _, line := range commentLines {
+		// Skip empty lines
+		if line == "" {
+			continue
+		}
+		// Skip if this line exists in known lines
+		if knownLines[line] {
+			continue
+		}
+		// Skip if this looks like commented-out code
+		if isCodeComment(line) {
 			continue
 		}
 		uniqueCount++
@@ -195,8 +286,8 @@ func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types
 		officialImages[domain] = true
 	}
 
-	// Filter out known lines
-	uniqueCommentCount := FilterUniqueLines(info.CommentLines, knownComments)
+	// Filter out known lines (and code-like comments for comment lines)
+	uniqueCommentCount := FilterUniqueComments(info.CommentLines, knownComments) // Filters code comments too
 	uniqueProvisionLines := FilterUniqueLines(info.ProvisionLines, knownProvision)
 	uniqueProbeLines := FilterUniqueLines(info.ProbeLines, knownProbes)
 
