@@ -21,10 +21,11 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
     // Get regular keywords from currently filtered templates, excluding selected ones
     const regularKeywords = getKeywordCounts(filteredTemplates, selectedKeywords);
 
-    // Get dynamic keywords based on focused template (only from all templates, not filtered)
+    // Get dynamic keywords based on focused template
+    // Uses allTemplates to determine org/repo structure, filteredTemplates for counts
     const allTemplates = State.getTemplates();
     const focusedTemplate = State.getFocusedTemplate();
-    const dynamicKeywords = getDynamicKeywords(allTemplates, focusedTemplate);
+    const dynamicKeywords = getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate);
 
     // Filter out dynamic keywords that are already selected
     const availableDynamicKeywords = dynamicKeywords.filter(

@@ -30,16 +30,18 @@ export function getKeywordCounts(templateList, excludeKeywords = new Set()) {
 
 /**
  * Get dynamic ORG/REPO keywords based on focused template
- * @param {Array} allTemplates - All templates in the catalog
+ * @param {Array} allTemplates - All templates in the catalog (to determine org/repo structure)
+ * @param {Array} filteredTemplates - Currently filtered templates (to calculate counts)
  * @param {Object} focusedTemplate - Currently focused template
  * @returns {Array} Array of [keyword, count, isDynamic] tuples
  */
-export function getDynamicKeywords(allTemplates, focusedTemplate) {
+export function getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate) {
     console.log('[getDynamicKeywords] Called with:', {
         focusedTemplate,
         hasOrg: focusedTemplate?.org,
         hasRepo: focusedTemplate?.repo,
-        templateCount: allTemplates.length
+        allTemplateCount: allTemplates.length,
+        filteredTemplateCount: filteredTemplates.length
     });
 
     if (!focusedTemplate || !focusedTemplate.org || !focusedTemplate.repo) {
@@ -51,52 +53,65 @@ export function getDynamicKeywords(allTemplates, focusedTemplate) {
     const focusedOrg = focusedTemplate.org;
     const focusedRepo = focusedTemplate.repo;
 
-    // Group templates by org and repo
+    // Group ALL templates by org and repo (to determine structure)
     const orgRepos = new Map(); // Map<org, Set<repo>>
-    const repoTemplates = new Map(); // Map<repo, count>
-
     allTemplates.forEach(template => {
         if (template.org && template.repo) {
-            // Track repos per org
             if (!orgRepos.has(template.org)) {
                 orgRepos.set(template.org, new Set());
             }
             orgRepos.get(template.org).add(template.repo);
+        }
+    });
 
-            // Count templates per repo
-            repoTemplates.set(template.repo, (repoTemplates.get(template.repo) || 0) + 1);
+    // Count FILTERED templates per org/repo
+    const orgTemplateCount = new Map(); // Map<org, count>
+    const repoTemplateCount = new Map(); // Map<repo, count>
+    filteredTemplates.forEach(template => {
+        if (template.org) {
+            orgTemplateCount.set(template.org, (orgTemplateCount.get(template.org) || 0) + 1);
+        }
+        if (template.repo) {
+            repoTemplateCount.set(template.repo, (repoTemplateCount.get(template.repo) || 0) + 1);
         }
     });
 
     const reposInFocusedOrg = orgRepos.get(focusedOrg);
     const repoCount = reposInFocusedOrg ? reposInFocusedOrg.size : 0;
-    const templatesInFocusedRepo = repoTemplates.get(focusedRepo) || 0;
+    const allTemplatesInFocusedRepo = allTemplates.filter(t => t.repo === focusedRepo).length;
 
     // Determine which keywords to add based on the rules
     if (repoCount > 1) {
-        // Multiple repos from same org: add ORG keyword and ORG/REPO keywords for each repo
-        // Add ORG keyword with total count of templates in this org
-        let orgTemplateCount = 0;
-        reposInFocusedOrg.forEach(repo => {
-            orgTemplateCount += repoTemplates.get(repo) || 0;
-        });
-        dynamicKeywords.push([focusedOrg, orgTemplateCount, true]);
+        // Multiple repos from same org: add ORG keyword and REPO keywords for each repo
 
-        // Add ORG/REPO keywords for each repo in this org
+        // Add ORG keyword if it would filter something out
+        const orgCount = orgTemplateCount.get(focusedOrg) || 0;
+        if (orgCount > 0 && orgCount < filteredTemplates.length) {
+            dynamicKeywords.push([focusedOrg, orgCount, true]);
+        }
+
+        // Add REPO keywords for each repo in this org
         reposInFocusedOrg.forEach(repo => {
-            const count = repoTemplates.get(repo) || 0;
-            dynamicKeywords.push([repo, count, true]);
+            const count = repoTemplateCount.get(repo) || 0;
+            // Only add if it would filter something out
+            if (count > 0 && count < filteredTemplates.length) {
+                dynamicKeywords.push([repo, count, true]);
+            }
         });
-    } else if (repoCount === 1 && templatesInFocusedRepo > 1) {
-        // Only one repo from this org, but multiple templates: add ORG/REPO keyword
-        dynamicKeywords.push([focusedRepo, templatesInFocusedRepo, true]);
+    } else if (repoCount === 1 && allTemplatesInFocusedRepo > 1) {
+        // Only one repo from this org, but multiple templates: add REPO keyword
+        const count = repoTemplateCount.get(focusedRepo) || 0;
+        // Only add if it would filter something out
+        if (count > 0 && count < filteredTemplates.length) {
+            dynamicKeywords.push([focusedRepo, count, true]);
+        }
     }
 
     console.log('[getDynamicKeywords] Returning:', {
         count: dynamicKeywords.length,
         keywords: dynamicKeywords.map(k => k[0]),
         repoCount,
-        templatesInFocusedRepo
+        filteredTemplateCount: filteredTemplates.length
     });
 
     return dynamicKeywords;

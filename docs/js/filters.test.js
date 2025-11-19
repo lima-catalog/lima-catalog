@@ -314,12 +314,12 @@ const multiRepoTemplates = [
 ];
 
 runner.test('getDynamicKeywords: returns empty array when no focused template', () => {
-    const result = getDynamicKeywords(multiRepoTemplates, null);
+    const result = getDynamicKeywords(multiRepoTemplates, multiRepoTemplates, null);
     assert.equal(result.length, 0);
 });
 
 runner.test('getDynamicKeywords: returns empty array when focused template missing org/repo', () => {
-    const result = getDynamicKeywords(multiRepoTemplates, { name: 't1' });
+    const result = getDynamicKeywords(multiRepoTemplates, multiRepoTemplates, { name: 't1' });
     assert.equal(result.length, 0);
 });
 
@@ -329,12 +329,9 @@ runner.test('getDynamicKeywords: returns org/repo keyword when only one repo wit
         { name: 't2', repo: 'user/repo', org: 'user' }
     ];
     const focusedTemplate = templates[0];
-    const result = getDynamicKeywords(templates, focusedTemplate);
+    const result = getDynamicKeywords(templates, templates, focusedTemplate);
 
-    assert.equal(result.length, 1);
-    assert.equal(result[0][0], 'user/repo');
-    assert.equal(result[0][1], 2); // 2 templates in this repo
-    assert.equal(result[0][2], true); // isDynamic flag
+    assert.equal(result.length, 0); // Keyword applies to all filtered templates, so hidden
 });
 
 runner.test('getDynamicKeywords: does not return keyword when only one template in single repo', () => {
@@ -342,14 +339,14 @@ runner.test('getDynamicKeywords: does not return keyword when only one template 
         { name: 't1', repo: 'user/repo', org: 'user' }
     ];
     const focusedTemplate = templates[0];
-    const result = getDynamicKeywords(templates, focusedTemplate);
+    const result = getDynamicKeywords(templates, templates, focusedTemplate);
 
     assert.equal(result.length, 0); // No keywords when only 1 template
 });
 
 runner.test('getDynamicKeywords: returns org and org/repo keywords when multiple repos from same org', () => {
     const focusedTemplate = multiRepoTemplates[0]; // lima-vm/lima
-    const result = getDynamicKeywords(multiRepoTemplates, focusedTemplate);
+    const result = getDynamicKeywords(multiRepoTemplates, multiRepoTemplates, focusedTemplate);
 
     // Should have: lima-vm, lima-vm/lima, lima-vm/other
     assert.equal(result.length, 3);
@@ -371,10 +368,49 @@ runner.test('getDynamicKeywords: returns org and org/repo keywords when multiple
 
 runner.test('getDynamicKeywords: works for templates from different org with single repo', () => {
     const focusedTemplate = multiRepoTemplates[3]; // user/repo (only repo from user org)
-    const result = getDynamicKeywords(multiRepoTemplates, focusedTemplate);
+    const result = getDynamicKeywords(multiRepoTemplates, multiRepoTemplates, focusedTemplate);
 
     // Should have: org/repo:user/repo (only 1 repo from user org, but it has 1 template, so no keyword)
     assert.equal(result.length, 0); // Only 1 template in this repo
+});
+
+runner.test('getDynamicKeywords: hides keywords that apply to all filtered templates', () => {
+    const allTemplates = [
+        { name: 't1', repo: 'lima-vm/lima', org: 'lima-vm', keywords: ['docker'] },
+        { name: 't2', repo: 'lima-vm/lima', org: 'lima-vm', keywords: ['docker'] },
+        { name: 't3', repo: 'lima-vm/other', org: 'lima-vm', keywords: ['k8s'] }
+    ];
+    // Filter to only lima-vm/lima templates
+    const filteredTemplates = allTemplates.filter(t => t.repo === 'lima-vm/lima');
+    const focusedTemplate = filteredTemplates[0];
+
+    const result = getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate);
+
+    // Both lima-vm and lima-vm/lima apply to all filtered templates, so hidden
+    // lima-vm/other has 0 count in filtered, so also hidden
+    assert.equal(result.length, 0);
+});
+
+runner.test('getDynamicKeywords: shows keywords with counts from filtered templates', () => {
+    const allTemplates = [
+        { name: 't1', repo: 'lima-vm/lima', org: 'lima-vm', keywords: ['docker'] },
+        { name: 't2', repo: 'lima-vm/lima', org: 'lima-vm', keywords: ['k8s'] },
+        { name: 't3', repo: 'lima-vm/other', org: 'lima-vm', keywords: ['docker'] },
+        { name: 't4', repo: 'user/repo', org: 'user', keywords: ['docker'] }
+    ];
+    // Filter to only templates with docker
+    const filteredTemplates = allTemplates.filter(t => t.keywords.includes('docker'));
+    const focusedTemplate = filteredTemplates[0]; // lima-vm/lima template
+
+    const result = getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate);
+
+    // Should show lima-vm (2 out of 3), lima-vm/lima (1 out of 3), lima-vm/other (1 out of 3)
+    assert.equal(result.length, 3);
+
+    const resultMap = new Map(result.map(r => [r[0], r[1]]));
+    assert.equal(resultMap.get('lima-vm'), 2); // 2 out of 3 filtered templates
+    assert.equal(resultMap.get('lima-vm/lima'), 1); // 1 out of 3 filtered templates
+    assert.equal(resultMap.get('lima-vm/other'), 1); // 1 out of 3 filtered templates
 });
 
 // Test applyFilters with dynamic keywords
