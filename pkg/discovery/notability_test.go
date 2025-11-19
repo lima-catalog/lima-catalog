@@ -112,8 +112,8 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				MessageLineCount: 5, // 5 lines adds 5 points
 			},
 			repoStars: 0,
-			minScore:  105.0, // 100 (base) + 5 (lines)
-			maxScore:  105.0,
+			minScore:  55.0, // 50 (base) + 5 (lines)
+			maxScore:  55.0,
 		},
 		{
 			name: "Template with provision scripts",
@@ -163,8 +163,8 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				MessageLineCount: 3, // 3 lines adds 3 points
 			},
 			repoStars: 1000, // Should cap at 50 points
-			minScore:  153.0, // 100 (message base) + 3 (lines) + 50 (capped stars)
-			maxScore:  153.0,
+			minScore:  103.0, // 50 (message base) + 3 (lines) + 50 (capped stars)
+			maxScore:  103.0,
 		},
 		{
 			name: "Template with comments",
@@ -192,8 +192,8 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				UnusualImages:        []string{"nixos.org"},
 			},
 			repoStars: 500,
-			minScore:  100 + 5 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 30 + 50, // Total = 407
-			maxScore:  407.0,
+			minScore:  50 + 5 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 30 + 50, // Total = 357
+			maxScore:  357.0,
 		},
 	}
 
