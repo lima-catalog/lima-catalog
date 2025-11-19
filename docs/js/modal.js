@@ -5,6 +5,8 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
+import * as State from './state.js';
+import { filterAndRender } from './appActions.js';
 
 // Modal state
 let currentTemplate = null;
@@ -17,6 +19,11 @@ let previouslyFocusedElement = null;
  */
 export function openPreviewModal(template) {
     currentTemplate = template;
+
+    // Set focused template in global state and trigger sidebar update
+    State.setFocusedTemplate(template);
+    // Use setTimeout to avoid blocking modal rendering
+    setTimeout(() => filterAndRender(), 0);
 
     // Store the currently focused element to restore later
     previouslyFocusedElement = document.activeElement;
@@ -69,6 +76,11 @@ export function closePreviewModal() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
     currentTemplate = null;
+
+    // Clear focused template in global state and update sidebar
+    State.setFocusedTemplate(null);
+    // Use setTimeout to avoid blocking modal close
+    setTimeout(() => filterAndRender(), 0);
 
     // Release focus trap
     if (releaseFocusTrap) {
