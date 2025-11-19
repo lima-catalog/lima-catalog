@@ -106,13 +106,9 @@ func UpdateOfficialKnowledge(ctx context.Context, repoPath, outputPath string) (
 		_ = gitCheckout(ctx, repoPath, originalHead)
 	}()
 
-	// Process both directories
+	// Process both directories (handles cases where directory might not exist in all commits)
 	for _, dir := range []string{"templates", "examples"} {
 		if err := processDirectory(ctx, repoPath, dir, ok); err != nil {
-			// Don't fail if examples/ doesn't exist (newer repos)
-			if dir == "examples" && strings.Contains(err.Error(), "does not have any commits") {
-				continue
-			}
 			return nil, fmt.Errorf("failed to process %s: %w", dir, err)
 		}
 	}
@@ -161,6 +157,12 @@ func processDirectory(ctx context.Context, repoPath, dir string, ok *OfficialKno
 
 		// Scan all YAML files in directory (recursive)
 		dirPath := filepath.Join(repoPath, dir)
+
+		// Check if directory exists at this commit (it might not in older/newer commits)
+		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+			continue // Directory doesn't exist at this commit, skip
+		}
+
 		if err := scanYAMLFiles(dirPath, ok); err != nil {
 			return fmt.Errorf("failed to scan YAML files at %s: %w", commit.Hash, err)
 		}
