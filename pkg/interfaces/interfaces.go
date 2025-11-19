@@ -34,10 +34,12 @@ type DefaultHTTPClient struct {
 	client *http.Client
 }
 
-// NewDefaultHTTPClient creates a new DefaultHTTPClient
+// NewDefaultHTTPClient creates a new DefaultHTTPClient with a 30-second timeout
 func NewDefaultHTTPClient() *DefaultHTTPClient {
 	return &DefaultHTTPClient{
-		client: &http.Client{},
+		client: &http.Client{
+			Timeout: 30 * time.Second, // Prevent hanging on unresponsive servers
+		},
 	}
 }
 
