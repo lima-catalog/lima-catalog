@@ -131,7 +131,7 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	if template.Message != "" {
 		messageLines := strings.Split(template.Message, "\n")
 		for _, line := range messageLines {
-			normalized := normalizeLinePkg(line)
+			normalized := normalizeLine(line)
 			if normalized != "" {
 				info.MessageLines = append(info.MessageLines, normalized)
 			}
@@ -146,7 +146,7 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 
 		if strings.HasPrefix(trimmed, "#") {
 			// Normalize: strip leading whitespace, #, and trailing whitespace
-			normalized := normalizeCommentLinePkg(line)
+			normalized := normalizeCommentLine(line)
 			if normalized != "" {
 				info.CommentLines = append(info.CommentLines, normalized)
 				info.CommentLineCount++
@@ -189,7 +189,7 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		provisioningText += " " + prov.Script
 
 		// Extract non-comment lines from provision script
-		scriptLines := extractNonCommentLinesPkg(prov.Script)
+		scriptLines := extractNonCommentLines(prov.Script)
 		info.ProvisionLines = append(info.ProvisionLines, scriptLines...)
 		info.ProvisionTotalLines += len(scriptLines)
 		// Track line count per script for notability scoring
@@ -201,7 +201,7 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	info.ProbeCount = len(template.Probes)
 	for _, probe := range template.Probes {
 		// Extract non-comment lines from probe script
-		scriptLines := extractNonCommentLinesPkg(probe.Script)
+		scriptLines := extractNonCommentLines(probe.Script)
 		info.ProbeLines = append(info.ProbeLines, scriptLines...)
 		info.ProbeTotalLines += len(scriptLines)
 		// Track line count per script for notability scoring
@@ -327,45 +327,3 @@ func appendUnique(slice []string, items ...string) []string {
 	return slice
 }
 
-// normalizeCommentLinePkg normalizes a comment line (strip leading whitespace and #, trailing whitespace)
-func normalizeCommentLinePkg(line string) string {
-	// Trim leading whitespace
-	line = strings.TrimLeft(line, " \t")
-
-	// Strip all leading # and whitespace
-	line = strings.TrimLeft(line, "#")
-	line = strings.TrimLeft(line, " \t")
-
-	// Trim trailing whitespace
-	line = strings.TrimRight(line, " \t")
-
-	return line
-}
-
-// normalizeLinePkg normalizes a regular line (strip leading and trailing whitespace)
-func normalizeLinePkg(line string) string {
-	// Trim leading and trailing whitespace
-	return strings.TrimSpace(line)
-}
-
-// extractNonCommentLinesPkg extracts non-comment lines from script content
-func extractNonCommentLinesPkg(script string) []string {
-	var lines []string
-	scriptLines := strings.Split(script, "\n")
-	for _, line := range scriptLines {
-		// Trim leading whitespace
-		trimmed := strings.TrimLeft(line, " \t")
-
-		// Skip comment lines (they're counted as YAML comments)
-		if strings.HasPrefix(trimmed, "#") {
-			continue
-		}
-
-		// Skip empty lines
-		normalized := normalizeLinePkg(line)
-		if normalized != "" {
-			lines = append(lines, normalized)
-		}
-	}
-	return lines
-}
