@@ -334,6 +334,11 @@ func extractKnowledgeFromFile(path string, knowledge *OfficialKnowledge) error {
 	// Extract comments from raw content
 	extractCommentLines(string(content), knowledge)
 
+	// Extract all YAML lines (non-comments) as potential commented-out YAML
+	// When users copy official templates and comment out parts, we don't want
+	// to count those as unique comments
+	extractYAMLLines(string(content), knowledge)
+
 	return nil
 }
 
@@ -470,6 +475,36 @@ func extractCommentLines(content string, knowledge *OfficialKnowledge) {
 			if normalized != "" {
 				addUnique(&knowledge.KnownLines.Comments, normalized)
 			}
+		}
+	}
+}
+
+// extractYAMLLines extracts non-comment YAML lines as known content
+// This helps filter out commented-out YAML that users copy from official templates
+func extractYAMLLines(content string, knowledge *OfficialKnowledge) {
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Trim leading whitespace
+		trimmed := strings.TrimLeft(line, " \t")
+
+		// Skip empty lines
+		if trimmed == "" {
+			continue
+		}
+
+		// Skip comment lines (already handled by extractCommentLines)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
+		// Normalize the line (strip whitespace)
+		normalized := normalizeLine(line)
+		if normalized != "" {
+			// Add to Comments list - when users comment out YAML, it becomes a "comment"
+			// and we want to filter it out as known content
+			addUnique(&knowledge.KnownLines.Comments, normalized)
 		}
 	}
 }
