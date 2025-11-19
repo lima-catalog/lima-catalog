@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v57/github"
 	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
@@ -14,10 +13,8 @@ import (
 
 // Analyzer handles template analysis and categorization
 type Analyzer struct {
-	// OfficialImages contains the list of official image names from lima-vm/lima
-	OfficialImages map[string]bool
-	// DefaultComments contains normalized comment lines from default.yaml
-	DefaultComments map[string]bool
+	// OfficialKnowledge contains known lines and images from lima-vm/lima templates
+	OfficialKnowledge *OfficialKnowledge
 	// ForceAnalyze forces re-analysis of all templates, even if already analyzed
 	ForceAnalyze bool
 	// HTTPClient for making HTTP requests (allows mocking in tests)
@@ -50,6 +47,13 @@ func WithClock(clock interfaces.Clock) AnalyzerOption {
 	}
 }
 
+// WithOfficialKnowledge sets the official knowledge for filtering known lines
+func WithOfficialKnowledge(ok *OfficialKnowledge) AnalyzerOption {
+	return func(a *Analyzer) {
+		a.OfficialKnowledge = ok
+	}
+}
+
 // NewAnalyzer creates a new template analyzer with optional configuration.
 //
 // The analyzer is responsible for extracting metadata from Lima templates including
@@ -59,10 +63,10 @@ func WithClock(clock interfaces.Clock) AnalyzerOption {
 //   - WithForceAnalyze(bool): Force re-analysis of already analyzed templates
 //   - WithHTTPClient(client): Use custom HTTP client (for testing)
 //   - WithClock(clock): Use custom clock (for testing)
+//   - WithOfficialKnowledge(ok): Set official knowledge for filtering (for testing)
 //
-// Returns a configured Analyzer with empty OfficialImages and DefaultComments maps.
-// Call FetchOfficialImagesForAnalyzer and FetchDefaultTemplateComments before analyzing
-// templates to populate these reference sets.
+// Returns a configured Analyzer with empty OfficialKnowledge.
+// In production, load OfficialKnowledge from file or update it before analyzing templates.
 //
 // Example:
 //
@@ -76,11 +80,19 @@ func WithClock(clock interfaces.Clock) AnalyzerOption {
 //	)
 func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
 	a := &Analyzer{
-		OfficialImages:  make(map[string]bool),
-		DefaultComments: make(map[string]bool),
-		ForceAnalyze:    false, // default
-		HTTPClient:      interfaces.NewDefaultHTTPClient(),
-		Clock:           interfaces.NewDefaultClock(),
+		OfficialKnowledge: &OfficialKnowledge{
+			LastUpdate: time.Time{}, // Zero time
+			KnownLines: OfficialKnownLines{
+				Comments:  []string{},
+				Provision: []string{},
+				Probes:    []string{},
+				Messages:  []string{},
+			},
+			Images: []string{},
+		},
+		ForceAnalyze: false, // default
+		HTTPClient:   interfaces.NewDefaultHTTPClient(),
+		Clock:        interfaces.NewDefaultClock(),
 	}
 
 	// Apply options
@@ -89,60 +101,6 @@ func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
 	}
 
 	return a
-}
-
-// FetchOfficialImagesForAnalyzer fetches official image domains from lima-vm/lima and stores them.
-//
-// The official images list is used to identify "unusual" images in community templates.
-// Images using domains not found in official templates are flagged as unusual, which
-// increases the template's notability score.
-//
-// Parameters:
-//   - ctx: Context for cancellation and timeouts
-//   - client: GitHub client wrapper for API access
-//
-// Returns error if GitHub API call fails, but gracefully falls back to empty map
-// (all images will be considered unusual). The error is logged as a warning.
-//
-// The function prints the count of fetched official images for debugging.
-func (a *Analyzer) FetchOfficialImagesForAnalyzer(ctx context.Context, client *github.Client) error {
-	officialImages, err := FetchOfficialImages(ctx, client)
-	if err != nil {
-		// If fetching fails, use empty map (all images will be considered unusual)
-		fmt.Printf("Warning: failed to fetch official images: %v\n", err)
-		a.OfficialImages = make(map[string]bool)
-		return err
-	}
-	a.OfficialImages = officialImages
-	fmt.Printf("Fetched %d official images from lima-vm/lima\n", len(officialImages))
-	return nil
-}
-
-// FetchDefaultTemplateComments fetches and extracts comment lines from lima-vm/lima default.yaml.
-//
-// The default template comments are used as a baseline to filter out common boilerplate
-// comments when calculating notability scores. Only comments that differ from the default
-// template contribute to a template's comment score.
-//
-// Parameters:
-//   - ctx: Context for cancellation and timeouts
-//   - client: GitHub client wrapper for API access
-//
-// Returns error if GitHub API call fails, but gracefully falls back to empty map
-// (no comments will be filtered). The error is logged as a warning.
-//
-// The function prints the count of fetched comment lines for debugging.
-func (a *Analyzer) FetchDefaultTemplateComments(ctx context.Context, client *github.Client) error {
-	defaultComments, err := FetchDefaultTemplateComments(ctx, client)
-	if err != nil {
-		// If fetching fails, use empty map (won't filter any comments)
-		fmt.Printf("Warning: failed to fetch default template comments: %v\n", err)
-		a.DefaultComments = make(map[string]bool)
-		return err
-	}
-	a.DefaultComments = defaultComments
-	fmt.Printf("Fetched %d unique comment lines from default.yaml\n", len(defaultComments))
-	return nil
 }
 
 // AnalyzeTemplate performs comprehensive analysis on a single template.
@@ -194,8 +152,8 @@ func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template
 	template.Arch = templateInfo.Arch
 	template.Keywords = templateInfo.Keywords
 
-	// Populate notability metrics (filtering out default template comments)
-	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialImages, a.DefaultComments)
+	// Populate notability metrics (filtering out known lines from official templates)
+	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialKnowledge)
 
 	// Step 3: Infer basic category and description
 	category, useCase := a.inferCategory(templateInfo, repoInfo)

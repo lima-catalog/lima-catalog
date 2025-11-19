@@ -200,10 +200,18 @@ func TestCalculateNotabilityScore(t *testing.T) {
 }
 
 func TestPopulateNotabilityMetrics(t *testing.T) {
-	// Create a test official domains map
-	officialDomains := map[string]bool{
-		"cloud-images.ubuntu.com": true,
-		"dl-cdn.alpinelinux.org":  true,
+	// Create test official knowledge
+	officialKnowledge := &OfficialKnowledge{
+		Images: []string{
+			"ubuntu.com",
+			"alpinelinux.org",
+		},
+		KnownLines: OfficialKnownLines{
+			Comments:  []string{},  // Empty for this test
+			Provision: []string{},
+			Probes:    []string{},
+			Messages:  []string{},
+		},
 	}
 
 	info := &TemplateInfo{
@@ -220,11 +228,13 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 		ParamCount:          5,
 		EnvCount:            3,
 		CommentLineCount:    20,
-		CommentLines:        []string{"# This is a test comment", "# Another comment"},
+		CommentLines:        []string{"This is a test comment", "Another comment"}, // Normalized (no # prefix)
+		ProvisionLines:      make([]string, 75), // Fill with dummy lines for the test
+		ProbeLines:          make([]string, 10),
+		MessageLines:        []string{"Line 1", "Line 2"},
 	}
 
-	defaultComments := make(map[string]bool) // Empty for this test
-	metrics := PopulateNotabilityMetrics(info, officialDomains, defaultComments)
+	metrics := PopulateNotabilityMetrics(info, officialKnowledge)
 
 	if metrics.MessageLength != 150 {
 		t.Errorf("MessageLength = %d, want 150", metrics.MessageLength)

@@ -149,26 +149,16 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	return breakdown
 }
 
-// isEmptyComment checks if a comment line is empty (just # with whitespace)
-func isEmptyComment(line string) bool {
-	// Remove the leading # and check if remainder is only whitespace
-	if !strings.HasPrefix(line, "#") {
-		return false
-	}
-	remainder := strings.TrimSpace(line[1:])
-	return remainder == ""
-}
-
-// FilterUniqueComments counts unique comment lines, excluding empty comments and default template comments
-func FilterUniqueComments(commentLines []string, defaultComments map[string]bool) int {
+// FilterUniqueLines counts unique lines, excluding empty lines and lines in the known set
+func FilterUniqueLines(lines []string, knownLines map[string]bool) int {
 	uniqueCount := 0
-	for _, line := range commentLines {
-		// Skip empty comments (just # with whitespace)
-		if isEmptyComment(line) {
+	for _, line := range lines {
+		// Skip empty lines
+		if line == "" {
 			continue
 		}
-		// Skip if this comment exists in default template
-		if defaultComments[line] {
+		// Skip if this line exists in known lines
+		if knownLines[line] {
 			continue
 		}
 		uniqueCount++
@@ -177,17 +167,55 @@ func FilterUniqueComments(commentLines []string, defaultComments map[string]bool
 }
 
 // PopulateNotabilityMetrics creates NotabilityMetrics from TemplateInfo
-// Filters out comments that are in the default template or are empty
-func PopulateNotabilityMetrics(info *TemplateInfo, officialImages map[string]bool, defaultComments map[string]bool) *types.NotabilityMetrics {
-	// Filter out default template comments and empty comments
-	uniqueCommentCount := FilterUniqueComments(info.CommentLines, defaultComments)
+// Filters out known lines from official templates
+func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types.NotabilityMetrics {
+	// Build lookup maps from official knowledge
+	knownComments := make(map[string]bool)
+	for _, line := range ok.KnownLines.Comments {
+		knownComments[line] = true
+	}
+
+	knownProvision := make(map[string]bool)
+	for _, line := range ok.KnownLines.Provision {
+		knownProvision[line] = true
+	}
+
+	knownProbes := make(map[string]bool)
+	for _, line := range ok.KnownLines.Probes {
+		knownProbes[line] = true
+	}
+
+	knownMessages := make(map[string]bool)
+	for _, line := range ok.KnownLines.Messages {
+		knownMessages[line] = true
+	}
+
+	officialImages := make(map[string]bool)
+	for _, domain := range ok.Images {
+		officialImages[domain] = true
+	}
+
+	// Filter out known lines
+	uniqueCommentCount := FilterUniqueLines(info.CommentLines, knownComments)
+	uniqueProvisionLines := FilterUniqueLines(info.ProvisionLines, knownProvision)
+	uniqueProbeLines := FilterUniqueLines(info.ProbeLines, knownProbes)
+
+	// Check if message contains any unique lines
+	messageLength := 0
+	if len(info.MessageLines) > 0 {
+		uniqueMessageLines := FilterUniqueLines(info.MessageLines, knownMessages)
+		if uniqueMessageLines > 0 {
+			// If there are unique message lines, count total message length
+			messageLength = info.MessageLength
+		}
+	}
 
 	return &types.NotabilityMetrics{
-		MessageLength:       info.MessageLength,
+		MessageLength:       messageLength,
 		ProvisionCount:      info.ProvisionCount,
-		ProvisionTotalLines: info.ProvisionTotalLines,
+		ProvisionTotalLines: uniqueProvisionLines,
 		ProbeCount:          info.ProbeCount,
-		ProbeTotalLines:     info.ProbeTotalLines,
+		ProbeTotalLines:     uniqueProbeLines,
 		ParamCount:          info.ParamCount,
 		EnvCount:            info.EnvCount,
 		CommentLineCount:    uniqueCommentCount,
