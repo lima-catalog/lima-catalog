@@ -2,6 +2,18 @@
 
 This tool helps debug the notability scoring system by showing what lines remain in a template after removing known lines from official templates.
 
+## Getting official.json
+
+The official knowledge database is stored in the `data` branch. To use it with this tool on the `main` branch:
+
+```bash
+# Check out official.json from the data branch
+git show data:data/official.json > data/official.json
+
+# Or if you want to use a temporary copy
+git show data:data/official.json > /tmp/official.json
+```
+
 ## Usage
 
 ```bash
