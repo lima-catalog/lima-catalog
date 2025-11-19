@@ -109,7 +109,10 @@ func UpdateOfficialKnowledge(ctx context.Context, repoPath, outputPath string) (
 	// Process both directories (handles cases where directory might not exist in all commits)
 	for _, dir := range []string{"templates", "examples"} {
 		if err := processDirectory(ctx, repoPath, dir, ok); err != nil {
-			return nil, fmt.Errorf("failed to process %s: %w", dir, err)
+			// Log error but continue with other directory
+			// The directory might not exist in all commits (e.g., examples was renamed to templates)
+			fmt.Fprintf(os.Stderr, "Warning: failed to process %s directory: %v\n", dir, err)
+			continue
 		}
 	}
 
@@ -159,8 +162,13 @@ func processDirectory(ctx context.Context, repoPath, dir string, ok *OfficialKno
 		dirPath := filepath.Join(repoPath, dir)
 
 		// Check if directory exists at this commit (it might not in older/newer commits)
-		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-			continue // Directory doesn't exist at this commit, skip
+		if _, err := os.Stat(dirPath); err != nil {
+			if os.IsNotExist(err) {
+				continue // Directory doesn't exist at this commit, skip
+			}
+			// Other stat errors - log but continue to next commit
+			fmt.Fprintf(os.Stderr, "Warning: stat failed for %s at %s: %v\n", dirPath, commit.Hash, err)
+			continue
 		}
 
 		if err := scanYAMLFiles(dirPath, ok); err != nil {
@@ -245,7 +253,8 @@ func gitCheckout(ctx context.Context, repoPath, ref string) error {
 func scanYAMLFiles(dirPath string, ok *OfficialKnowledge) error {
 	return filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			// Directory might have been deleted/renamed by git - just skip
+			return nil
 		}
 
 		// Skip directories
