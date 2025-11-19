@@ -108,17 +108,19 @@ func TestCalculateNotabilityScore(t *testing.T) {
 		{
 			name: "Template with message (high priority)",
 			metrics: &types.NotabilityMetrics{
-				MessageLength: 100,
+				MessageLength:    100,
+				MessageLineCount: 5, // 5 lines adds 5 points
 			},
 			repoStars: 0,
-			minScore:  100.0,
-			maxScore:  100.0,
+			minScore:  105.0, // 100 (base) + 5 (lines)
+			maxScore:  105.0,
 		},
 		{
 			name: "Template with provision scripts",
 			metrics: &types.NotabilityMetrics{
-				ProvisionCount:      2,
-				ProvisionTotalLines: 50,
+				ProvisionCount:       2,
+				ProvisionSubstantial: 2, // Both scripts are substantial
+				ProvisionTotalLines:  50,
 			},
 			repoStars: 0,
 			minScore:  25.0, // 2*10 + 50/10 = 25
@@ -137,8 +139,9 @@ func TestCalculateNotabilityScore(t *testing.T) {
 		{
 			name: "Template with probes",
 			metrics: &types.NotabilityMetrics{
-				ProbeCount:      2,
-				ProbeTotalLines: 20,
+				ProbeCount:       2,
+				ProbeSubstantial: 2, // Both probes are substantial
+				ProbeTotalLines:  20,
 			},
 			repoStars: 0,
 			minScore:  12.0, // 2*5 + 20/10 = 12
@@ -156,11 +159,12 @@ func TestCalculateNotabilityScore(t *testing.T) {
 		{
 			name: "Template with stars (capped at 50)",
 			metrics: &types.NotabilityMetrics{
-				MessageLength: 50,
+				MessageLength:    50,
+				MessageLineCount: 3, // 3 lines adds 3 points
 			},
 			repoStars: 1000, // Should cap at 50 points
-			minScore:  150.0, // 100 (message) + 50 (capped stars)
-			maxScore:  150.0,
+			minScore:  153.0, // 100 (message base) + 3 (lines) + 50 (capped stars)
+			maxScore:  153.0,
 		},
 		{
 			name: "Template with comments",
@@ -174,19 +178,22 @@ func TestCalculateNotabilityScore(t *testing.T) {
 		{
 			name: "Complex template (everything)",
 			metrics: &types.NotabilityMetrics{
-				MessageLength:       100,
-				ProvisionCount:      3,
-				ProvisionTotalLines: 100,
-				ProbeCount:          2,
-				ProbeTotalLines:     20,
-				ParamCount:          4,
-				EnvCount:            6,
-				CommentLineCount:    15,
-				UnusualImages:       []string{"nixos.org"},
+				MessageLength:        100,
+				MessageLineCount:     5, // 5 lines in message
+				ProvisionCount:       3,
+				ProvisionSubstantial: 3, // All 3 scripts are substantial
+				ProvisionTotalLines:  100,
+				ProbeCount:           2,
+				ProbeSubstantial:     2, // Both probes are substantial
+				ProbeTotalLines:      20,
+				ParamCount:           4,
+				EnvCount:             6,
+				CommentLineCount:     15,
+				UnusualImages:        []string{"nixos.org"},
 			},
 			repoStars: 500,
-			minScore:  100 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 30 + 50, // Total = 402
-			maxScore:  402.0,
+			minScore:  100 + 5 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 30 + 50, // Total = 407
+			maxScore:  407.0,
 		},
 	}
 
@@ -233,18 +240,20 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 			"https://nixos.org/channels/nixos.iso",
 			"https://dl-cdn.alpinelinux.org/alpine/v3.18/alpine.iso",
 		},
-		MessageLength:       150,
-		ProvisionCount:      3,
-		ProvisionTotalLines: 75,
-		ProbeCount:          1,
-		ProbeTotalLines:     10,
-		ParamCount:          5,
-		EnvCount:            3,
-		CommentLineCount:    20,
-		CommentLines:        []string{"This is a test comment", "Another comment"}, // Normalized (no # prefix)
-		ProvisionLines:      provisionLines, // Fill with real non-empty lines
-		ProbeLines:          probeLines,
-		MessageLines:        []string{"Line 1", "Line 2"},
+		MessageLength:        150,
+		ProvisionCount:       3,
+		ProvisionTotalLines:  75,
+		ProvisionScriptLines: []int{25, 30, 20}, // 3 scripts with 25, 30, and 20 lines each (all >10)
+		ProbeCount:           1,
+		ProbeTotalLines:      10,
+		ProbeScriptLines:     []int{10}, // 1 probe with 10 lines (not >10, so min 1)
+		ParamCount:           5,
+		EnvCount:             3,
+		CommentLineCount:     20,
+		CommentLines:         []string{"This is a test comment", "Another comment"}, // Normalized (no # prefix)
+		ProvisionLines:       provisionLines,                                         // Fill with real non-empty lines
+		ProbeLines:           probeLines,
+		MessageLines:         []string{"Line 1", "Line 2"},
 	}
 
 	metrics := PopulateNotabilityMetrics(info, officialKnowledge)
@@ -272,6 +281,15 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 	}
 	if metrics.CommentLineCount != 2 {
 		t.Errorf("CommentLineCount = %d, want 2 (unique comments from CommentLines)", metrics.CommentLineCount)
+	}
+	if metrics.MessageLineCount != 2 {
+		t.Errorf("MessageLineCount = %d, want 2 (from MessageLines)", metrics.MessageLineCount)
+	}
+	if metrics.ProvisionSubstantial != 3 {
+		t.Errorf("ProvisionSubstantial = %d, want 3 (all 3 scripts have >10 lines)", metrics.ProvisionSubstantial)
+	}
+	if metrics.ProbeSubstantial != 1 {
+		t.Errorf("ProbeSubstantial = %d, want 1 (minimum 1, probe has exactly 10 lines)", metrics.ProbeSubstantial)
 	}
 
 	// Should identify nixos.org as unusual domain

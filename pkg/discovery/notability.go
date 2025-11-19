@@ -122,12 +122,18 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	weights := config.DefaultNotabilityWeights()
 
 	// Message presence (strong signal for reusability)
+	// Base bonus for having a message, plus line-based bonus for length
 	if metrics.MessageLength > 0 {
 		breakdown.Message = weights.Message
+		// Add 1 point per line for better filtering granularity
+		// (allows sorting by message quality, not just presence)
+		breakdown.Message += float64(metrics.MessageLineCount)
 	}
 
 	// Provision scripts (indicates customization/setup)
-	breakdown.Provision = float64(metrics.ProvisionCount)*weights.ProvisionBase +
+	// Use substantial script count (>10 lines, capped at 3, min 1) to avoid
+	// rewarding templates that split scripts into many tiny pieces
+	breakdown.Provision = float64(metrics.ProvisionSubstantial)*weights.ProvisionBase +
 		float64(metrics.ProvisionTotalLines)*weights.ProvisionLine
 
 	// Parameters (indicates configurability)
@@ -137,7 +143,9 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	breakdown.EnvVars = float64(metrics.EnvCount) * weights.EnvVar
 
 	// Probes (less important than provision)
-	breakdown.Probes = float64(metrics.ProbeCount)*weights.ProbeBase +
+	// Use substantial script count (>10 lines, capped at 3, min 1) to avoid
+	// rewarding templates that split scripts into many tiny pieces
+	breakdown.Probes = float64(metrics.ProbeSubstantial)*weights.ProbeBase +
 		float64(metrics.ProbeTotalLines)*weights.ProbeLine
 
 	// Unusual images (indicates specialized use case)
@@ -321,25 +329,62 @@ func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types
 
 	// Check if message contains any unique lines
 	messageLength := 0
+	messageLineCount := 0
 	if len(info.MessageLines) > 0 {
 		uniqueMessageLines := FilterUniqueLines(info.MessageLines, knownMessages)
 		if uniqueMessageLines > 0 {
-			// If there are unique message lines, count total message length
+			// If there are unique message lines, count total message length and line count
 			messageLength = info.MessageLength
+			messageLineCount = len(info.MessageLines)
 		}
 	}
 
+	// Count substantial scripts (>10 lines) for provision and probes
+	// Cap at 3, minimum 1 if any scripts exist
+	provisionSubstantial := countSubstantialScripts(info.ProvisionScriptLines, info.ProvisionCount)
+	probeSubstantial := countSubstantialScripts(info.ProbeScriptLines, info.ProbeCount)
+
 	return &types.NotabilityMetrics{
-		MessageLength:       messageLength,
-		ProvisionCount:      info.ProvisionCount,
-		ProvisionTotalLines: uniqueProvisionLines,
-		ProbeCount:          info.ProbeCount,
-		ProbeTotalLines:     uniqueProbeLines,
-		ParamCount:          info.ParamCount,
-		EnvCount:            info.EnvCount,
-		CommentLineCount:    uniqueCommentCount,
-		UnusualImages:       IdentifyUnusualImages(info.Images, officialImages),
+		MessageLength:        messageLength,
+		MessageLineCount:     messageLineCount,
+		ProvisionCount:       info.ProvisionCount,
+		ProvisionSubstantial: provisionSubstantial,
+		ProvisionTotalLines:  uniqueProvisionLines,
+		ProbeCount:           info.ProbeCount,
+		ProbeSubstantial:     probeSubstantial,
+		ProbeTotalLines:      uniqueProbeLines,
+		ParamCount:           info.ParamCount,
+		EnvCount:             info.EnvCount,
+		CommentLineCount:     uniqueCommentCount,
+		UnusualImages:        IdentifyUnusualImages(info.Images, officialImages),
 	}
+}
+
+// countSubstantialScripts counts scripts with >10 lines, capped at 3, minimum 1 if any scripts exist
+func countSubstantialScripts(scriptLineCounts []int, totalScripts int) int {
+	if totalScripts == 0 {
+		return 0
+	}
+
+	// Count scripts with >10 lines
+	substantial := 0
+	for _, lineCount := range scriptLineCounts {
+		if lineCount > 10 {
+			substantial++
+		}
+	}
+
+	// Cap at 3
+	if substantial > 3 {
+		substantial = 3
+	}
+
+	// Minimum 1 if any scripts exist
+	if substantial == 0 && totalScripts > 0 {
+		substantial = 1
+	}
+
+	return substantial
 }
 
 // FetchOfficialImages retrieves the list of official image domains from lima-vm/lima repository

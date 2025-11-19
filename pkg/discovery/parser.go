@@ -59,18 +59,20 @@ type TemplateInfo struct {
 	Categories   []string
 
 	// Notability metrics (raw data for scoring)
-	MessageLength       int
-	ProvisionCount      int
-	ProvisionTotalLines int
-	ProbeCount          int
-	ProbeTotalLines     int
-	ParamCount          int
-	EnvCount            int
-	CommentLineCount    int
-	CommentLines        []string // Normalized comment lines for filtering
-	ProvisionLines      []string // Normalized provision script lines (non-comments)
-	ProbeLines          []string // Normalized probe script lines (non-comments)
-	MessageLines        []string // Normalized message lines
+	MessageLength          int
+	ProvisionCount         int
+	ProvisionTotalLines    int
+	ProvisionScriptLines   []int    // Line count per provision script (for counting substantial scripts)
+	ProbeCount             int
+	ProbeTotalLines        int
+	ProbeScriptLines       []int    // Line count per probe script
+	ParamCount             int
+	EnvCount               int
+	CommentLineCount       int
+	CommentLines           []string // Normalized comment lines for filtering
+	ProvisionLines         []string // Normalized provision script lines (non-comments)
+	ProbeLines             []string // Normalized probe script lines (non-comments)
+	MessageLines           []string // Normalized message lines
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file
@@ -108,14 +110,16 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	info := &TemplateInfo{
-		Images:         []string{},
-		Arch:           []string{},
-		Keywords:       []string{},
-		Categories:     []string{},
-		CommentLines:   []string{},
-		ProvisionLines: []string{},
-		ProbeLines:     []string{},
-		MessageLines:   []string{},
+		Images:               []string{},
+		Arch:                 []string{},
+		Keywords:             []string{},
+		Categories:           []string{},
+		CommentLines:         []string{},
+		ProvisionLines:       []string{},
+		ProbeLines:           []string{},
+		MessageLines:         []string{},
+		ProvisionScriptLines: []int{},
+		ProbeScriptLines:     []int{},
 	}
 
 	// Extract notability metrics
@@ -188,6 +192,8 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		scriptLines := extractNonCommentLinesPkg(prov.Script)
 		info.ProvisionLines = append(info.ProvisionLines, scriptLines...)
 		info.ProvisionTotalLines += len(scriptLines)
+		// Track line count per script for notability scoring
+		info.ProvisionScriptLines = append(info.ProvisionScriptLines, len(scriptLines))
 	}
 	provisioningText = strings.ToLower(provisioningText)
 
@@ -198,6 +204,8 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		scriptLines := extractNonCommentLinesPkg(probe.Script)
 		info.ProbeLines = append(info.ProbeLines, scriptLines...)
 		info.ProbeTotalLines += len(scriptLines)
+		// Track line count per script for notability scoring
+		info.ProbeScriptLines = append(info.ProbeScriptLines, len(scriptLines))
 	}
 
 	// Detect technologies from provisioning scripts
