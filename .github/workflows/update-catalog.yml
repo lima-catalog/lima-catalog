@@ -39,6 +39,12 @@ jobs:
           ref: data
           path: data-branch
 
+      - name: Clone lima-vm/lima repository
+        run: |
+          # Clone full history for historic knowledge tracking (git log traversal)
+          git clone https://github.com/lima-vm/lima.git lima-repo
+          echo "Cloned lima-vm/lima for official knowledge tracking"
+
       - name: Run catalog collection
         env:
           GITHUB_TOKEN: ${{ secrets.CATALOG_TOKEN }}
@@ -46,6 +52,7 @@ jobs:
           INCREMENTAL: "true"
           ANALYZE: "true"
           FORCE_ANALYZE: ${{ inputs.force_analyze == true && 'true' || '' }}
+          LIMA_REPO_PATH: ./lima-repo
         run: |
           # Copy existing data from data branch to enable incremental updates
           mkdir -p catalog-data
