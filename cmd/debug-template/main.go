@@ -85,7 +85,7 @@ func main() {
 		if knownComments[line] {
 			continue
 		}
-		if isCodeComment(line) {
+		if discovery.IsCodeComment(line) {
 			codeComments++
 			fmt.Printf("[CODE] %s\n", line)
 			continue
@@ -151,91 +151,4 @@ func main() {
 	fmt.Printf("Unique provision lines: %d\n", uniqueProvision)
 	fmt.Printf("Unique probe lines:     %d\n", uniqueProbes)
 	fmt.Printf("Unique message lines:   %d\n", uniqueMessages)
-}
-
-// isCodeComment checks if a comment line looks like commented-out code
-// Uses conservative heuristics to avoid false positives
-func isCodeComment(line string) bool {
-	// Check for shell variable expansion ($VAR, ${VAR}, $(...))
-	if strings.Contains(line, "$") {
-		dollarIdx := strings.Index(line, "$")
-		if dollarIdx+1 < len(line) {
-			nextChar := line[dollarIdx+1]
-			if nextChar == '{' || nextChar == '(' || (nextChar >= 'A' && nextChar <= 'Z') || (nextChar >= 'a' && nextChar <= 'z') || nextChar == '_' {
-				return true
-			}
-		}
-	}
-
-	// Check for backticks (command substitution)
-	if strings.Contains(line, "`") {
-		return true
-	}
-
-	// Check for pipes (excluding markdown table separators)
-	if strings.Contains(line, "|") {
-		// Allow markdown tables (like "| col1 | col2 |")
-		// But reject shell pipes (like "grep foo | sort")
-		pipeCount := strings.Count(line, "|")
-		if pipeCount == 1 || !strings.Contains(line, " | ") {
-			return true
-		}
-	}
-
-	// Check for command chaining
-	if strings.Contains(line, "&&") || strings.Contains(line, "||") {
-		return true
-	}
-
-	// Check for shell redirects (>, >>, <, 2>&1)
-	if strings.Contains(line, ">>") || strings.Contains(line, "2>&1") {
-		return true
-	}
-	if strings.Contains(line, ">") || strings.Contains(line, "<") {
-		// Make sure it's not just a comparison operator or arrow
-		for i, char := range line {
-			if char == '>' || char == '<' {
-				// Check context - is this a redirect or part of text?
-				before := ""
-				after := ""
-				if i > 0 {
-					before = string(line[i-1])
-				}
-				if i+1 < len(line) {
-					after = string(line[i+1])
-				}
-				// If surrounded by spaces, likely a redirect
-				if (before == " " || before == "") && (after == " " || after == "") {
-					return true
-				}
-			}
-		}
-	}
-
-	// Check for variable assignment (VAR=value, excluding URLs like http://...)
-	if strings.Contains(line, "=") && !strings.Contains(line, "://") {
-		eqIdx := strings.Index(line, "=")
-		if eqIdx > 0 {
-			// Get word before =
-			before := line[:eqIdx]
-			// Check if it looks like a variable name (alphanumeric + underscore)
-			if len(before) > 0 && !strings.Contains(before, " ") {
-				if (before[0] >= 'A' && before[0] <= 'Z') ||
-					(before[0] >= 'a' && before[0] <= 'z') ||
-					before[0] == '_' {
-					return true
-				}
-			}
-		}
-	}
-
-	// Check if line starts with absolute file path
-	if strings.HasPrefix(line, "/etc/") || strings.HasPrefix(line, "/usr/") ||
-		strings.HasPrefix(line, "/var/") || strings.HasPrefix(line, "/opt/") ||
-		strings.HasPrefix(line, "/tmp/") || strings.HasPrefix(line, "/home/") ||
-		strings.HasPrefix(line, "~/") {
-		return true
-	}
-
-	return false
 }
