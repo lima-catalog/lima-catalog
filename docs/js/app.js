@@ -12,10 +12,11 @@ import { setupKeyboardShortcuts, showKeyboardHelp } from './keyboard.js';
 import { debounce } from './utils.js';
 
 /**
- * Clear all selected keywords
+ * Clear all selected keywords and dynamic keywords
  */
 function clearKeywords() {
     State.clearAllSelections();
+    State.setFocusedTemplate(null); // Clear focused template to remove dynamic keywords
     filterAndRender();
 }
 
