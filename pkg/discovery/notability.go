@@ -172,13 +172,22 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	return breakdown
 }
 
-// isCodeComment checks if a normalized comment line looks like commented-out code
+// IsCodeComment checks if a normalized comment line looks like commented-out code
 // rather than actual documentation. Uses conservative heuristics to avoid false positives.
 // Strong indicators: shell variables ($VAR), pipes (|), redirects (>, <), command chaining (&&, ||)
-func isCodeComment(line string) bool {
+func IsCodeComment(line string) bool {
 	// Skip empty lines
 	if line == "" {
 		return false
+	}
+
+	// Check for shell keywords at start of line
+	lowerLine := strings.ToLower(line)
+	shellKeywords := []string{"export ", "source ", "alias ", "unset ", "cd ", "mkdir ", "chmod ", "chown ", "ln ", "cp ", "mv ", "rm "}
+	for _, keyword := range shellKeywords {
+		if strings.HasPrefix(lowerLine, keyword) {
+			return true
+		}
 	}
 
 	// Check for shell variable expansion (strong indicator)
@@ -285,7 +294,7 @@ func FilterUniqueComments(commentLines []string, knownLines map[string]bool) int
 			continue
 		}
 		// Skip if this looks like commented-out code
-		if isCodeComment(line) {
+		if IsCodeComment(line) {
 			continue
 		}
 		uniqueCount++

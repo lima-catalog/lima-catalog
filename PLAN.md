@@ -264,6 +264,8 @@ Context included in prompts:
 5. **README content** - Repository README (truncated to ~5000 chars)
 6. **Template references** - Shallow clone + grep for template filename with 15 lines context before/after
 
+**Developer Tools:**
+
 Standalone CLI tool `cmd/prompt-generator`:
 - Purpose: Test prompts with different LLM models before backend integration
 - Usage: `prompt-generator owner/repo/path/template.yaml`
@@ -271,6 +273,12 @@ Standalone CLI tool `cmd/prompt-generator`:
 - Configuration: Context lines, max README length, max references, enable/disable sections
 - **Custom templates**: Use `-template` flag or `PROMPT_TEMPLATE` env var to test different prompt structures
 - Token estimation: Shows approximate token count for prompt size planning
+
+Standalone CLI tool `cmd/debug-template`:
+- Purpose: Debug notability scoring by showing unique lines after filtering known official lines
+- Usage: `debug-template -url <template-url> [-official <path-to-official.json>]`
+- Output: Shows comment/provision/probe/message lines that remain after filtering, with code comments marked separately
+- Helps verify official knowledge extraction and code comment detection are working correctly
 
 Backend integration:
 - Same `pkg/prompt.Builder` will be used by analyzer
