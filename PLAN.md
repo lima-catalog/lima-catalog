@@ -269,6 +269,7 @@ Standalone CLI tool `cmd/prompt-generator`:
 - Usage: `prompt-generator owner/repo/path/template.yaml`
 - Output: Formatted prompt ready for LLM testing (stdout or file)
 - Configuration: Context lines, max README length, max references, enable/disable sections
+- **Custom templates**: Use `-template` flag or `PROMPT_TEMPLATE` env var to test different prompt structures
 - Token estimation: Shows approximate token count for prompt size planning
 
 Backend integration:

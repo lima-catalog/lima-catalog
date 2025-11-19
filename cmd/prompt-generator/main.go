@@ -25,6 +25,8 @@ Options:
         GitHub repository name (alternative to full path)
   -path string
         Path to template file in repository (alternative to full path)
+  -template string
+        Path to custom prompt template file (uses embedded default if not specified)
   -context int
         Number of context lines to include around references (default 15)
   -no-comments
@@ -43,7 +45,8 @@ Options:
         Show this help message
 
 Environment Variables:
-  GITHUB_TOKEN    GitHub API token (required)
+  GITHUB_TOKEN       GitHub API token (required)
+  PROMPT_TEMPLATE    Path to custom prompt template (can be overridden by -template flag)
 
 Examples:
   # Using full path notation
@@ -60,6 +63,13 @@ Examples:
 
   # Custom context lines
   prompt-generator lima-vm/lima/templates/ubuntu.yaml -context=20
+
+  # Use custom prompt template
+  prompt-generator lima-vm/lima/templates/ubuntu.yaml -template=my-custom-template.tmpl
+
+  # Use custom template via environment variable
+  export PROMPT_TEMPLATE=my-custom-template.tmpl
+  prompt-generator lima-vm/lima/templates/ubuntu.yaml
 `
 
 func main() {
@@ -67,6 +77,7 @@ func main() {
 		owner           string
 		repo            string
 		path            string
+		templatePath    string
 		contextLines    int
 		noComments      bool
 		noReferences    bool
@@ -80,6 +91,7 @@ func main() {
 	flag.StringVar(&owner, "owner", "", "GitHub repository owner")
 	flag.StringVar(&repo, "repo", "", "GitHub repository name")
 	flag.StringVar(&path, "path", "", "Path to template file")
+	flag.StringVar(&templatePath, "template", "", "Path to custom prompt template file")
 	flag.IntVar(&contextLines, "context", 15, "Number of context lines around references")
 	flag.BoolVar(&noComments, "no-comments", false, "Exclude YAML comments")
 	flag.BoolVar(&noReferences, "no-references", false, "Exclude template references")
@@ -130,6 +142,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Get template path from environment if not provided via flag
+	if templatePath == "" {
+		templatePath = os.Getenv("PROMPT_TEMPLATE")
+	}
+
 	// Build configuration
 	config := &prompt.PromptConfig{
 		ContextLines:      contextLines,
@@ -138,6 +155,7 @@ func main() {
 		IncludeReadme:     !noReadme,
 		MaxReadmeLength:   maxReadmeLength,
 		MaxReferenceFiles: maxRefFiles,
+		TemplatePath:      templatePath,
 	}
 
 	// Create builder

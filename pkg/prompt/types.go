@@ -30,6 +30,12 @@ type TemplateContext struct {
 	References []TemplateReference
 }
 
+// TemplateData wraps TemplateContext and Config for template rendering
+type TemplateData struct {
+	*TemplateContext
+	Config *PromptConfig
+}
+
 // TemplateReference represents a reference to the template file in the repository
 type TemplateReference struct {
 	// File path relative to repo root
@@ -67,6 +73,10 @@ type PromptConfig struct {
 
 	// MaxReferenceFiles limits number of reference files to include (0 = unlimited)
 	MaxReferenceFiles int
+
+	// TemplatePath is the path to a custom prompt template file
+	// If empty, the default embedded template is used
+	TemplatePath string
 }
 
 // DefaultPromptConfig returns sensible defaults for prompt generation
