@@ -488,12 +488,14 @@ func extractNonCommentLines(script string) []string {
 
 // normalizeCommentLine normalizes a comment line (strip leading whitespace and #, trailing whitespace)
 func normalizeCommentLine(line string) string {
-	// Trim leading whitespace
-	line = strings.TrimLeft(line, " \t")
-
-	// Strip all leading # and whitespace
-	line = strings.TrimLeft(line, "#")
-	line = strings.TrimLeft(line, " \t")
+	// Strip ALL leading whitespace and # characters (loop until nothing left to strip)
+	for {
+		before := line
+		line = strings.TrimLeft(line, " \t#")
+		if line == before {
+			break // Nothing more to strip
+		}
+	}
 
 	// Trim trailing whitespace
 	line = strings.TrimRight(line, " \t")
