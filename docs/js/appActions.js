@@ -9,6 +9,23 @@ import { updateSidebar } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
 
 /**
+ * Update sidebar only (used when focused template changes)
+ * This doesn't re-render the template grid to avoid breaking keyboard navigation
+ */
+export function updateSidebarOnly() {
+    const templates = State.getTemplates();
+    const selectedKeywords = State.getSelectedKeywords();
+    const selectedCategory = State.getSelectedCategory();
+    const filteredTemplates = State.getFilteredTemplates();
+
+    updateSidebar({
+        filteredTemplates,
+        selectedKeywords,
+        selectedCategory
+    }, handleKeywordToggle, handleCategoryToggle, {});
+}
+
+/**
  * Filter and render templates based on current state
  */
 export function filterAndRender(options = {}) {

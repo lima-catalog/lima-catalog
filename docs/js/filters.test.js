@@ -332,7 +332,7 @@ runner.test('getDynamicKeywords: returns org/repo keyword when only one repo wit
     const result = getDynamicKeywords(templates, focusedTemplate);
 
     assert.equal(result.length, 1);
-    assert.equal(result[0][0], 'org/repo:user/repo');
+    assert.equal(result[0][0], 'user/repo');
     assert.equal(result[0][1], 2); // 2 templates in this repo
     assert.equal(result[0][2], true); // isDynamic flag
 });
@@ -351,19 +351,19 @@ runner.test('getDynamicKeywords: returns org and org/repo keywords when multiple
     const focusedTemplate = multiRepoTemplates[0]; // lima-vm/lima
     const result = getDynamicKeywords(multiRepoTemplates, focusedTemplate);
 
-    // Should have: org:lima-vm, org/repo:lima-vm/lima, org/repo:lima-vm/other
+    // Should have: lima-vm, lima-vm/lima, lima-vm/other
     assert.equal(result.length, 3);
 
     const keywords = result.map(r => r[0]);
-    assert.ok(keywords.includes('org:lima-vm'));
-    assert.ok(keywords.includes('org/repo:lima-vm/lima'));
-    assert.ok(keywords.includes('org/repo:lima-vm/other'));
+    assert.ok(keywords.includes('lima-vm'));
+    assert.ok(keywords.includes('lima-vm/lima'));
+    assert.ok(keywords.includes('lima-vm/other'));
 
     // Check counts
     const resultMap = new Map(result.map(r => [r[0], r[1]]));
-    assert.equal(resultMap.get('org:lima-vm'), 3); // 2 from lima + 1 from other
-    assert.equal(resultMap.get('org/repo:lima-vm/lima'), 2);
-    assert.equal(resultMap.get('org/repo:lima-vm/other'), 1);
+    assert.equal(resultMap.get('lima-vm'), 3); // 2 from lima + 1 from other
+    assert.equal(resultMap.get('lima-vm/lima'), 2);
+    assert.equal(resultMap.get('lima-vm/other'), 1);
 
     // Check isDynamic flags
     assert.ok(result.every(r => r[2] === true));
@@ -378,26 +378,26 @@ runner.test('getDynamicKeywords: works for templates from different org with sin
 });
 
 // Test applyFilters with dynamic keywords
-runner.test('applyFilters: filters by org: dynamic keyword', () => {
+runner.test('applyFilters: filters by org dynamic keyword', () => {
     const templates = [
         { name: 't1', repo: 'lima-vm/lima', org: 'lima-vm', keywords: [] },
         { name: 't2', repo: 'lima-vm/other', org: 'lima-vm', keywords: [] },
         { name: 't3', repo: 'user/repo', org: 'user', keywords: [] }
     ];
-    const result = applyFilters(templates, { selectedKeywords: new Set(['org:lima-vm']) });
+    const result = applyFilters(templates, { selectedKeywords: new Set(['lima-vm']) });
 
     assert.equal(result.length, 2);
     assert.ok(result.every(t => t.org === 'lima-vm'));
 });
 
-runner.test('applyFilters: filters by org/repo: dynamic keyword', () => {
+runner.test('applyFilters: filters by repo dynamic keyword', () => {
     const templates = [
         { name: 't1', repo: 'lima-vm/lima', org: 'lima-vm', keywords: [] },
         { name: 't2', repo: 'lima-vm/lima', org: 'lima-vm', keywords: [] },
         { name: 't3', repo: 'lima-vm/other', org: 'lima-vm', keywords: [] },
         { name: 't4', repo: 'user/repo', org: 'user', keywords: [] }
     ];
-    const result = applyFilters(templates, { selectedKeywords: new Set(['org/repo:lima-vm/lima']) });
+    const result = applyFilters(templates, { selectedKeywords: new Set(['lima-vm/lima']) });
 
     assert.equal(result.length, 2);
     assert.ok(result.every(t => t.repo === 'lima-vm/lima'));
@@ -410,11 +410,11 @@ runner.test('applyFilters: combines dynamic keyword with regular keyword', () =>
         { name: 't3', repo: 'user/repo', org: 'user', keywords: ['docker'] }
     ];
     const result = applyFilters(templates, {
-        selectedKeywords: new Set(['org:lima-vm', 'docker'])
+        selectedKeywords: new Set(['lima-vm', 'docker'])
     });
 
     assert.equal(result.length, 1);
-    assert.equal(result[0].name, 't1'); // Only t1 matches both org:lima-vm AND docker
+    assert.equal(result[0].name, 't1'); // Only t1 matches both lima-vm AND docker
 });
 
 runner.test('applyFilters: handles multiple dynamic keywords', () => {
@@ -424,10 +424,10 @@ runner.test('applyFilters: handles multiple dynamic keywords', () => {
         { name: 't3', repo: 'user/repo', org: 'user', keywords: [] }
     ];
     const result = applyFilters(templates, {
-        selectedKeywords: new Set(['org:lima-vm', 'org/repo:lima-vm/lima'])
+        selectedKeywords: new Set(['lima-vm', 'lima-vm/lima'])
     });
 
-    // AND logic: must match BOTH org:lima-vm AND org/repo:lima-vm/lima
+    // AND logic: must match BOTH lima-vm AND lima-vm/lima
     assert.equal(result.length, 1);
     assert.equal(result[0].repo, 'lima-vm/lima');
 });

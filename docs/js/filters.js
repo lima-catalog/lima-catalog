@@ -80,16 +80,16 @@ export function getDynamicKeywords(allTemplates, focusedTemplate) {
         reposInFocusedOrg.forEach(repo => {
             orgTemplateCount += repoTemplates.get(repo) || 0;
         });
-        dynamicKeywords.push([`org:${focusedOrg}`, orgTemplateCount, true]);
+        dynamicKeywords.push([focusedOrg, orgTemplateCount, true]);
 
         // Add ORG/REPO keywords for each repo in this org
         reposInFocusedOrg.forEach(repo => {
             const count = repoTemplates.get(repo) || 0;
-            dynamicKeywords.push([`org/repo:${repo}`, count, true]);
+            dynamicKeywords.push([repo, count, true]);
         });
     } else if (repoCount === 1 && templatesInFocusedRepo > 1) {
         // Only one repo from this org, but multiple templates: add ORG/REPO keyword
-        dynamicKeywords.push([`org/repo:${focusedRepo}`, templatesInFocusedRepo, true]);
+        dynamicKeywords.push([focusedRepo, templatesInFocusedRepo, true]);
     }
 
     console.log('[getDynamicKeywords] Returning:', {
@@ -152,16 +152,19 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
         if (selectedKeywords.size > 0) {
             const templateKeywords = new Set(template.keywords || []);
             for (const keyword of selectedKeywords) {
-                // Check if this is a dynamic keyword
-                if (keyword.startsWith('org:')) {
-                    const org = keyword.substring(4); // Remove 'org:' prefix
-                    if (template.org !== org) return false;
-                } else if (keyword.startsWith('org/repo:')) {
-                    const repo = keyword.substring(9); // Remove 'org/repo:' prefix
-                    if (template.repo !== repo) return false;
+                // Check if it's a regular keyword first
+                if (templateKeywords.has(keyword)) {
+                    continue; // Match found, check next keyword
+                }
+
+                // Not a regular keyword - check if it's a dynamic org/repo keyword
+                // Repo keywords contain '/', org keywords don't
+                if (keyword.includes('/')) {
+                    // Repo keyword - must match template.repo
+                    if (template.repo !== keyword) return false;
                 } else {
-                    // Regular keyword - check if template has it
-                    if (!templateKeywords.has(keyword)) return false;
+                    // Org keyword - must match template.org
+                    if (template.org !== keyword) return false;
                 }
             }
         }

@@ -4,7 +4,7 @@
 
 import { isDebugMode } from './state.js';
 import * as State from './state.js';
-import { filterAndRender } from './appActions.js';
+import { updateSidebarOnly } from './appActions.js';
 
 /**
  * Escape HTML to prevent XSS
@@ -369,13 +369,13 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
     const updateFocusedTemplate = () => {
         console.log('[templateCard] Setting focused template:', template.id);
         State.setFocusedTemplate(template);
-        filterAndRender();
+        updateSidebarOnly();
     };
 
     const clearFocusedTemplate = () => {
         console.log('[templateCard] Clearing focused template');
         State.setFocusedTemplate(null);
-        filterAndRender();
+        updateSidebarOnly();
     };
 
     // On mouse hover
