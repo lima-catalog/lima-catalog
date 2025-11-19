@@ -12,31 +12,46 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// extractDomain extracts the domain from a URL or location string
+// extractDomain extracts the top-level domain from a URL or location string
+// e.g., "downloads.ubuntu.com" -> "ubuntu.com", "nixos.org" -> "nixos.org"
 func extractDomain(location string) string {
 	// Handle template:// references (these are references to local templates)
 	if strings.HasPrefix(location, "template://") {
 		return "" // Not a real domain, skip
 	}
 
+	var host string
+
 	// Try to parse as URL
 	if strings.HasPrefix(location, "http://") || strings.HasPrefix(location, "https://") {
 		parsedURL, err := url.Parse(location)
 		if err == nil && parsedURL.Host != "" {
-			return strings.ToLower(parsedURL.Host)
+			host = parsedURL.Host
 		}
-	}
-
-	// If it looks like a domain (contains dots but no slashes before first dot)
-	if strings.Contains(location, ".") {
+	} else if strings.Contains(location, ".") {
+		// If it looks like a domain (contains dots but no slashes before first dot)
 		parts := strings.Split(location, "/")
-		domain := parts[0]
-		if strings.Contains(domain, ".") {
-			return strings.ToLower(domain)
+		if len(parts) > 0 && strings.Contains(parts[0], ".") {
+			host = parts[0]
 		}
 	}
 
-	return ""
+	if host == "" {
+		return ""
+	}
+
+	// Remove port if present
+	host = strings.Split(host, ":")[0]
+	host = strings.ToLower(host)
+
+	// Extract registrable domain (last 2 parts)
+	domainParts := strings.Split(host, ".")
+	if len(domainParts) < 2 {
+		return host // Already a simple domain
+	}
+
+	// Return last 2 parts (e.g., ubuntu.com from downloads.ubuntu.com)
+	return strings.Join(domainParts[len(domainParts)-2:], ".")
 }
 
 // IdentifyUnusualImages returns a list of image domains not in the official template set
@@ -107,12 +122,18 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	weights := config.DefaultNotabilityWeights()
 
 	// Message presence (strong signal for reusability)
+	// Base bonus for having a message, plus line-based bonus for length
 	if metrics.MessageLength > 0 {
 		breakdown.Message = weights.Message
+		// Add 1 point per line for better filtering granularity
+		// (allows sorting by message quality, not just presence)
+		breakdown.Message += float64(metrics.MessageLineCount)
 	}
 
 	// Provision scripts (indicates customization/setup)
-	breakdown.Provision = float64(metrics.ProvisionCount)*weights.ProvisionBase +
+	// Use substantial script count (>10 lines, capped at 3, min 1) to avoid
+	// rewarding templates that split scripts into many tiny pieces
+	breakdown.Provision = float64(metrics.ProvisionSubstantial)*weights.ProvisionBase +
 		float64(metrics.ProvisionTotalLines)*weights.ProvisionLine
 
 	// Parameters (indicates configurability)
@@ -122,7 +143,9 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	breakdown.EnvVars = float64(metrics.EnvCount) * weights.EnvVar
 
 	// Probes (less important than provision)
-	breakdown.Probes = float64(metrics.ProbeCount)*weights.ProbeBase +
+	// Use substantial script count (>10 lines, capped at 3, min 1) to avoid
+	// rewarding templates that split scripts into many tiny pieces
+	breakdown.Probes = float64(metrics.ProbeSubstantial)*weights.ProbeBase +
 		float64(metrics.ProbeTotalLines)*weights.ProbeLine
 
 	// Unusual images (indicates specialized use case)
@@ -149,26 +172,120 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 	return breakdown
 }
 
-// isEmptyComment checks if a comment line is empty (just # with whitespace)
-func isEmptyComment(line string) bool {
-	// Remove the leading # and check if remainder is only whitespace
-	if !strings.HasPrefix(line, "#") {
+// isCodeComment checks if a normalized comment line looks like commented-out code
+// rather than actual documentation. Uses conservative heuristics to avoid false positives.
+// Strong indicators: shell variables ($VAR), pipes (|), redirects (>, <), command chaining (&&, ||)
+func isCodeComment(line string) bool {
+	// Skip empty lines
+	if line == "" {
 		return false
 	}
-	remainder := strings.TrimSpace(line[1:])
-	return remainder == ""
+
+	// Check for shell variable expansion (strong indicator)
+	// $VAR, ${VAR}, $(...), or backticks
+	if strings.Contains(line, "$") {
+		// Make sure it's not just a price ($5) by checking for variable patterns
+		if strings.Contains(line, "${") || strings.Contains(line, "$(") {
+			return true
+		}
+		// Check for $WORD pattern (not just $ followed by number)
+		for i := strings.Index(line, "$"); i >= 0; i = strings.Index(line[i+1:], "$") {
+			if i+1 < len(line) && (line[i+1] >= 'A' && line[i+1] <= 'Z' || line[i+1] >= 'a' && line[i+1] <= 'z' || line[i+1] == '_') {
+				return true
+			}
+			if i+1 >= len(line) {
+				break
+			}
+		}
+	}
+
+	// Check for backticks (command substitution)
+	if strings.Contains(line, "`") {
+		return true
+	}
+
+	// Check for pipe (likely command chaining, not markdown table)
+	// Markdown tables have multiple pipes in a pattern like "| cell | cell |"
+	pipeCount := strings.Count(line, "|")
+	if pipeCount == 1 || (pipeCount > 1 && !strings.Contains(line, "| ")) {
+		return true
+	}
+
+	// Check for command chaining operators
+	if strings.Contains(line, "&&") || strings.Contains(line, "||") {
+		return true
+	}
+
+	// Check for shell redirects (strong indicator)
+	if strings.Contains(line, " > ") || strings.Contains(line, " >> ") ||
+		strings.Contains(line, " < ") || strings.Contains(line, " 2>&1") ||
+		strings.HasSuffix(line, ">") || strings.HasSuffix(line, ">>") {
+		return true
+	}
+
+	// Check for assignment pattern (VAR=value without spaces, but not ==)
+	if strings.Contains(line, "=") && !strings.Contains(line, "==") && !strings.Contains(line, "!=") {
+		// Look for pattern: WORD=value with no spaces around =
+		// But avoid URLs (http://) and explanatory text (key = value)
+		if !strings.Contains(line, "://") && !strings.Contains(line, " = ") {
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				before := strings.TrimSpace(parts[0])
+				// Check if before looks like a variable name (no spaces, starts with letter/underscore)
+				if len(before) > 0 && !strings.Contains(before, " ") {
+					if (before[0] >= 'A' && before[0] <= 'Z') ||
+						(before[0] >= 'a' && before[0] <= 'z') ||
+						before[0] == '_' {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	// Check if line starts with absolute file path
+	if strings.HasPrefix(line, "/etc/") || strings.HasPrefix(line, "/usr/") ||
+		strings.HasPrefix(line, "/var/") || strings.HasPrefix(line, "/opt/") ||
+		strings.HasPrefix(line, "/tmp/") || strings.HasPrefix(line, "/home/") ||
+		strings.HasPrefix(line, "~/") {
+		return true
+	}
+
+	return false
 }
 
-// FilterUniqueComments counts unique comment lines, excluding empty comments and default template comments
-func FilterUniqueComments(commentLines []string, defaultComments map[string]bool) int {
+// FilterUniqueLines counts unique lines, excluding empty lines, known lines, and code-like comments
+// For comment lines, also filters out commented-out code (e.g., "# apt-get install foo")
+func FilterUniqueLines(lines []string, knownLines map[string]bool) int {
 	uniqueCount := 0
-	for _, line := range commentLines {
-		// Skip empty comments (just # with whitespace)
-		if isEmptyComment(line) {
+	for _, line := range lines {
+		// Skip empty lines
+		if line == "" {
 			continue
 		}
-		// Skip if this comment exists in default template
-		if defaultComments[line] {
+		// Skip if this line exists in known lines
+		if knownLines[line] {
+			continue
+		}
+		uniqueCount++
+	}
+	return uniqueCount
+}
+
+// FilterUniqueComments counts unique comment lines, excluding empty lines, known lines, and code-like comments
+func FilterUniqueComments(commentLines []string, knownLines map[string]bool) int {
+	uniqueCount := 0
+	for _, line := range commentLines {
+		// Skip empty lines
+		if line == "" {
+			continue
+		}
+		// Skip if this line exists in known lines
+		if knownLines[line] {
+			continue
+		}
+		// Skip if this looks like commented-out code
+		if isCodeComment(line) {
 			continue
 		}
 		uniqueCount++
@@ -177,22 +294,97 @@ func FilterUniqueComments(commentLines []string, defaultComments map[string]bool
 }
 
 // PopulateNotabilityMetrics creates NotabilityMetrics from TemplateInfo
-// Filters out comments that are in the default template or are empty
-func PopulateNotabilityMetrics(info *TemplateInfo, officialImages map[string]bool, defaultComments map[string]bool) *types.NotabilityMetrics {
-	// Filter out default template comments and empty comments
-	uniqueCommentCount := FilterUniqueComments(info.CommentLines, defaultComments)
+// Filters out known lines from official templates
+func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types.NotabilityMetrics {
+	// Build lookup maps from official knowledge
+	knownComments := make(map[string]bool)
+	for _, line := range ok.KnownLines.Comments {
+		knownComments[line] = true
+	}
+
+	knownProvision := make(map[string]bool)
+	for _, line := range ok.KnownLines.Provision {
+		knownProvision[line] = true
+	}
+
+	knownProbes := make(map[string]bool)
+	for _, line := range ok.KnownLines.Probes {
+		knownProbes[line] = true
+	}
+
+	knownMessages := make(map[string]bool)
+	for _, line := range ok.KnownLines.Messages {
+		knownMessages[line] = true
+	}
+
+	officialImages := make(map[string]bool)
+	for _, domain := range ok.Images {
+		officialImages[domain] = true
+	}
+
+	// Filter out known lines (and code-like comments for comment lines)
+	uniqueCommentCount := FilterUniqueComments(info.CommentLines, knownComments) // Filters code comments too
+	uniqueProvisionLines := FilterUniqueLines(info.ProvisionLines, knownProvision)
+	uniqueProbeLines := FilterUniqueLines(info.ProbeLines, knownProbes)
+
+	// Check if message contains any unique lines
+	messageLength := 0
+	messageLineCount := 0
+	if len(info.MessageLines) > 0 {
+		uniqueMessageLines := FilterUniqueLines(info.MessageLines, knownMessages)
+		if uniqueMessageLines > 0 {
+			// If there are unique message lines, count total message length and line count
+			messageLength = info.MessageLength
+			messageLineCount = len(info.MessageLines)
+		}
+	}
+
+	// Count substantial scripts (>10 lines) for provision and probes
+	// Cap at 3, minimum 1 if any scripts exist
+	provisionSubstantial := countSubstantialScripts(info.ProvisionScriptLines, info.ProvisionCount)
+	probeSubstantial := countSubstantialScripts(info.ProbeScriptLines, info.ProbeCount)
 
 	return &types.NotabilityMetrics{
-		MessageLength:       info.MessageLength,
-		ProvisionCount:      info.ProvisionCount,
-		ProvisionTotalLines: info.ProvisionTotalLines,
-		ProbeCount:          info.ProbeCount,
-		ProbeTotalLines:     info.ProbeTotalLines,
-		ParamCount:          info.ParamCount,
-		EnvCount:            info.EnvCount,
-		CommentLineCount:    uniqueCommentCount,
-		UnusualImages:       IdentifyUnusualImages(info.Images, officialImages),
+		MessageLength:        messageLength,
+		MessageLineCount:     messageLineCount,
+		ProvisionCount:       info.ProvisionCount,
+		ProvisionSubstantial: provisionSubstantial,
+		ProvisionTotalLines:  uniqueProvisionLines,
+		ProbeCount:           info.ProbeCount,
+		ProbeSubstantial:     probeSubstantial,
+		ProbeTotalLines:      uniqueProbeLines,
+		ParamCount:           info.ParamCount,
+		EnvCount:             info.EnvCount,
+		CommentLineCount:     uniqueCommentCount,
+		UnusualImages:        IdentifyUnusualImages(info.Images, officialImages),
 	}
+}
+
+// countSubstantialScripts counts scripts with >10 lines, capped at 3, minimum 1 if any scripts exist
+func countSubstantialScripts(scriptLineCounts []int, totalScripts int) int {
+	if totalScripts == 0 {
+		return 0
+	}
+
+	// Count scripts with >10 lines
+	substantial := 0
+	for _, lineCount := range scriptLineCounts {
+		if lineCount > 10 {
+			substantial++
+		}
+	}
+
+	// Cap at 3
+	if substantial > 3 {
+		substantial = 3
+	}
+
+	// Minimum 1 if any scripts exist
+	if substantial == 0 && totalScripts > 0 {
+		substantial = 1
+	}
+
+	return substantial
 }
 
 // FetchOfficialImages retrieves the list of official image domains from lima-vm/lima repository

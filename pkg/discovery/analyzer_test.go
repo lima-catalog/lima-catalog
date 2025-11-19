@@ -35,11 +35,14 @@ func TestNewAnalyzer(t *testing.T) {
 		if a == nil {
 			t.Fatal("expected non-nil analyzer")
 		}
-		if a.OfficialImages == nil {
-			t.Error("expected OfficialImages map to be initialized")
+		if a.OfficialKnowledge == nil {
+			t.Error("expected OfficialKnowledge to be initialized")
 		}
-		if a.DefaultComments == nil {
-			t.Error("expected DefaultComments map to be initialized")
+		if a.OfficialKnowledge.Images == nil {
+			t.Error("expected OfficialKnowledge.Images to be initialized")
+		}
+		if a.OfficialKnowledge.KnownLines.Comments == nil {
+			t.Error("expected OfficialKnowledge.KnownLines.Comments to be initialized")
 		}
 		if a.ForceAnalyze != false {
 			t.Error("expected ForceAnalyze to be false")
@@ -438,18 +441,27 @@ func TestAnalyzeTemplate(t *testing.T) {
 	})
 
 	t.Run("Analysis with official images", func(t *testing.T) {
+		officialKnowledge := &OfficialKnowledge{
+			Images: []string{
+				"ubuntu.com",
+				"alpinelinux.org",
+			},
+			KnownLines: OfficialKnownLines{
+				Comments:  []string{},
+				Provision: []string{},
+				Probes:    []string{},
+				Messages:  []string{},
+			},
+		}
+
 		a := NewAnalyzer(
 			WithClock(&mockClock{now: fixedTime}),
 			WithHTTPClient(&mockHTTPClient{
 				response: nil,
 				err:      http.ErrContentLength,
 			}),
+			WithOfficialKnowledge(officialKnowledge),
 		)
-		// Set official images after creation (no option for this as it's populated by FetchOfficialImagesForAnalyzer)
-		a.OfficialImages = map[string]bool{
-			"ubuntu": true,
-			"alpine": true,
-		}
 
 		template := &types.Template{
 			ID:   "test/repo/template.yaml",

@@ -31,7 +31,7 @@ provision:
 				Categories:          []string{"containers"},
 				HasDocker:           true,
 				ProvisionCount:      1,
-				ProvisionTotalLines: 3,
+				ProvisionTotalLines: 2, // Changed from 3: only non-empty lines count now
 				CommentLineCount:    1,
 			},
 			wantErr: false,
@@ -74,7 +74,7 @@ provision:
 				Categories:          []string{"orchestration", "development"}, // "development" from node keyword
 				HasK8s:              true,
 				ProvisionCount:      1,
-				ProvisionTotalLines: 3,
+				ProvisionTotalLines: 2, // Changed from 3: only non-empty lines count now
 			},
 			wantErr: false,
 		},
@@ -92,7 +92,7 @@ probes:
 				Images:          []string{"ubuntu"},
 				Keywords:        []string{"ubuntu"},
 				ProbeCount:      1,
-				ProbeTotalLines: 2,
+				ProbeTotalLines: 1, // Changed from 2: only non-empty lines count now
 			},
 			wantErr: false,
 		},

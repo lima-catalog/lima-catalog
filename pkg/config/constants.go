@@ -66,7 +66,7 @@ type NotabilityWeights struct {
 // DefaultNotabilityWeights returns the default scoring weights
 func DefaultNotabilityWeights() NotabilityWeights {
 	return NotabilityWeights{
-		Message:        100.0, // Strong signal for reusability
+		Message:        50.0,  // Base bonus for user-facing message
 		ProvisionBase:  10.0,  // Points per provision script
 		ProvisionLine:  0.1,   // Points per line (10 lines = 1 point)
 		ProbeBase:      5.0,   // Points per probe script

@@ -56,15 +56,18 @@ type Template struct {
 // NotabilityMetrics contains raw observations used to calculate template notability score
 // These are stored as raw data to allow weight adjustments without re-analysis
 type NotabilityMetrics struct {
-	MessageLength       int      `json:"message_length"`           // Length of message in characters (>0 means template has message)
-	ProvisionCount      int      `json:"provision_count"`          // Number of provision scripts
-	ProvisionTotalLines int      `json:"provision_total_lines"`    // Total lines across all provision scripts
-	ProbeCount          int      `json:"probe_count"`              // Number of probe scripts
-	ProbeTotalLines     int      `json:"probe_total_lines"`        // Total lines across all probe scripts
-	ParamCount          int      `json:"param_count"`              // Number of configurable parameters
-	EnvCount            int      `json:"env_count"`                // Number of environment variables
-	CommentLineCount    int      `json:"comment_line_count"`       // Number of comment lines in template
-	UnusualImages       []string `json:"unusual_images,omitempty"` // Images not in official templates
+	MessageLength            int      `json:"message_length"`                      // Length of message in characters (>0 means template has message)
+	MessageLineCount         int      `json:"message_line_count,omitempty"`        // Number of lines in message (for line-based bonus)
+	ProvisionCount           int      `json:"provision_count"`                     // Number of provision scripts (total)
+	ProvisionSubstantial     int      `json:"provision_substantial,omitempty"`     // Number of substantial provision scripts (>10 lines, capped at 3, min 1)
+	ProvisionTotalLines      int      `json:"provision_total_lines"`               // Total unique lines across all provision scripts
+	ProbeCount               int      `json:"probe_count"`                         // Number of probe scripts (total)
+	ProbeSubstantial         int      `json:"probe_substantial,omitempty"`         // Number of substantial probe scripts (>10 lines, capped at 3, min 1)
+	ProbeTotalLines          int      `json:"probe_total_lines"`                   // Total unique lines across all probe scripts
+	ParamCount               int      `json:"param_count"`                         // Number of configurable parameters
+	EnvCount                 int      `json:"env_count"`                           // Number of environment variables
+	CommentLineCount         int      `json:"comment_line_count"`                  // Number of unique comment lines in template
+	UnusualImages            []string `json:"unusual_images,omitempty"`            // Images not in official templates
 }
 
 // Repository represents a GitHub repository containing templates

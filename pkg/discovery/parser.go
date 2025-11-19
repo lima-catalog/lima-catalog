@@ -59,15 +59,20 @@ type TemplateInfo struct {
 	Categories   []string
 
 	// Notability metrics (raw data for scoring)
-	MessageLength       int
-	ProvisionCount      int
-	ProvisionTotalLines int
-	ProbeCount          int
-	ProbeTotalLines     int
-	ParamCount          int
-	EnvCount            int
-	CommentLineCount    int
-	CommentLines        []string // Actual comment lines for filtering
+	MessageLength          int
+	ProvisionCount         int
+	ProvisionTotalLines    int
+	ProvisionScriptLines   []int    // Line count per provision script (for counting substantial scripts)
+	ProbeCount             int
+	ProbeTotalLines        int
+	ProbeScriptLines       []int    // Line count per probe script
+	ParamCount             int
+	EnvCount               int
+	CommentLineCount       int
+	CommentLines           []string // Normalized comment lines for filtering
+	ProvisionLines         []string // Normalized provision script lines (non-comments)
+	ProbeLines             []string // Normalized probe script lines (non-comments)
+	MessageLines           []string // Normalized message lines
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file
@@ -105,10 +110,16 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	info := &TemplateInfo{
-		Images:     []string{},
-		Arch:       []string{},
-		Keywords:   []string{},
-		Categories: []string{},
+		Images:               []string{},
+		Arch:                 []string{},
+		Keywords:             []string{},
+		Categories:           []string{},
+		CommentLines:         []string{},
+		ProvisionLines:       []string{},
+		ProbeLines:           []string{},
+		MessageLines:         []string{},
+		ProvisionScriptLines: []int{},
+		ProbeScriptLines:     []int{},
 	}
 
 	// Extract notability metrics
@@ -116,14 +127,30 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	info.ParamCount = len(template.Param)
 	info.EnvCount = len(template.Env)
 
-	// Extract comment lines
+	// Extract and normalize message lines
+	if template.Message != "" {
+		messageLines := strings.Split(template.Message, "\n")
+		for _, line := range messageLines {
+			normalized := normalizeLinePkg(line)
+			if normalized != "" {
+				info.MessageLines = append(info.MessageLines, normalized)
+			}
+		}
+	}
+
+	// Extract and normalize comment lines
 	lines := strings.Split(content, "\n")
 	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
+		// Trim leading whitespace
+		trimmed := strings.TrimLeft(line, " \t")
+
 		if strings.HasPrefix(trimmed, "#") {
-			// Store the comment line for filtering
-			info.CommentLines = append(info.CommentLines, trimmed)
-			info.CommentLineCount++
+			// Normalize: strip leading whitespace, #, and trailing whitespace
+			normalized := normalizeCommentLinePkg(line)
+			if normalized != "" {
+				info.CommentLines = append(info.CommentLines, normalized)
+				info.CommentLineCount++
+			}
 		}
 	}
 
@@ -160,15 +187,25 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	info.ProvisionCount = len(template.Provision)
 	for _, prov := range template.Provision {
 		provisioningText += " " + prov.Script
-		// Count lines in this provision script
-		info.ProvisionTotalLines += strings.Count(prov.Script, "\n") + 1
+
+		// Extract non-comment lines from provision script
+		scriptLines := extractNonCommentLinesPkg(prov.Script)
+		info.ProvisionLines = append(info.ProvisionLines, scriptLines...)
+		info.ProvisionTotalLines += len(scriptLines)
+		// Track line count per script for notability scoring
+		info.ProvisionScriptLines = append(info.ProvisionScriptLines, len(scriptLines))
 	}
 	provisioningText = strings.ToLower(provisioningText)
 
 	// Collect probe metrics
 	info.ProbeCount = len(template.Probes)
 	for _, probe := range template.Probes {
-		info.ProbeTotalLines += strings.Count(probe.Script, "\n") + 1
+		// Extract non-comment lines from probe script
+		scriptLines := extractNonCommentLinesPkg(probe.Script)
+		info.ProbeLines = append(info.ProbeLines, scriptLines...)
+		info.ProbeTotalLines += len(scriptLines)
+		// Track line count per script for notability scoring
+		info.ProbeScriptLines = append(info.ProbeScriptLines, len(scriptLines))
 	}
 
 	// Detect technologies from provisioning scripts
@@ -288,4 +325,47 @@ func appendUnique(slice []string, items ...string) []string {
 	}
 
 	return slice
+}
+
+// normalizeCommentLinePkg normalizes a comment line (strip leading whitespace and #, trailing whitespace)
+func normalizeCommentLinePkg(line string) string {
+	// Trim leading whitespace
+	line = strings.TrimLeft(line, " \t")
+
+	// Strip all leading # and whitespace
+	line = strings.TrimLeft(line, "#")
+	line = strings.TrimLeft(line, " \t")
+
+	// Trim trailing whitespace
+	line = strings.TrimRight(line, " \t")
+
+	return line
+}
+
+// normalizeLinePkg normalizes a regular line (strip leading and trailing whitespace)
+func normalizeLinePkg(line string) string {
+	// Trim leading and trailing whitespace
+	return strings.TrimSpace(line)
+}
+
+// extractNonCommentLinesPkg extracts non-comment lines from script content
+func extractNonCommentLinesPkg(script string) []string {
+	var lines []string
+	scriptLines := strings.Split(script, "\n")
+	for _, line := range scriptLines {
+		// Trim leading whitespace
+		trimmed := strings.TrimLeft(line, " \t")
+
+		// Skip comment lines (they're counted as YAML comments)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
+		// Skip empty lines
+		normalized := normalizeLinePkg(line)
+		if normalized != "" {
+			lines = append(lines, normalized)
+		}
+	}
+	return lines
 }

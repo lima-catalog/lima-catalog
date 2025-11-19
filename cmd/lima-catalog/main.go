@@ -127,7 +127,7 @@ func checkRateLimits(client *github.Client) error {
 }
 
 // runAnalysisPhase analyzes templates for keywords, categories, and notability
-func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage.Storage, forceAnalyze bool) error {
+func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage.Storage, dataDir string, forceAnalyze bool) error {
 	fmt.Println("=== Phase 3: Template Analysis ===")
 	fmt.Println()
 
@@ -148,24 +148,75 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 		repoMap[repositories[i].ID] = &repositories[i]
 	}
 
-	// Create analyzer
-	analyzer := discovery.NewAnalyzer(discovery.WithForceAnalyze(forceAnalyze))
+	// Load or update official knowledge
+	officialKnowledgePath := filepath.Join(dataDir, "official.json")
+	fmt.Println("Loading official knowledge from lima-vm/lima...")
 
-	// Fetch official images for notability scoring
-	fmt.Println("Fetching official images from lima-vm/lima...")
-	if err := analyzer.FetchOfficialImagesForAnalyzer(ctx, client.GetClient()); err != nil {
-		fmt.Printf("Warning: failed to fetch official images: %v\n", err)
-		fmt.Println("Continuing with analysis (all images will be considered unusual)...")
+	var officialKnowledge *discovery.OfficialKnowledge
+	limaRepoPath := os.Getenv("LIMA_REPO_PATH")
+
+	if limaRepoPath != "" {
+		// Update official knowledge from lima repo
+		fmt.Printf("Using lima repo at: %s\n", limaRepoPath)
+		var err error
+		officialKnowledge, err = discovery.UpdateOfficialKnowledge(ctx, limaRepoPath, officialKnowledgePath)
+		if err != nil {
+			fmt.Printf("Warning: failed to update official knowledge: %v\n", err)
+			fmt.Println("Loading existing official knowledge...")
+			officialKnowledge, err = discovery.LoadOfficialKnowledge(officialKnowledgePath)
+			if err != nil {
+				fmt.Printf("Warning: failed to load official knowledge: %v\n", err)
+				fmt.Println("Continuing with empty official knowledge...")
+				officialKnowledge = &discovery.OfficialKnowledge{
+					KnownLines: discovery.OfficialKnownLines{
+						Comments:  []string{},
+						Provision: []string{},
+						Probes:    []string{},
+						Messages:  []string{},
+					},
+					Images: []string{},
+				}
+			}
+		}
+		fmt.Printf("Loaded %d known comment lines, %d provision lines, %d probe lines, %d message lines, %d image domains\n",
+			len(officialKnowledge.KnownLines.Comments),
+			len(officialKnowledge.KnownLines.Provision),
+			len(officialKnowledge.KnownLines.Probes),
+			len(officialKnowledge.KnownLines.Messages),
+			len(officialKnowledge.Images))
+	} else {
+		// Load existing official knowledge
+		fmt.Println("LIMA_REPO_PATH not set, loading existing official knowledge...")
+		var err error
+		officialKnowledge, err = discovery.LoadOfficialKnowledge(officialKnowledgePath)
+		if err != nil {
+			fmt.Printf("Warning: failed to load official knowledge: %v\n", err)
+			fmt.Println("Continuing with empty official knowledge...")
+			officialKnowledge = &discovery.OfficialKnowledge{
+				KnownLines: discovery.OfficialKnownLines{
+					Comments:  []string{},
+					Provision: []string{},
+					Probes:    []string{},
+					Messages:  []string{},
+				},
+				Images: []string{},
+			}
+		} else {
+			fmt.Printf("Loaded %d known comment lines, %d provision lines, %d probe lines, %d message lines, %d image domains\n",
+				len(officialKnowledge.KnownLines.Comments),
+				len(officialKnowledge.KnownLines.Provision),
+				len(officialKnowledge.KnownLines.Probes),
+				len(officialKnowledge.KnownLines.Messages),
+				len(officialKnowledge.Images))
+		}
 	}
 	fmt.Println()
 
-	// Fetch default template comments for filtering
-	fmt.Println("Fetching default template comments from lima-vm/lima...")
-	if err := analyzer.FetchDefaultTemplateComments(ctx, client.GetClient()); err != nil {
-		fmt.Printf("Warning: failed to fetch default template comments: %v\n", err)
-		fmt.Println("Continuing with analysis (default comments won't be filtered)...")
-	}
-	fmt.Println()
+	// Create analyzer with official knowledge
+	analyzer := discovery.NewAnalyzer(
+		discovery.WithForceAnalyze(forceAnalyze),
+		discovery.WithOfficialKnowledge(officialKnowledge),
+	)
 
 	// Analyze templates
 	analyzedTemplates, err := analyzer.AnalyzeTemplates(ctx, templates, repoMap)
@@ -506,7 +557,7 @@ func run() error {
 
 	// Phase 3: Template Analysis (optional)
 	if cfg.analyze {
-		if err := runAnalysisPhase(ctx, client, store, cfg.forceAnalyze); err != nil {
+		if err := runAnalysisPhase(ctx, client, store, cfg.dataDir, cfg.forceAnalyze); err != nil {
 			return err
 		}
 	}
