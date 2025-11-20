@@ -51,6 +51,7 @@ type Template struct {
 	Arch             []string  `json:"arch,omitempty"`             // Architectures supported
 	AnalyzedAt       time.Time `json:"analyzed_at,omitempty"`      // When analysis was performed
 	Notability       *NotabilityMetrics `json:"notability,omitempty"` // Metrics for calculating notability score
+	MinHashSignature []uint32  `json:"minhash_signature,omitempty"` // MinHash signature for duplicate detection (128 hash values)
 }
 
 // NotabilityMetrics contains raw observations used to calculate template notability score

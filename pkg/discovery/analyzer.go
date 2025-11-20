@@ -3,11 +3,13 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/config"
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
+	"github.com/lima-catalog/lima-catalog/pkg/minhash"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
@@ -21,6 +23,8 @@ type Analyzer struct {
 	HTTPClient interfaces.HTTPClient
 	// Clock for time operations (allows mocking in tests)
 	Clock interfaces.Clock
+	// MinHash for generating duplicate detection signatures
+	MinHash *minhash.MinHash
 }
 
 // AnalyzerOption configures an Analyzer
@@ -93,6 +97,7 @@ func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
 		ForceAnalyze: false, // default
 		HTTPClient:   interfaces.NewDefaultHTTPClient(),
 		Clock:        interfaces.NewDefaultClock(),
+		MinHash:      minhash.New(), // Default MinHash with 128 hashes, 5-word shingles
 	}
 
 	// Apply options
@@ -155,6 +160,16 @@ func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template
 	// Populate notability metrics (filtering out known lines from official templates)
 	template.Notability = PopulateNotabilityMetrics(templateInfo, a.OfficialKnowledge)
 
+	// Step 2.5: Generate MinHash signature for duplicate detection
+	// Download template content for MinHash (may be cached by HTTPClient)
+	rawContent, err := a.downloadTemplateContent(template.URL)
+	if err != nil {
+		fmt.Printf("Warning: failed to download template for MinHash %s: %v\n", template.ID, err)
+		// Continue without MinHash signature - not critical
+	} else {
+		template.MinHashSignature = a.MinHash.Signature(rawContent)
+	}
+
 	// Step 3: Infer basic category and description
 	category, useCase := a.inferCategory(templateInfo, repoInfo)
 	template.Category = category
@@ -166,6 +181,36 @@ func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template
 	template.AnalyzedAt = a.Clock.Now()
 
 	return nil
+}
+
+// downloadTemplateContent downloads the raw template content from URL.
+//
+// Converts GitHub blob URL to raw URL and downloads the content.
+// This is a helper for MinHash signature generation.
+func (a *Analyzer) downloadTemplateContent(url string) (string, error) {
+	// Convert GitHub blob URL to raw URL
+	// Pattern: https://github.com/owner/repo/blob/commit/path
+	// Target: https://raw.githubusercontent.com/owner/repo/commit/path
+	rawURL := strings.Replace(url, "github.com", "raw.githubusercontent.com", 1)
+	rawURL = strings.Replace(rawURL, "/blob/", "/", 1)
+
+	// Download template content
+	resp, err := a.HTTPClient.Get(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to download template: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("failed to download template: HTTP %d", resp.StatusCode)
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template: %w", err)
+	}
+
+	return string(content), nil
 }
 
 // inferCategory infers the template's category and use case from content and repo metadata.
