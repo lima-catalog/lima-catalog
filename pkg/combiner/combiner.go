@@ -60,6 +60,7 @@ type CombinedTemplate struct {
 	RawURL                  string                                 `json:"raw_url"`
 	NotabilityScore         float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
 	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown   `json:"notability_score_breakdown,omitempty"` // Debug: score components
+	SimilarTemplates        []types.SimilarTemplate                `json:"similar_templates,omitempty"` // Similar/duplicate templates detected by MinHash+LSH
 }
 
 // Combiner combines templates with repo/org metadata for frontend consumption
@@ -145,6 +146,7 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 			RawURL:                  c.getRawURL(template, repo),
 			NotabilityScore:         breakdown.Total,
 			NotabilityScoreBreakdown: &breakdown,
+			SimilarTemplates:        template.SimilarTemplates,
 		})
 	}
 

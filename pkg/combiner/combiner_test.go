@@ -272,6 +272,95 @@ func TestCombineData(t *testing.T) {
 			},
 		},
 		{
+			name: "Template with similar templates",
+			templates: []types.Template{
+				{
+					ID:               "owner1/repo1/ubuntu.yaml",
+					Repo:             "owner1/repo1",
+					Path:             "ubuntu.yaml",
+					Name:             "ubuntu",
+					DisplayName:      "Ubuntu Template",
+					ShortDescription: "Ubuntu development template",
+					Category:         "development",
+					Keywords:         []string{"ubuntu", "docker"},
+					IsOfficial:       false,
+					URL:              "https://github.com/owner1/repo1/blob/main/ubuntu.yaml",
+					SimilarTemplates: []types.SimilarTemplate{
+						{
+							ID:            "owner2/repo2/ubuntu-dev.yaml",
+							Similarity:    0.85,
+							DuplicateType: "near",
+							SharedBands:   28,
+						},
+						{
+							ID:            "owner3/repo3/ubuntu-docker.yaml",
+							Similarity:    0.65,
+							DuplicateType: "similar",
+							SharedBands:   18,
+						},
+					},
+				},
+			},
+			repos: []types.Repository{
+				{
+					ID:            "owner1/repo1",
+					Owner:         "owner1",
+					Name:          "repo1",
+					Stars:         15,
+					DefaultBranch: "main",
+					UpdatedAt:     now,
+				},
+			},
+			orgs: []types.Organization{
+				{
+					ID:    "owner1",
+					Login: "owner1",
+					Type:  "Organization",
+				},
+			},
+			blocklist:        nil,
+			expectedCount:    1,
+			expectedFiltered: 0,
+			checkTemplate: func(t *testing.T, combined []CombinedTemplate) {
+				if len(combined) != 1 {
+					t.Fatalf("Expected 1 template, got %d", len(combined))
+				}
+
+				tmpl := combined[0]
+				if len(tmpl.SimilarTemplates) != 2 {
+					t.Errorf("Expected 2 similar templates, got %d", len(tmpl.SimilarTemplates))
+				}
+
+				// Check first similar template
+				if len(tmpl.SimilarTemplates) > 0 {
+					sim := tmpl.SimilarTemplates[0]
+					if sim.ID != "owner2/repo2/ubuntu-dev.yaml" {
+						t.Errorf("Expected similar template ID 'owner2/repo2/ubuntu-dev.yaml', got '%s'", sim.ID)
+					}
+					if sim.Similarity != 0.85 {
+						t.Errorf("Expected similarity 0.85, got %f", sim.Similarity)
+					}
+					if sim.DuplicateType != "near" {
+						t.Errorf("Expected duplicate type 'near', got '%s'", sim.DuplicateType)
+					}
+					if sim.SharedBands != 28 {
+						t.Errorf("Expected 28 shared bands, got %d", sim.SharedBands)
+					}
+				}
+
+				// Check second similar template
+				if len(tmpl.SimilarTemplates) > 1 {
+					sim := tmpl.SimilarTemplates[1]
+					if sim.ID != "owner3/repo3/ubuntu-docker.yaml" {
+						t.Errorf("Expected similar template ID 'owner3/repo3/ubuntu-docker.yaml', got '%s'", sim.ID)
+					}
+					if sim.Similarity != 0.65 {
+						t.Errorf("Expected similarity 0.65, got %f", sim.Similarity)
+					}
+				}
+			},
+		},
+		{
 			name: "Sorting by org/repo/path",
 			templates: []types.Template{
 				{
