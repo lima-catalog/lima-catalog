@@ -8,6 +8,7 @@ let filteredTemplates = [];
 let selectedKeywords = new Set();
 let selectedCategory = null;
 let debugMode = false;
+let focusedTemplate = null;
 
 // Getters
 export function getTemplates() {
@@ -24,6 +25,10 @@ export function getSelectedKeywords() {
 
 export function getSelectedCategory() {
     return selectedCategory;
+}
+
+export function getFocusedTemplate() {
+    return focusedTemplate;
 }
 
 // Setters
@@ -57,6 +62,10 @@ export function toggleCategorySelection(category) {
 
 export function clearCategorySelection() {
     selectedCategory = null;
+}
+
+export function setFocusedTemplate(template) {
+    focusedTemplate = template;
 }
 
 export function clearAllSelections() {

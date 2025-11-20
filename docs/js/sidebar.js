@@ -3,7 +3,8 @@
  */
 
 import { escapeHtml, formatCategoryName } from './templateCard.js';
-import { getKeywordCounts, getCategoryCounts } from './filters.js';
+import { getKeywordCounts, getCategoryCounts, getDynamicKeywords } from './filters.js';
+import * as State from './state.js';
 
 /**
  * Render keyword cloud
@@ -17,20 +18,35 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
     const focusedKeyword = document.activeElement?.dataset?.keyword;
     const isFocusedInCloud = document.activeElement?.classList?.contains('keyword-tag');
 
-    // Get keywords from currently filtered templates, excluding selected ones
-    const keywords = getKeywordCounts(filteredTemplates, selectedKeywords);
+    // Get regular keywords from currently filtered templates, excluding selected ones
+    const regularKeywords = getKeywordCounts(filteredTemplates, selectedKeywords);
 
-    if (keywords.length === 0) {
+    // Get dynamic keywords based on focused template
+    // Uses allTemplates to determine org/repo structure, filteredTemplates for counts
+    const allTemplates = State.getTemplates();
+    const focusedTemplate = State.getFocusedTemplate();
+    const dynamicKeywords = getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate);
+
+    // Filter out dynamic keywords that are already selected
+    const availableDynamicKeywords = dynamicKeywords.filter(
+        ([keyword]) => !selectedKeywords.has(keyword)
+    );
+
+    // Combine dynamic keywords (at the beginning) with regular keywords
+    const allKeywords = [...availableDynamicKeywords, ...regularKeywords.map(([k, c]) => [k, c, false])];
+
+    if (allKeywords.length === 0) {
         cloudElement.innerHTML = '<p style="color: var(--text-light); font-size: 0.875rem; padding: 0.5rem 0;">No additional keywords available</p>';
         return;
     }
 
-    cloudElement.innerHTML = keywords.map(([keyword, count]) => `
-        <div class="keyword-tag" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
+    cloudElement.innerHTML = allKeywords.map(([keyword, count, isDynamic]) => {
+        const dynamicClass = isDynamic ? ' keyword-tag-dynamic' : '';
+        return `<div class="keyword-tag${dynamicClass}" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
             <span class="keyword-count">${count}</span>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 
     // Add click and keyboard handlers
     let firstTag = null;
@@ -148,12 +164,15 @@ export function renderSelectedKeywords(selectedKeywords, containerElement, onRem
         return;
     }
 
-    containerElement.innerHTML = Array.from(selectedKeywords).map(keyword => `
-        <div class="selected-keyword" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Remove keyword filter: ${escapeHtml(keyword)}">
+    containerElement.innerHTML = Array.from(selectedKeywords).map(keyword => {
+        // Check if this is a dynamic keyword (starts with 'org:' or 'org/repo:')
+        const isDynamic = keyword.startsWith('org:') || keyword.startsWith('org/repo:');
+        const dynamicClass = isDynamic ? ' selected-keyword-dynamic' : '';
+        return `<div class="selected-keyword${dynamicClass}" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Remove keyword filter: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
             <span class="remove">×</span>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 
     // Add click and keyboard handlers for removal
     const newTags = Array.from(containerElement.querySelectorAll('.selected-keyword'));

@@ -52,6 +52,7 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 
 **Key features:**
 - Multi-keyword filtering with AND logic
+- **Dynamic ORG/REPO keyword filters** - When viewing a template, contextual keywords appear for filtering by organization or repository
 - Category browsing with dynamic counts
 - Template preview modal with YAML syntax highlighting
 - Lima 2.0 `github:` URL generation and copy
@@ -65,6 +66,14 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 - `app.js` - Application initialization and event setup
 - `appActions.js` - Shared actions to break circular dependencies (filter, render, UI updates)
 - `keyboard.js` - Keyboard shortcuts and navigation (990 lines, extracted for maintainability)
+
+**Dynamic ORG/REPO Keyword Filters**: When focusing on a template card (keyboard navigation), contextual keyword filters appear in the sidebar based on the template's organization and repository:
+- If the org has multiple repos in the catalog: Shows org keyword (e.g., `lima-vm`) plus repo keywords for each repo (e.g., `lima-vm/lima`, `lima-vm/alpine`)
+- If the org has only one repo with multiple templates: Shows repo keyword only (e.g., `user/myrepo`)
+- Visual distinction: Dynamic keywords use teal/green gradient colors (light when unselected, darker when selected) vs. blue for regular keywords
+- Filtering: Keywords with `/` filter by template.repo field, keywords without `/` filter by template.org field
+- Integration: Works seamlessly with existing AND-logic keyword filtering
+- UX: Keyboard-only feature (hover caused issues when moving mouse to sidebar); keywords persist while navigating to sidebar, only change when focusing a different card
 
 See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design system documentation.
 

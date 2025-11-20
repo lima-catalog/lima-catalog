@@ -3,6 +3,7 @@
  */
 
 import { MAX_KEYWORDS_DISPLAY } from './config.js';
+import * as State from './state.js';
 
 /**
  * Get all keywords with counts from a specific template list
@@ -25,6 +26,95 @@ export function getKeywordCounts(templateList, excludeKeywords = new Set()) {
     return Array.from(counts.entries())
         .sort((a, b) => b[1] - a[1]) // Sort by count descending
         .slice(0, MAX_KEYWORDS_DISPLAY);
+}
+
+/**
+ * Get dynamic ORG/REPO keywords based on focused template
+ * @param {Array} allTemplates - All templates in the catalog (to determine org/repo structure)
+ * @param {Array} filteredTemplates - Currently filtered templates (to calculate counts)
+ * @param {Object} focusedTemplate - Currently focused template
+ * @returns {Array} Array of [keyword, count, isDynamic] tuples
+ */
+export function getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate) {
+    console.log('[getDynamicKeywords] Called with:', {
+        focusedTemplate,
+        hasOrg: focusedTemplate?.org,
+        hasRepo: focusedTemplate?.repo,
+        allTemplateCount: allTemplates.length,
+        filteredTemplateCount: filteredTemplates.length
+    });
+
+    if (!focusedTemplate || !focusedTemplate.org || !focusedTemplate.repo) {
+        console.log('[getDynamicKeywords] Returning empty - missing data');
+        return [];
+    }
+
+    const dynamicKeywords = [];
+    const focusedOrg = focusedTemplate.org;
+    const focusedRepo = focusedTemplate.repo;
+
+    // Group ALL templates by org and repo (to determine structure)
+    const orgRepos = new Map(); // Map<org, Set<repo>>
+    allTemplates.forEach(template => {
+        if (template.org && template.repo) {
+            if (!orgRepos.has(template.org)) {
+                orgRepos.set(template.org, new Set());
+            }
+            orgRepos.get(template.org).add(template.repo);
+        }
+    });
+
+    // Count FILTERED templates per org/repo
+    const orgTemplateCount = new Map(); // Map<org, count>
+    const repoTemplateCount = new Map(); // Map<repo, count>
+    filteredTemplates.forEach(template => {
+        if (template.org) {
+            orgTemplateCount.set(template.org, (orgTemplateCount.get(template.org) || 0) + 1);
+        }
+        if (template.repo) {
+            repoTemplateCount.set(template.repo, (repoTemplateCount.get(template.repo) || 0) + 1);
+        }
+    });
+
+    const reposInFocusedOrg = orgRepos.get(focusedOrg);
+    const repoCount = reposInFocusedOrg ? reposInFocusedOrg.size : 0;
+    const allTemplatesInFocusedRepo = allTemplates.filter(t => t.repo === focusedRepo).length;
+
+    // Determine which keywords to add based on the rules
+    if (repoCount > 1) {
+        // Multiple repos from same org: add ORG keyword and REPO keywords for each repo
+
+        // Add ORG keyword if it would filter something out
+        const orgCount = orgTemplateCount.get(focusedOrg) || 0;
+        if (orgCount > 0 && orgCount < filteredTemplates.length) {
+            dynamicKeywords.push([focusedOrg, orgCount, true]);
+        }
+
+        // Add REPO keywords for each repo in this org
+        reposInFocusedOrg.forEach(repo => {
+            const count = repoTemplateCount.get(repo) || 0;
+            // Only add if it would filter something out
+            if (count > 0 && count < filteredTemplates.length) {
+                dynamicKeywords.push([repo, count, true]);
+            }
+        });
+    } else if (repoCount === 1 && allTemplatesInFocusedRepo > 1) {
+        // Only one repo from this org, but multiple templates: add REPO keyword
+        const count = repoTemplateCount.get(focusedRepo) || 0;
+        // Only add if it would filter something out
+        if (count > 0 && count < filteredTemplates.length) {
+            dynamicKeywords.push([focusedRepo, count, true]);
+        }
+    }
+
+    console.log('[getDynamicKeywords] Returning:', {
+        count: dynamicKeywords.length,
+        keywords: dynamicKeywords.map(k => k[0]),
+        repoCount,
+        filteredTemplateCount: filteredTemplates.length
+    });
+
+    return dynamicKeywords;
 }
 
 /**
@@ -77,7 +167,20 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
         if (selectedKeywords.size > 0) {
             const templateKeywords = new Set(template.keywords || []);
             for (const keyword of selectedKeywords) {
-                if (!templateKeywords.has(keyword)) return false;
+                // Check if it's a regular keyword first
+                if (templateKeywords.has(keyword)) {
+                    continue; // Match found, check next keyword
+                }
+
+                // Not a regular keyword - check if it's a dynamic org/repo keyword
+                // Repo keywords contain '/', org keywords don't
+                if (keyword.includes('/')) {
+                    // Repo keyword - must match template.repo
+                    if (template.repo !== keyword) return false;
+                } else {
+                    // Org keyword - must match template.org
+                    if (template.org !== keyword) return false;
+                }
             }
         }
 

@@ -9,6 +9,23 @@ import { updateSidebar } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
 
 /**
+ * Update sidebar only (used when focused template changes)
+ * This doesn't re-render the template grid to avoid breaking keyboard navigation
+ */
+export function updateSidebarOnly() {
+    const templates = State.getTemplates();
+    const selectedKeywords = State.getSelectedKeywords();
+    const selectedCategory = State.getSelectedCategory();
+    const filteredTemplates = State.getFilteredTemplates();
+
+    updateSidebar({
+        filteredTemplates,
+        selectedKeywords,
+        selectedCategory
+    }, handleKeywordToggle, handleCategoryToggle, {});
+}
+
+/**
  * Filter and render templates based on current state
  */
 export function filterAndRender(options = {}) {
@@ -157,10 +174,11 @@ function updateStats() {
  * Update clear keywords button visibility
  */
 function updateClearButtons() {
-    // Clear keywords button
+    // Clear keywords button - show if regular keywords selected OR focused template (dynamic keywords)
     const selectedKeywords = State.getSelectedKeywords();
+    const focusedTemplate = State.getFocusedTemplate();
     const clearKeywordsBtn = document.getElementById('clear-keywords');
-    if (selectedKeywords.size > 0) {
+    if (selectedKeywords.size > 0 || focusedTemplate) {
         clearKeywordsBtn.style.display = 'block';
     } else {
         clearKeywordsBtn.style.display = 'none';

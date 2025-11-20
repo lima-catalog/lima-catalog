@@ -3,6 +3,8 @@
  */
 
 import { isDebugMode } from './state.js';
+import * as State from './state.js';
+import { updateSidebarOnly } from './appActions.js';
 
 /**
  * Escape HTML to prevent XSS
@@ -361,6 +363,16 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
+    });
+
+    // Update focused template on keyboard focus to show dynamic keywords
+    // (Keyboard-only feature - hover causes issues when moving mouse to sidebar)
+    // Note: We only set on focus, not clear on blur, so keywords persist while
+    // navigating to sidebar. Keywords clear when a different card gets focus.
+    card.addEventListener('focus', () => {
+        console.log('[templateCard] Setting focused template:', template.id);
+        State.setFocusedTemplate(template);
+        updateSidebarOnly();
     });
 
     return card;
