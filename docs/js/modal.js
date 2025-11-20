@@ -5,6 +5,7 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
+import { getTemplates } from './state.js';
 
 // Modal state
 let currentTemplate = null;
@@ -51,6 +52,9 @@ export function openPreviewModal(template) {
     // Remove ready class to hide modal-content during loading
     const modalContent = modal.querySelector('.modal-content');
     modalContent.classList.remove('ready');
+
+    // Populate similar templates section
+    populateSimilarTemplates(template);
 
     // Trap focus within modal for accessibility
     setTimeout(() => {
@@ -154,6 +158,83 @@ async function copyToClipboard(text, button) {
             button.textContent = 'Copy';
         }, 2000);
     }
+}
+
+/**
+ * Populate similar templates section
+ * @param {Object} template - Template object
+ */
+function populateSimilarTemplates(template) {
+    const similarSection = document.getElementById('similar-templates-section');
+    const similarList = document.getElementById('similar-templates-list');
+
+    // Check if template has similar templates
+    if (!template.similar_templates || template.similar_templates.length === 0) {
+        similarSection.classList.add('hidden');
+        return;
+    }
+
+    // Show section and populate list
+    similarSection.classList.remove('hidden');
+    similarList.innerHTML = '';
+
+    // Get all templates for looking up names
+    const allTemplates = getTemplates();
+    const templateMap = new Map(allTemplates.map(t => [t.id, t]));
+
+    template.similar_templates.forEach(similar => {
+        const similarTemplate = templateMap.get(similar.id);
+        const displayName = similarTemplate ? deriveDisplayName(similarTemplate) : similar.id;
+        const similarityPercent = Math.round(similar.similarity * 100);
+
+        const item = document.createElement('div');
+        item.className = 'similar-template-item';
+        item.setAttribute('role', 'listitem');
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('aria-label', `Similar template: ${displayName}, ${similarityPercent}% similar`);
+
+        item.innerHTML = `
+            <div class="similar-template-info">
+                <div class="similar-template-name">${escapeHtml(displayName)}</div>
+                <div class="similar-template-similarity">From ${escapeHtml(similar.id.split('/').slice(0, 2).join('/'))}</div>
+            </div>
+            <div class="similar-template-badges">
+                ${similar.duplicate_type ? `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>` : ''}
+                <span class="similarity-percentage">${similarityPercent}%</span>
+            </div>
+        `;
+
+        // Click handler to open the similar template
+        const clickHandler = () => {
+            if (similarTemplate) {
+                closePreviewModal();
+                setTimeout(() => openPreviewModal(similarTemplate), 100);
+            }
+        };
+        item.addEventListener('click', clickHandler);
+
+        // Keyboard handler for accessibility
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                clickHandler();
+            }
+        });
+
+        similarList.appendChild(item);
+    });
+}
+
+/**
+ * Escape HTML to prevent XSS
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 /**
