@@ -35,6 +35,7 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 - Content-based validation to eliminate false positives
 - YAML parsing and technology detection
 - Automatic categorization and keyword extraction
+- **Duplicate detection** - MinHash signatures (128 hashes) + LSH (32×4 bands) for sub-linear similarity search
 - Efficient metadata refresh (oldest-first, 5% per run)
 - Blocklist filtering for false positives
 
@@ -55,6 +56,7 @@ A searchable catalog of 700+ Lima VM templates from across GitHub, with automate
 - **Dynamic ORG/REPO keyword filters** - When viewing a template, contextual keywords appear for filtering by organization or repository
 - Category browsing with dynamic counts
 - Template preview modal with YAML syntax highlighting
+- **Duplicate/similar template detection** - MinHash + LSH detects similar templates (50%+ similarity) with visual badges (exact/near/similar) and click-to-navigate
 - Lima 2.0 `github:` URL generation and copy
 - About/Help modal with tabbed interface (catalog info + keyboard shortcuts)
 - Responsive design for mobile/tablet/desktop
@@ -109,7 +111,16 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
     "env_count": 5,
     "comment_line_count": 15,
     "unusual_images": ["nixos.org"]
-  }
+  },
+  "minhash_signature": [12345, 67890, ...],
+  "similar_templates": [
+    {
+      "id": "other/repo/similar.yaml",
+      "similarity": 0.85,
+      "duplicate_type": "near",
+      "shared_bands": 28
+    }
+  ]
 }
 ```
 
@@ -227,6 +238,45 @@ See [INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md) for complete design syste
 - Rate limiting: With ~20-30 LLM requests/day, notability ensures we analyze the best templates first
 
 **Design Decision**: Store raw metrics, calculate score on-demand. This allows weight tuning without re-analyzing all templates.
+
+## Duplicate Detection System
+
+**Goal**: Identify similar/duplicate templates to help users discover alternatives and understand template relationships.
+
+**Algorithm**: MinHash + Locality-Sensitive Hashing (LSH)
+- **MinHash**: Generates 128-hash signature from 5-word shingles (YAML content)
+- **LSH**: 32 bands × 4 rows for sub-linear similarity search (~42% threshold)
+- **Classification**: exact (>90%), near (70-90%), similar (50-70%)
+
+**Performance**:
+- Signature generation: ~10-20ms per template
+- Storage: 512 bytes per template (128 × uint32)
+- Search: O(n) sub-linear vs O(n²) brute force
+- Accuracy: ~8.8% error rate with 128 hashes
+
+**Configuration** (`pkg/discovery/analyzer.go`):
+```go
+analyzer := NewAnalyzer(
+    WithDetectDuplicates(true),              // Default: enabled
+    WithDuplicateSimilarityThreshold(0.5),   // Default: 50%
+)
+```
+
+**Data Flow**:
+1. Analyzer generates MinHash signature during template analysis
+2. `DetectDuplicates()` builds LSH index and finds similar templates
+3. Populates `similar_templates` field with IDs, similarity scores, and types
+4. Combiner copies to `catalog.jsonl` for frontend
+5. Modal displays "Similar Templates" section with badges
+
+**UI Features**:
+- Color-coded badges: Exact (red), Near (orange), Similar (blue)
+- Similarity percentage displayed
+- Click to navigate between similar templates
+- Full keyboard accessibility
+- Hidden when no similar templates exist
+
+**Research**: See `DUPLICATE_DETECTION_RESEARCH.md` for algorithm selection rationale and parameter tuning guidelines.
 
 ## Remaining Work
 

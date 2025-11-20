@@ -1059,6 +1059,105 @@ footer a:hover {
     min-width: 100%;
 }
 
+/* Similar Templates Section */
+.similar-templates-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+}
+
+.similar-templates-title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.similar-templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.similar-template-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.similar-template-item:hover {
+    background: var(--bg-elevated);
+    border-color: var(--primary);
+    transform: translateX(4px);
+}
+
+.similar-template-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 1rem;
+}
+
+.similar-template-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.similar-template-similarity {
+    font-size: 0.875rem;
+    color: var(--text-light);
+}
+
+.similar-template-badges {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.duplicate-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.duplicate-badge.exact {
+    background: #ef4444;
+    color: white;
+}
+
+.duplicate-badge.near {
+    background: #f97316;
+    color: white;
+}
+
+.duplicate-badge.similar {
+    background: #3b82f6;
+    color: white;
+}
+
+.similarity-percentage {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-light);
+    min-width: 3rem;
+    text-align: right;
+}
+
 .modal-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--border-elevated);
