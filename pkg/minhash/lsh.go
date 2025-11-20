@@ -3,6 +3,7 @@ package minhash
 import (
 	"fmt"
 	"hash/fnv"
+	"math"
 )
 
 // LSH implements Locality-Sensitive Hashing for efficient similarity search.
@@ -237,41 +238,5 @@ func (lsh *LSH) EstimateThreshold() float64 {
 	// threshold ≈ (1/b)^(1/r)
 	b := float64(lsh.numBands)
 	r := float64(lsh.rowsPerBand)
-	return pow(1.0/b, 1.0/r)
-}
-
-// pow computes x^y using simple iteration (for small positive integer y).
-// This avoids importing math package just for power function.
-func pow(x, y float64) float64 {
-	if y == 0 {
-		return 1.0
-	}
-	if y == 1 {
-		return x
-	}
-
-	// For fractional y, use approximation: x^y ≈ exp(y * log(x))
-	// Simple Newton's method approximation for exp and log
-	// This is good enough for threshold estimation
-
-	// log(x) approximation using Taylor series
-	logX := 0.0
-	term := (x - 1.0) / (x + 1.0)
-	logX = 2.0 * term
-	termPow := term
-	for i := 1; i < 10; i++ {
-		termPow *= term * term
-		logX += 2.0 * termPow / float64(2*i+1)
-	}
-
-	// exp(y * log(x)) approximation
-	yLogX := y * logX
-	result := 1.0
-	term = 1.0
-	for i := 1; i < 20; i++ {
-		term *= yLogX / float64(i)
-		result += term
-	}
-
-	return result
+	return math.Pow(1.0/b, 1.0/r)
 }

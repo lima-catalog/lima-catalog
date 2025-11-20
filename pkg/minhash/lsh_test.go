@@ -353,8 +353,8 @@ func TestLSH_EstimateThreshold(t *testing.T) {
 			name:        "64 bands x 2 rows (very low threshold)",
 			numBands:    64,
 			rowsPerBand: 2,
-			wantMin:     0.14,  // (1/64)^(1/2) ≈ 0.155
-			wantMax:     0.17,
+			wantMin:     0.12,  // (1/64)^(1/2) = 0.125 exactly
+			wantMax:     0.13,
 		},
 	}
 
