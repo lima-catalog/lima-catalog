@@ -174,10 +174,11 @@ function updateStats() {
  * Update clear keywords button visibility
  */
 function updateClearButtons() {
-    // Clear keywords button
+    // Clear keywords button - show if regular keywords selected OR focused template (dynamic keywords)
     const selectedKeywords = State.getSelectedKeywords();
+    const focusedTemplate = State.getFocusedTemplate();
     const clearKeywordsBtn = document.getElementById('clear-keywords');
-    if (selectedKeywords.size > 0) {
+    if (selectedKeywords.size > 0 || focusedTemplate) {
         clearKeywordsBtn.style.display = 'block';
     } else {
         clearKeywordsBtn.style.display = 'none';
