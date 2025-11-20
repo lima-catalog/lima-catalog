@@ -25,6 +25,10 @@ type Analyzer struct {
 	Clock interfaces.Clock
 	// MinHash for generating duplicate detection signatures
 	MinHash *minhash.MinHash
+	// DetectDuplicates enables duplicate detection (default: true)
+	DetectDuplicates bool
+	// DuplicateSimilarityThreshold is the minimum similarity to report (default: 0.5)
+	DuplicateSimilarityThreshold float64
 }
 
 // AnalyzerOption configures an Analyzer
@@ -58,24 +62,54 @@ func WithOfficialKnowledge(ok *OfficialKnowledge) AnalyzerOption {
 	}
 }
 
+// WithDetectDuplicates enables or disables duplicate detection
+func WithDetectDuplicates(enabled bool) AnalyzerOption {
+	return func(a *Analyzer) {
+		a.DetectDuplicates = enabled
+	}
+}
+
+// WithDuplicateSimilarityThreshold sets the minimum similarity for duplicate detection (0.0-1.0)
+func WithDuplicateSimilarityThreshold(threshold float64) AnalyzerOption {
+	return func(a *Analyzer) {
+		a.DuplicateSimilarityThreshold = threshold
+	}
+}
+
 // NewAnalyzer creates a new template analyzer with optional configuration.
 //
 // The analyzer is responsible for extracting metadata from Lima templates including
-// OS images, categories, keywords, and notability metrics.
+// OS images, categories, keywords, notability metrics, and duplicate detection.
 //
 // Options:
 //   - WithForceAnalyze(bool): Force re-analysis of already analyzed templates
 //   - WithHTTPClient(client): Use custom HTTP client (for testing)
 //   - WithClock(clock): Use custom clock (for testing)
 //   - WithOfficialKnowledge(ok): Set official knowledge for filtering (for testing)
+//   - WithDetectDuplicates(bool): Enable/disable duplicate detection (default: true)
+//   - WithDuplicateSimilarityThreshold(float64): Set similarity threshold 0.0-1.0 (default: 0.5)
 //
 // Returns a configured Analyzer with empty OfficialKnowledge.
 // In production, load OfficialKnowledge from file or update it before analyzing templates.
 //
+// Duplicate Detection:
+// By default, the analyzer detects duplicate templates using MinHash + LSH with a 50%
+// similarity threshold. Templates with >50% similarity will be linked in SimilarTemplates.
+//
 // Example:
 //
-//	// Production code
+//	// Production code with default duplicate detection
 //	analyzer := NewAnalyzer(WithForceAnalyze(true))
+//
+//	// Production code with custom threshold (70% similarity)
+//	analyzer := NewAnalyzer(
+//	    WithDuplicateSimilarityThreshold(0.7),
+//	)
+//
+//	// Disable duplicate detection
+//	analyzer := NewAnalyzer(
+//	    WithDetectDuplicates(false),
+//	)
 //
 //	// Test code with mocks
 //	analyzer := NewAnalyzer(
@@ -94,10 +128,12 @@ func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
 			},
 			Images: []string{},
 		},
-		ForceAnalyze: false, // default
-		HTTPClient:   interfaces.NewDefaultHTTPClient(),
-		Clock:        interfaces.NewDefaultClock(),
-		MinHash:      minhash.New(), // Default MinHash with 128 hashes, 5-word shingles
+		ForceAnalyze:                 false, // default
+		HTTPClient:                   interfaces.NewDefaultHTTPClient(),
+		Clock:                        interfaces.NewDefaultClock(),
+		MinHash:                      minhash.New(), // Default MinHash with 128 hashes, 5-word shingles
+		DetectDuplicates:             true,          // Enable duplicate detection by default
+		DuplicateSimilarityThreshold: 0.5,           // Default 50% similarity threshold
 	}
 
 	// Apply options
@@ -349,6 +385,11 @@ func (a *Analyzer) generateBasicDescription(template *types.Template, info *Temp
 // Adds a delay (config.MetadataAPIDelay) between templates to avoid overwhelming
 // external services when fetching template content.
 //
+// Duplicate Detection:
+// After all templates are analyzed, duplicate detection runs automatically (unless disabled).
+// This populates the SimilarTemplates field for each template with similar templates above
+// the configured similarity threshold (default: 50%).
+//
 // Use Cases:
 //   - Incremental mode: Only analyze new/changed templates (efficient)
 //   - Full refresh: Set ForceAnalyze=true to re-analyze everything (after logic changes)
@@ -400,6 +441,32 @@ func (a *Analyzer) AnalyzeTemplates(ctx context.Context, templates []types.Templ
 		case <-ctx.Done():
 			return analyzed, ctx.Err()
 		case <-time.After(config.MetadataAPIDelay):
+		}
+	}
+
+	// Detect duplicates if enabled
+	if a.DetectDuplicates && len(analyzed) > 0 {
+		fmt.Printf("Detecting duplicates with threshold %.2f...\n", a.DuplicateSimilarityThreshold)
+
+		dd, err := minhash.NewDuplicateDetector(a.MinHash, a.DuplicateSimilarityThreshold)
+		if err != nil {
+			fmt.Printf("Warning: failed to create duplicate detector: %v\n", err)
+			return analyzed, nil
+		}
+
+		analyzed, err = dd.DetectDuplicates(analyzed)
+		if err != nil {
+			fmt.Printf("Warning: failed to detect duplicates: %v\n", err)
+			// Continue without duplicate detection - not critical
+		} else {
+			// Count templates with duplicates
+			count := 0
+			for _, t := range analyzed {
+				if len(t.SimilarTemplates) > 0 {
+					count++
+				}
+			}
+			fmt.Printf("Found duplicates for %d templates\n", count)
 		}
 	}
 
