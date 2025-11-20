@@ -481,6 +481,112 @@ const (
 // <50% = Different
 ```
 
+### Parameter Selection Guide
+
+#### Number of Hash Functions
+
+**Formula**: Error rate ≈ 1/√n
+
+| NumHashes | Error Rate | Storage/Template | Use Case |
+|-----------|------------|------------------|----------|
+| 64 | ~12.5% | 256 bytes | Speed-critical, 100K+ templates |
+| 128 | ~8.8% | 512 bytes | **Recommended** - balanced accuracy/storage |
+| 256 | ~6.3% | 1024 bytes | High accuracy needed, storage not a concern |
+| 512 | ~4.4% | 2048 bytes | Legal/compliance, maximum accuracy |
+
+**For Lima Catalog**:
+- **128 hashes** chosen for good accuracy with reasonable storage
+- 716 templates × 512 bytes = 366KB total (acceptable)
+- Scales to 10,000+ templates without issues
+- Standard choice in academic research
+
+**When to change**:
+- **Increase to 256** if you need higher accuracy for critical applications
+- **Decrease to 64** if speed is critical and ~12% error is acceptable
+
+#### Shingle Size (k-grams)
+
+**Tradeoff**: Specificity vs Coverage
+
+| Shingle Size | Specificity | False Positives | Use Case |
+|--------------|-------------|-----------------|----------|
+| k=2 | Low | High | Very short documents (< 10 words) |
+| k=3 | Medium-Low | Medium-High | Short documents (10-30 words) |
+| k=5 | **Balanced** | Low | **YAML templates, structured text** |
+| k=7 | Medium-High | Very Low | Long documents (> 500 words) |
+| k=10 | High | Very Low | Code files, need exact matching |
+
+**For Lima Templates**:
+- **k=5 words** chosen because it captures meaningful phrases:
+  - Commands: "apt get install docker io"
+  - Paths: "cloud images ubuntu com releases"
+  - Config: "location https cloud images"
+- Balances detection of similar templates vs false positives
+- Standard for document similarity (used by Google, AltaVista)
+
+**Examples of k=5 shingles**:
+```
+Template: "# Ubuntu-based development environment with Docker"
+Shingles:
+  - "ubuntu based development environment with"
+  - "based development environment with docker"
+```
+
+**When to change**:
+- **Use k=3** if templates are very short (< 20 words) or you want looser matching
+- **Use k=7** if templates are very long (> 500 words) or you need to reduce false positives
+
+#### Why These Specific Values?
+
+**k=5 words**:
+1. **Not too small**: k=2-3 generates common shingles like "apt get install" that appear everywhere
+2. **Not too large**: k=7-10 is too specific, won't match templates differing by one word
+3. **Perfect for YAML**: Captures structural patterns in configuration files
+4. **Academic standard**: Commonly used in research papers on document similarity
+
+**128 hashes**:
+1. **Error sweet spot**: 8.8% error is acceptable for duplicate detection
+2. **Storage efficiency**: 512 bytes per template is small
+3. **Proven scale**: Used successfully for millions of documents
+4. **Standard practice**: Common in production systems (Google News, web crawlers)
+
+#### Tuning for Different Use Cases
+
+**High Precision** (minimize false positives):
+```go
+mh := minhash.New(
+    minhash.WithNumHashes(256),  // More accurate
+    minhash.WithShingleSize(7),   // More specific
+)
+// Good for: Legal compliance, exact duplicate detection
+```
+
+**High Recall** (maximize detection):
+```go
+mh := minhash.New(
+    minhash.WithNumHashes(128),  // Balanced
+    minhash.WithShingleSize(3),   // Less specific
+)
+// Good for: Finding all potential duplicates for review
+```
+
+**Speed Optimized** (large datasets):
+```go
+mh := minhash.New(
+    minhash.WithNumHashes(64),   // Faster
+    minhash.WithShingleSize(5),   // Standard
+)
+// Good for: 100K+ templates, real-time processing
+```
+
+**Recommended for Lima** (balanced):
+```go
+mh := minhash.New()  // Uses defaults
+// NumHashes: 128 (8.8% error, 512 bytes)
+// ShingleSize: 5 (balanced matching)
+// Good for: General-purpose duplicate detection
+```
+
 ### Storage Schema Addition
 
 ```json

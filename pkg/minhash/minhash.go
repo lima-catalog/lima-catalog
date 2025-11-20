@@ -31,11 +31,51 @@ import (
 
 const (
 	// DefaultNumHashes is the default number of hash functions (128)
-	// More hashes = more accurate similarity estimation but larger signatures
+	//
+	// Selection Guidelines:
+	//   - Error rate ≈ 1/√n, so 128 hashes gives ~8.8% error
+	//   - Storage = n × 4 bytes (uint32), so 128 hashes = 512 bytes per signature
+	//   - Common values: 64 (fast, ~12.5% error), 128 (balanced), 256 (accurate, ~6.3% error)
+	//
+	// For Lima templates:
+	//   - 128 provides good accuracy for ~716 templates
+	//   - Total storage: 716 × 512 bytes ≈ 366KB (acceptable)
+	//   - Scales to 10,000+ templates without issues
+	//
+	// Increase to 256 if:
+	//   - Need higher accuracy (e.g., legal/compliance use case)
+	//   - Storage is not a concern
+	//
+	// Decrease to 64 if:
+	//   - Speed is critical and 12% error acceptable
+	//   - Very large dataset (100K+ templates)
 	DefaultNumHashes = 128
 
 	// DefaultShingleSize is the default k-gram size (5 words)
-	// Larger k = more specific matching, smaller k = more general
+	//
+	// Selection Guidelines:
+	//   - Smaller k (2-3): More general matching, higher false positives
+	//     Example: "apt get install" matches many templates
+	//   - Larger k (7-10): More specific matching, may miss similar templates
+	//     Example: Won't match templates differing by one word
+	//   - k=5 is optimal for structured text like YAML
+	//
+	// For Lima templates:
+	//   - k=5 captures meaningful phrases:
+	//     * "cloud images ubuntu com releases"
+	//     * "apt get install docker io"
+	//     * "location https cloud images"
+	//   - Balances specificity vs generality
+	//   - Standard choice in document similarity research
+	//
+	// Use k=3 if:
+	//   - Templates are very short (< 20 words)
+	//   - Want to detect looser similarities
+	//
+	// Use k=7 if:
+	//   - Templates are very long (> 500 words)
+	//   - Want to reduce false positives
+	//   - Need very specific matching
 	DefaultShingleSize = 5
 
 	// MaxHashValue is the maximum value for a 32-bit hash
