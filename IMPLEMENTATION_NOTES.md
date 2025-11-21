@@ -106,13 +106,13 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - All 76 frontend tests passing
 
 **Changed files:**
-- `docs/js/data.js` - Replaced `loadTemplates()` and `loadRepositories()` with `loadCatalog()`
-- `docs/js/app.js` - Removed repositories parameter from rendering functions
-- `docs/js/filters.js` - Use embedded `stars` and `updated_at` fields directly
-- `docs/js/templateCard.js` - Use embedded `description` and `stars` fields
-- `docs/js/modal.js` - Removed repo parameter, use `raw_url` directly
-- `docs/js/urlHelpers.js` - Convert `raw_url` to display URL without repo lookup
-- `docs/js/state.js` - Removed repositories state management
+- `web/js/data.js` - Replaced `loadTemplates()` and `loadRepositories()` with `loadCatalog()`
+- `web/js/app.js` - Removed repositories parameter from rendering functions
+- `web/js/filters.js` - Use embedded `stars` and `updated_at` fields directly
+- `web/js/templateCard.js` - Use embedded `description` and `stars` fields
+- `web/js/modal.js` - Removed repo parameter, use `raw_url` directly
+- `web/js/urlHelpers.js` - Convert `raw_url` to display URL without repo lookup
+- `web/js/state.js` - Removed repositories state management
 - Test files updated to match new data structure
 
 ---
@@ -292,7 +292,7 @@ INCREMENTAL=1    # Enable incremental mode
 ```
 
 **Files changed:**
-- `docs/js/app.js` - Refactored `setupKeyboardShortcuts()` function
+- `web/js/app.js` - Refactored `setupKeyboardShortcuts()` function
 
 **No functional changes** - all existing shortcuts work exactly the same way.
 
@@ -326,11 +326,11 @@ INCREMENTAL=1    # Enable incremental mode
 **Files Changed:**
 - `pkg/discovery/notability.go` - Added NotabilityScoreBreakdown struct and calculation
 - `pkg/combiner/combiner.go` - Added breakdown field to CombinedTemplate
-- `docs/js/state.js` - Added debug mode state
-- `docs/js/app.js` - Added @ keyboard shortcut and notification
-- `docs/js/templateCard.js` - Badge replacement and popup rendering
-- `docs/index.html` - Added "Notability" to sort dropdown
-- `docs/style.css` - Debug mode styling
+- `web/js/state.js` - Added debug mode state
+- `web/js/app.js` - Added @ keyboard shortcut and notification
+- `web/js/templateCard.js` - Badge replacement and popup rendering
+- `web/index.html` - Added "Notability" to sort dropdown
+- `web/style.css` - Debug mode styling
 
 **Comment Filtering Enhancement (2025-01-18):**
 
@@ -386,10 +386,10 @@ INCREMENTAL=1    # Enable incremental mode
 - Sort by "Unusual Images Score" to find templates using non-standard distributions
 
 **Files Changed:**
-- `docs/js/filters.js` - Added 8 breakdown sort cases to sortTemplates()
-- `docs/js/app.js` - Added updateSortDropdown() function, called on debug toggle and initialization
-- `docs/js/templateCard.js` - Modified getDebugBadgeText() to accept sortBy parameter and return appropriate score
-- `docs/js/filters.test.js` - Added 6 new tests for breakdown sorting
+- `web/js/filters.js` - Added 8 breakdown sort cases to sortTemplates()
+- `web/js/app.js` - Added updateSortDropdown() function, called on debug toggle and initialization
+- `web/js/templateCard.js` - Modified getDebugBadgeText() to accept sortBy parameter and return appropriate score
+- `web/js/filters.test.js` - Added 6 new tests for breakdown sorting
 
 **Testing:**
 - 6 new test cases covering breakdown sorting for different components

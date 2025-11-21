@@ -111,29 +111,29 @@ Quick reference for all source files and their purposes.
 
 | File | Purpose |
 |------|---------|
-| `docs/index.html` | Main HTML structure with semantic layout and accessibility |
-| `docs/style.css` | Complete design system (colors, typography, spacing, components) |
-| `docs/tests.html` | Browser-based test runner page |
+| `web/index.html` | Main HTML structure with semantic layout and accessibility |
+| `web/style.css` | Complete design system (colors, typography, spacing, components) |
+| `web/tests.html` | Browser-based test runner page |
 
 ### Modular JavaScript (ES6)
 
 | File | Purpose |
 |------|---------|
-| `docs/js/app.js` | Main application initialization and event listener setup |
-| `docs/js/appActions.js` | Core application actions (filter, render, UI updates) - shared by app.js and keyboard.js |
-| `docs/js/config.js` | Configuration (data URL, cache keys) |
-| `docs/js/state.js` | Application state management |
-| `docs/js/data.js` | Fetch and parse catalog data from data branch (JSONL format) |
-| `docs/js/filters.js` | Filter and sort templates by keywords, categories, search terms |
-| `docs/js/sidebar.js` | Sidebar navigation, keyword cloud, category list |
-| `docs/js/templateCard.js` | Template card rendering with metadata and formatting |
-| `docs/js/modal.js` | Template preview and help modals with YAML syntax highlighting |
-| `docs/js/keyboard.js` | Keyboard shortcuts, navigation helpers, and help modal |
-| `docs/js/theme.js` | Dark/light theme management |
-| `docs/js/urlHelpers.js` | Lima 2.0 `github:` URL generation and GitHub URL conversions |
-| `docs/js/utils.js` | Utility functions (debounce, HTML escaping, etc.) |
-| `docs/js/test-framework.js` | Minimal test framework (assertions, runner) |
-| `docs/js/*.test.js` | Unit tests for each module |
+| `web/js/app.js` | Main application initialization and event listener setup |
+| `web/js/appActions.js` | Core application actions (filter, render, UI updates) - shared by app.js and keyboard.js |
+| `web/js/config.js` | Configuration (data URL, cache keys) |
+| `web/js/state.js` | Application state management |
+| `web/js/data.js` | Fetch and parse catalog data from data branch (JSONL format) |
+| `web/js/filters.js` | Filter and sort templates by keywords, categories, search terms |
+| `web/js/sidebar.js` | Sidebar navigation, keyword cloud, category list |
+| `web/js/templateCard.js` | Template card rendering with metadata and formatting |
+| `web/js/modal.js` | Template preview and help modals with YAML syntax highlighting |
+| `web/js/keyboard.js` | Keyboard shortcuts, navigation helpers, and help modal |
+| `web/js/theme.js` | Dark/light theme management |
+| `web/js/urlHelpers.js` | Lima 2.0 `github:` URL generation and GitHub URL conversions |
+| `web/js/utils.js` | Utility functions (debounce, HTML escaping, etc.) |
+| `web/js/test-framework.js` | Minimal test framework (assertions, runner) |
+| `web/js/*.test.js` | Unit tests for each module |
 
 ### Test Infrastructure
 
@@ -146,7 +146,7 @@ Quick reference for all source files and their purposes.
 
 | File | Purpose |
 |------|---------|
-| `docs/favicon.ico` | Favicon |
+| `web/favicon.ico` | Favicon |
 
 ## Documentation
 

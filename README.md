@@ -52,14 +52,14 @@ The web app uses ES6 modules which require a web server (cannot be opened direct
 
 **Option 1: Python**
 ```bash
-cd docs
+cd web
 python3 -m http.server 8000
 # Visit: http://localhost:8000
 ```
 
 **Option 2: Node.js**
 ```bash
-npx serve docs
+npx serve web
 # Visit: http://localhost:3000
 ```
 

@@ -2,30 +2,25 @@
 
 This file contains persistent instructions for Claude when working on this project.
 
-## Before Creating Pull Requests
+---
 
-**⚠️ CRITICAL: ALWAYS follow these steps IN ORDER before suggesting a PR:**
+## ⚠️ CRITICAL: Before Creating Pull Requests
 
-### Step 1: Update PLAN.md (DO THIS FIRST!)
+**ALWAYS follow these steps IN ORDER before suggesting a PR:**
 
-**READ PLAN.md and UPDATE IT if you made significant changes:**
-- New features → Add to appropriate section (e.g., "Template Preview Modal")
-- UI changes → Update "Recent: GitHub Pages UI Redesign" section
-- Backend changes → Add to relevant section
-- Bug fixes → May not need PLAN.md update (use judgment)
+### Step 1: Update Documentation (DO THIS FIRST!)
 
-**⚠️ IMPORTANT: Keep PLAN.md concise!**
+**READ and UPDATE architecture docs if you made significant changes:**
+- New features → Update [docs/architecture/overview.md](../docs/architecture/overview.md) or [future-work.md](../docs/architecture/future-work.md)
+- UI changes → Update [docs/guides/ui-ux-guidelines.md](../docs/guides/ui-ux-guidelines.md)
+- Backend changes → Update [docs/architecture/backend-design.md](../docs/architecture/backend-design.md)
+- Data pipeline changes → Update [docs/architecture/data-pipeline.md](../docs/architecture/data-pipeline.md)
+- Bug fixes → May not need doc updates (use judgment)
 
-When updating PLAN.md, check if implementation details should go to IMPLEMENTATION_NOTES.md instead:
-- **PLAN.md**: Current architecture, remaining work, high-level design decisions
-- **IMPLEMENTATION_NOTES.md**: Detailed "how we did it" notes, completed stage details, migration notes
-
-If you're adding detailed implementation notes for a completed feature, put them in IMPLEMENTATION_NOTES.md and keep only a summary in PLAN.md.
-
-**Then commit PLAN.md updates:**
+**Then commit documentation updates:**
 ```bash
-git add PLAN.md IMPLEMENTATION_NOTES.md  # If both changed
-git commit -m "Update PLAN.md to document [feature name]"
+git add docs/
+git commit -m "Update documentation for [feature name]"
 ```
 
 ### Step 2: Check and rebase on main
@@ -50,8 +45,8 @@ make test
 ```
 
 **This will run all tests (Go + JavaScript):**
-- Go backend tests (blocklist, metadata, combiner, etc.)
-- JavaScript frontend tests (URL helpers, data parsing, filters, etc.)
+- Go backend tests (83 tests)
+- JavaScript frontend tests (76 tests)
 
 **All tests must pass (exit code 0). If any tests fail, fix them before proceeding.**
 
@@ -68,21 +63,34 @@ make test
 - JavaScript changes: Tests are automated, but manual testing on GitHub Pages may be helpful
 
 **REMINDERS:**
-- **If you skip Step 1 (PLAN.md), the user will notice and ask why you forgot!**
+- **If you skip Step 1 (docs), the user will notice and ask why you forgot!**
 - **If you skip Step 3 (tests), the PR will be rejected!**
 
-## Project Context
+---
 
-- **[PLAN.md](PLAN.md)** - Current architecture, remaining work, design decisions
-- **[IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md)** - Detailed implementation notes for completed features
-- **[INTERFACE_GUIDELINES.md](INTERFACE_GUIDELINES.md)** - Complete UI/UX design system
-- **[SOURCE_INDEX.md](SOURCE_INDEX.md)** - Quick reference for all source files and their purposes
-- **[FINDINGS.md](FINDINGS.md)** - Research findings on GitHub search behavior
-- **[LLM_ANALYST_PROMPTS.md](LLM_ANALYST_PROMPTS.md)** - Documentation for LLM prompt generation system
+## Quick Reference for New Sessions
+
+**Starting a task?** Check these first:
+- 🏗️ [Architecture Overview](../ARCHITECTURE.md) - System design at a glance
+- 📋 [Source Index](../docs/architecture/source-index.md) - Find any file quickly
+- ✅ [Code Standards](../docs/reference/code-standards.md) - Quality checklist
+- 🎨 [UI Guidelines](../docs/guides/ui-ux-guidelines.md) - Frontend patterns
+
+**Common Tasks:**
+- Backend work → [Backend Design](../docs/architecture/backend-design.md)
+- Frontend work → [Frontend Design](../docs/architecture/frontend-design.md)
+- New feature → [Future Work](../docs/architecture/future-work.md)
+- Understanding flow → [Data Pipeline](../docs/architecture/data-pipeline.md)
+
+**Historical Reference:**
+- Research findings → [docs/research/](../docs/research/)
+- Implementation details → [docs/history/](../docs/history/)
+
+---
 
 ## Key Reminders
 
-- **Analysis is incremental:** Templates are only re-analyzed if their SHA changes (see `analyzer.go:170`)
+- **Analysis is incremental:** Templates only re-analyzed if SHA changes
 - **Browser caching:** GitHub Pages changes may need hard refresh (Cmd+Shift+R / Ctrl+Shift+R)
 - **Branch naming:** Must start with `claude/` and end with session ID for push permissions
 - **No PR creation:** Cannot run `gh pr create` directly - provide command for user to run
@@ -91,6 +99,8 @@ make test
   - Code blocks will break the heredoc (<<'EOF') and make the command uncopyable
   - Use indentation or plain text for code examples instead
   - If you need to show code, use 4-space indentation without backticks
+
+---
 
 ## Common Workflows
 
@@ -115,6 +125,8 @@ make test
 - Changes to `parser.go` or `analyzer.go` only affect NEW templates or templates with updated files
 - Existing analyzed templates keep their current keywords/categories until the template file changes
 - To force re-analysis of all templates, would need to clear AnalyzedAt timestamps (generally not needed)
+
+---
 
 ## Writing Tests
 
@@ -170,12 +182,13 @@ make test
 - Test error cases: invalid inputs should throw appropriate errors
 - DOM manipulation functions may need minimal mocking (see `test.js` for examples)
 
+---
 
 ## Backend Code Quality Standards
 
 **⚠️ CRITICAL: The backend has been extensively refactored for quality. Maintain these standards!**
 
-After 6 phases of refactoring (Phases 1-4, 6.1 complete), the backend is in excellent shape with 60%+ test coverage, idiomatic APIs, and solid error handling. **Follow these patterns to keep it that way.**
+After 6 phases of refactoring (Phases 1-6 complete), the backend is in excellent shape with 60%+ test coverage, idiomatic APIs, and solid error handling. **Follow these patterns to keep it that way.**
 
 ### Go Code Quality Checklist
 
@@ -187,16 +200,18 @@ When writing or modifying Go backend code:
 - ❌ DON'T: Call os.Create(), http.Get(), or time.Now() directly in business logic
 
 Example (Good):
-    func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
-        a := &Analyzer{
-            HTTPClient: interfaces.NewDefaultHTTPClient(),
-            Clock:      interfaces.NewDefaultClock(),
-        }
-        for _, opt := range opts {
-            opt(a)
-        }
-        return a
+```go
+func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
+    a := &Analyzer{
+        HTTPClient: interfaces.NewDefaultHTTPClient(),
+        Clock:      interfaces.NewDefaultClock(),
     }
+    for _, opt := range opts {
+        opt(a)
+    }
+    return a
+}
+```
 
 **2. Add Context Parameters for Cancellation**
 - ✅ DO: Add ctx context.Context as first parameter to long-running functions
@@ -252,7 +267,70 @@ When adding new features:
 
 ### When in Doubt
 
-1. Check BACKEND_CODE_REVIEW.md for past issues and solutions
+1. Check [docs/history/backend-refactoring/](../docs/history/backend-refactoring/) for past issues and solutions
 2. Look at recently refactored code (Analyzer, Discoverer, Storage)
 3. Run make test frequently during development
 4. If test coverage drops below 60%, add more tests
+
+---
+
+## Creating Pull Requests
+
+Use the gh command via the Bash tool for ALL GitHub-related tasks including working with issues, pull requests, checks, and releases. If given a Github URL use the gh command to get the information needed.
+
+**IMPORTANT: When the user asks you to create a pull request, follow these steps carefully:**
+
+1. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel using the Bash tool, in order to understand the current state of the branch since it diverged from the main branch:
+   - Run a git status command to see all untracked files
+   - Run a git diff command to see both staged and unstaged changes that will be committed
+   - Check if the current branch tracks a remote branch and is up to date with the remote, so you know if you need to push to the remote
+   - Run a git log command and `git diff [base-branch]...HEAD` to understand the full commit history for the current branch (from the time it diverged from the base branch)
+2. Analyze all changes that will be included in the pull request, making sure to look at all relevant commits (NOT just the latest commit, but ALL commits that will be included in the pull request!!!)
+3. You can call multiple tools in a single response. When multiple independent pieces of information are requested and all commands are likely to succeed, run multiple tool calls in parallel:
+   - Create new branch if needed
+   - Push to remote with -u flag if needed
+   - Create PR using gh pr create with the format below. Use a HEREDOC to pass the body to ensure correct formatting.
+
+Example:
+```bash
+gh pr create --title "the pr title" --body "$(cat <<'EOF'
+## Summary
+<1-3 bullet points>
+
+## Test plan
+[Bulleted markdown checklist of TODOs for testing the pull request...]
+EOF
+)"
+```
+
+Important:
+- DO NOT use the TodoWrite or Task tools
+- Return the PR URL when you're done, so the user can see it
+
+---
+
+## Project Documentation
+
+Quick links to essential documentation:
+
+**Core Docs:**
+- [ARCHITECTURE.md](../ARCHITECTURE.md) - High-level system design
+- [DEVELOPMENT.md](../DEVELOPMENT.md) - Development workflow
+
+**Detailed Docs:**
+- [docs/architecture/](../docs/architecture/) - Detailed architecture docs
+- [docs/guides/](../docs/guides/) - How-to guides
+- [docs/reference/](../docs/reference/) - Reference documentation
+
+**Historical:**
+- [docs/research/](../docs/research/) - Research findings and decision rationale
+- [docs/history/](../docs/history/) - Implementation archive
+
+---
+
+## Important Notes
+
+- This project uses `web/` for GitHub Pages (not `docs/`)
+- Project documentation is in `docs/`
+- All development is done by AI agents
+- PR workflow must be followed exactly (see top of this file!)
