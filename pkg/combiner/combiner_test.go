@@ -726,6 +726,15 @@ func TestCalculateScoreStatistics(t *testing.T) {
 			expectedAvg:   0,
 			expectedZeros: 3,
 		},
+		{
+			name:          "Realistic notability scores",
+			values:        []float64{25.5, 150.0, 0, 80.0, 200.5, 45.0, 0, 120.0},
+			expectedMin:   0,
+			expectedMax:   200.5,
+			expectedMed:   62.5, // Average of 45.0 and 80.0
+			expectedAvg:   77.625,
+			expectedZeros: 2,
+		},
 	}
 
 	for _, tt := range tests {
