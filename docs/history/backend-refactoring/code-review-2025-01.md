@@ -12,7 +12,7 @@
 >
 > **Remaining:** Phase 5 (code quality) and 6.2 (documentation) are low-priority incremental improvements.
 >
-> **See:** [CLAUDE.md](CLAUDE.md) for code quality standards to maintain going forward.
+> **See:** [Code Standards](../../reference/code-standards.md) for code quality standards to maintain going forward.
 
 ---
 
@@ -770,7 +770,7 @@ The refactoring successfully addressed:
 ## RECOMMENDATIONS FOR NEXT PHASES
 
 ### Phase 4: Testing Coverage ✅ COMPLETED
-**Status**: All critical testing completed in Phase 4 (see BACKEND_REFACTORING_PLAN.md)
+**Status**: All critical testing completed in Phase 4 (see [plan.md](plan.md))
 
 **Completed**:
 - ✅ analyzer.go: 0% → ~70% (5 test functions, 39 subtests)

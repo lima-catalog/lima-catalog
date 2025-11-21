@@ -150,18 +150,29 @@ Quick reference for all source files and their purposes.
 
 ## Documentation
 
+### Root Documentation
+
 | File | Purpose |
 |------|---------|
 | `README.md` | Project overview and quick start |
-| `PLAN.md` | Architecture, current state, remaining work (Stages 1-7) |
-| `IMPLEMENTATION_NOTES.md` | Detailed implementation notes for completed features |
-| `INTERFACE_GUIDELINES.md` | Complete UI/UX design system and component specs |
-| `FINDINGS.md` | Research findings (GitHub search behavior, scale assessment) |
-| `CLAUDE.md` | Instructions for Claude when working on this project |
-| `SOURCE_INDEX.md` | This file - quick reference for all source files |
-| `LLM_ANALYST_PROMPTS.md` | Documentation for LLM prompt generation system |
-| **`BACKEND_REFACTORING_PLAN.md`** | Backend refactoring roadmap and progress (Phases 1-4 complete) |
-| **`BACKEND_CODE_REVIEW.md`** | Comprehensive code review findings (38 issues across 8 categories) |
+| `ARCHITECTURE.md` | High-level system architecture and design decisions |
+| `DEVELOPMENT.md` | Setup, testing, and development workflow |
+
+### Documentation Directory (`docs/`)
+
+| Directory | Purpose |
+|-----------|---------|
+| `docs/architecture/` | Detailed architecture docs (overview, backend, frontend, data pipeline, future work) |
+| `docs/guides/` | How-to guides (getting started, UI/UX guidelines) |
+| `docs/reference/` | Reference documentation (code standards, LLM prompts) |
+| `docs/research/` | Research findings and decision rationale |
+| `docs/history/` | Implementation archive and refactoring history |
+
+### AI Agent Instructions
+
+| File | Purpose |
+|------|---------|
+| `.claude/instructions.md` | Complete AI workflow, PR checklist, code quality quick reference |
 
 ## GitHub Actions
 
@@ -285,11 +296,11 @@ No build step required - uses ES6 modules directly in browser.
 - `cmd/prompt-generator/main.go` - Standalone prompt generation CLI
 - `cmd/prompt-generator/README.md` - Prompt generator documentation
 - `cmd/prompt-generator/example.sh` - Usage examples
-- `LLM_ANALYST_PROMPTS.md` - LLM prompt system documentation
-- `SOURCE_INDEX.md` - This file
+- `docs/reference/llm-prompts.md` - LLM prompt system documentation
+- `docs/architecture/source-index.md` - This file
 
 ### Modified Files
-- `PLAN.md` - Added Stage 6 prompt builder architecture
+- `docs/architecture/future-work.md` - Stage 6 prompt builder architecture
 - `go.mod` - Downgraded to Go 1.24 for compatibility
 
 ## Quick Navigation Tips
@@ -303,13 +314,14 @@ No build step required - uses ES6 modules directly in browser.
 - Frontend data loading → `docs/js/data.js`
 - Template rendering → `docs/js/templateCard.js`
 - Search/filter → `docs/js/filters.js` + `docs/js/app.js`
-- UI design system → `INTERFACE_GUIDELINES.md` + `docs/style.css`
+- UI design system → `docs/guides/ui-ux-guidelines.md` + `web/style.css`
 - LLM prompt generation → `pkg/prompt/builder.go`
 - CLI tools → `cmd/*/main.go`
 
 **Working on...**
-- New feature → Check `PLAN.md` for architecture first
-- UI changes → Check `INTERFACE_GUIDELINES.md` for design system
+- New feature → Check `docs/architecture/` for architecture first
+- UI changes → Check `docs/guides/ui-ux-guidelines.md` for design system
+- Code standards → Check `docs/reference/code-standards.md`
 - Testing → See `Makefile` for test commands
-- Documentation → Update relevant `.md` files
-- LLM integration → See `LLM_ANALYST_PROMPTS.md`
+- AI workflow → See `.claude/instructions.md`
+- LLM integration → See `docs/reference/llm-prompts.md`

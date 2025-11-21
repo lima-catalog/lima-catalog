@@ -1,6 +1,6 @@
 # Implementation Notes - Lima Catalog
 
-This document contains detailed implementation notes for completed features. For current architecture and remaining work, see [PLAN.md](PLAN.md).
+This document contains detailed implementation notes for completed features. For current architecture and remaining work, see [Architecture Overview](../architecture/overview.md) and [Future Work](../architecture/future-work.md).
 
 ## Completed Stages (Incremental Update Redesign)
 
