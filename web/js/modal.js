@@ -393,6 +393,9 @@ async function fetchTemplateContent(template) {
         const modal = document.getElementById('preview-modal');
         const modalContent = modal.querySelector('.modal-content');
         modalContent.classList.add('ready');
+
+        // Trigger diff stats fetching now that YAML is available
+        document.dispatchEvent(new CustomEvent('yamlLoaded'));
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
@@ -591,8 +594,12 @@ function populateSimilarTemplates(template) {
         }
     };
 
-    // Start fetching stats for all items (don't await - let them complete in background)
-    items.forEach(item => fetchDiffStats(item, item.template));
+    // Wait for YAML to load before fetching diff stats
+    const handleYamlLoaded = () => {
+        document.removeEventListener('yamlLoaded', handleYamlLoaded);
+        items.forEach(item => fetchDiffStats(item, item.template));
+    };
+    document.addEventListener('yamlLoaded', handleYamlLoaded);
 
     // Update selection styling and show diff
     const updateSelection = async (newIndex) => {
