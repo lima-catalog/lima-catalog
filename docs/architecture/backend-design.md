@@ -1,0 +1,273 @@
+# Backend Design
+
+**Quick Links**: [Overview](overview.md) | [Frontend Design](frontend-design.md) | [Source Index](source-index.md) | [Code Standards](../reference/code-standards.md)
+
+---
+
+## Overview
+
+The backend is a Go CLI tool (`cmd/lima-catalog`) that discovers, validates, and analyzes Lima templates from across GitHub.
+
+**Key Technologies:**
+- Go 1.24+
+- GitHub API v3 (REST)
+- YAML parsing (gopkg.in/yaml.v3)
+- MinHash + LSH for duplicate detection
+
+**Architecture Principles:**
+- **Dependency Injection**: HTTPClient, FileSystem, Clock interfaces
+- **Context Support**: Cancellation for long-running operations
+- **Functional Options**: Flexible configuration
+- **Idiomatic Error Handling**: Sentinel errors, wrapped errors
+- **60%+ Test Coverage**: Comprehensive tests with mocks
+
+→ For code quality standards, see [Code Standards](../reference/code-standards.md)
+
+---
+
+## Notability Scoring System
+
+**Purpose**: Identify and prioritize the most "interesting" templates for LLM analysis and user discovery.
+
+### Raw Metrics
+
+Stored in `notability` field:
+
+- `message_length` - Length of user-facing message (>0 indicates template meant for reuse)
+- `provision_count` - Number of provision scripts
+- `provision_total_lines` - Total lines across all provision scripts
+- `probe_count` - Number of probe scripts
+- `probe_total_lines` - Total lines across all probe scripts
+- `param_count` - Number of configurable parameters
+- `env_count` - Number of environment variables
+- `comment_line_count` - Number of **unique** YAML comment lines (filtered)
+- `unusual_images` - List of unusual image **domains** (not in official templates)
+
+### Comment Filtering
+
+Prevents score inflation from inherited comments:
+
+1. Fetches `default.yaml` from lima-vm/lima repository
+2. Extracts all normalized comment lines from default template
+3. Only counts comments that are:
+   - Not present in default.yaml (prevents derivative templates from inheriting scores)
+   - Not empty (ignores lines with just `#` and whitespace)
+
+**Rationale**: Many templates start from default.yaml and inherit documentation comments. Without filtering, these templates get artificially inflated scores (default.yaml itself scores 1132 primarily from 541 comment lines).
+
+### Official Images Detection
+
+Domain-based, dynamically fetched:
+
+- Fetched from `lima-vm/lima/templates/_images/` directory via GitHub API
+- Extracts **domains** from image URLs (e.g., `cloud-images.ubuntu.com`)
+- Domain-based matching handles version updates automatically
+- No hardcoded data - fully autonomous system
+- Fetched once per analyzer run, cached for all template analyses
+
+### Unusual Images
+
+What gets stored:
+
+- Template image URLs are parsed to extract their domains
+- Domains not found in official images list are stored in `unusual_images`
+- Example: Template using `https://nixos.org/channels/...` would store `nixos.org`
+- Deduplicates domains (multiple images from same domain counted once)
+- Skips `template://` references (internal template references)
+
+### Score Calculation
+
+Weighted sum of metrics:
+
+1. **Message**: 100 points (strong signal for reusability)
+2. **Provision scripts**: 10 points per script + 1 point per 10 lines
+3. **Parameters**: 20 points per param (indicates configurability)
+4. **Environment vars**: 10 points per var (shows configuration effort)
+5. **Probes**: 5 points per probe + 1 point per 10 lines
+6. **Unusual images**: 30 points if any unusual domains present
+7. **Comment lines**: 2 points per comment line (documentation quality)
+8. **Repository stars**: 1 point per 10 stars (capped at 50 points)
+
+### Usage
+
+- **Frontend**: Sort templates by `notability_score` to show most interesting first
+- **LLM Analysis**: Process templates in notability order (highest first) to prioritize valuable templates
+- **Rate limiting**: With ~20-30 LLM requests/day, notability ensures we analyze the best templates first
+
+**Design Decision**: Store raw metrics, calculate score on-demand. This allows weight tuning without re-analyzing all templates.
+
+**Implementation**: See `pkg/discovery/notability.go`
+
+---
+
+## Duplicate Detection System
+
+**Goal**: Identify similar/duplicate templates to help users discover alternatives and understand template relationships.
+
+### Algorithm: MinHash + LSH
+
+- **MinHash**: Generates 128-hash signature from 5-word shingles (YAML content)
+- **LSH**: 32 bands × 4 rows for sub-linear similarity search (~42% threshold)
+- **Classification**: exact (>90%), near (70-90%), similar (50-70%)
+
+### Performance
+
+- **Signature generation**: ~10-20ms per template
+- **Storage**: 512 bytes per template (128 × uint32)
+- **Search**: O(n) sub-linear vs O(n²) brute force
+- **Accuracy**: ~8.8% error rate with 128 hashes
+
+### Configuration
+
+```go
+analyzer := NewAnalyzer(
+    WithDetectDuplicates(true),              // Default: enabled
+    WithDuplicateSimilarityThreshold(0.5),   // Default: 50%
+)
+```
+
+### Data Flow
+
+1. Analyzer generates MinHash signature during template analysis
+2. `DetectDuplicates()` builds LSH index and finds similar templates
+3. Populates `similar_templates` field with IDs, similarity scores, and types
+4. Combiner copies to `catalog.jsonl` for frontend
+5. Modal displays "Similar Templates" section with badges
+
+### UI Features
+
+- Color-coded badges: Exact (red), Near (orange), Similar (blue)
+- Similarity percentage displayed
+- Click to navigate between similar templates
+- Full keyboard accessibility
+- Hidden when no similar templates exist
+
+**Research**: See [Duplicate Detection Research](../research/duplicate-detection-algorithms.md) for algorithm selection rationale and parameter tuning guidelines.
+
+**Implementation**: See `pkg/discovery/analyzer.go`, `pkg/minhash/`
+
+---
+
+## Backend Code Quality
+
+After 6 phases of refactoring (Nov 2024 - Jan 2025), the backend is in excellent shape:
+
+**Current State:**
+- ✅ 0 critical issues
+- ✅ 60%+ test coverage (83 tests passing)
+- ✅ Idiomatic Go APIs with context support
+- ✅ Dependency injection for testability
+- ✅ Comprehensive documentation
+
+**Key Patterns:**
+- **Interfaces**: HTTPClient, FileSystem, Clock for all external dependencies
+- **Functional Options**: `NewX(opts ...Option)` for complex constructors
+- **Context**: First parameter in long-running functions for cancellation
+- **Sentinel Errors**: Named error variables for expected error conditions
+- **Table-Driven Tests**: One test function with []struct{} for multiple cases
+
+→ See [Code Standards](../reference/code-standards.md) for detailed quality requirements
+
+→ See [Backend Refactoring History](../history/backend-refactoring/) for refactoring details
+
+---
+
+## Package Structure
+
+```
+pkg/
+├── discovery/        # Template discovery and analysis
+│   ├── discovery.go  # GitHub Code Search integration
+│   ├── analyzer.go   # Template analysis (keywords, categories, duplicates)
+│   ├── parser.go     # YAML parsing and info extraction
+│   ├── naming.go     # Template naming logic
+│   ├── metadata.go   # Repository/org metadata collection
+│   ├── notability.go # Notability scoring system
+│   ├── blocklist.go  # Blocklist pattern matching
+│   └── update.go     # Incremental update logic
+├── storage/          # JSON Lines storage
+│   └── storage.go    # Load/save templates, repos, orgs, progress
+├── github/           # GitHub API wrapper
+│   └── client.go     # Rate limiting, caching, API wrappers
+├── combiner/         # Frontend data generation
+│   └── combiner.go   # Merge templates+repos+orgs → catalog.jsonl
+├── minhash/          # Duplicate detection
+│   ├── minhash.go    # MinHash signature generation
+│   └── lsh.go        # LSH index and similarity search
+├── prompt/           # LLM prompt generation (future)
+│   ├── builder.go    # Context gathering and prompt formatting
+│   └── types.go      # Data structures
+├── validation/       # Input validation
+│   └── validation.go # Token, path, config validation
+├── retry/            # Retry logic
+│   └── retry.go      # Exponential backoff retry
+├── cache/            # In-memory caching
+│   └── cache.go      # TTL-based cache
+├── config/           # Configuration
+│   └── constants.go  # API delays, rate limits, weights
+├── interfaces/       # Interfaces for testing
+│   └── interfaces.go # HTTPClient, FileSystem, Clock
+└── types/            # Core data structures
+    ├── template.go   # Template, Repository, Organization
+    ├── progress.go   # Progress tracking
+    └── blocklist.go  # Blocklist configuration
+```
+
+→ For complete file index, see [Source Index](source-index.md)
+
+---
+
+## CLI Tools
+
+### Main Tool: `cmd/lima-catalog`
+
+Daily data collection orchestrator:
+
+```bash
+export GITHUB_TOKEN=your_token
+export ANALYZE=true
+./lima-catalog
+```
+
+**Steps:**
+1. Load progress and existing templates
+2. Discover new/changed templates
+3. Validate content (check `images:` field)
+4. Analyze templates (keywords, categories, duplicates)
+5. Refresh stale metadata (5% per run)
+6. Generate frontend data (`catalog.jsonl`)
+7. Save progress
+
+### Prompt Generator: `cmd/prompt-generator`
+
+Generate LLM prompts for testing (future Stage 6):
+
+```bash
+export GITHUB_TOKEN=your_token
+prompt-generator lima-vm/lima/templates/ubuntu.yaml
+```
+
+Gathers comprehensive context:
+- Template YAML content
+- Template comments
+- Repository metadata
+- Organization info
+- README content
+- Template references in repo
+
+→ See [LLM Prompts Documentation](../reference/llm-prompts.md)
+
+---
+
+## Related Documentation
+
+- **[Overview](overview.md)** - System architecture and data schema
+- **[Frontend Design](frontend-design.md)** - JavaScript modules and UI
+- **[Data Pipeline](data-pipeline.md)** - Discovery → Analysis → Frontend
+- **[Future Work](future-work.md)** - LLM descriptions, template cleanup
+- **[Code Standards](../reference/code-standards.md)** - Quality requirements
+- **[Source Index](source-index.md)** - Find any source file
+
+**Historical:**
+- **[Backend Refactoring](../history/backend-refactoring/)** - 6-phase refactoring
+- **[Research](../research/)** - Algorithm selection rationale

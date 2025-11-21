@@ -27,13 +27,29 @@ Search, filter, and preview Lima templates with:
 
 Want your Lima template included in the catalog? Just create a valid Lima template (with `images:` field) in a public GitHub repository - it will be automatically discovered within 24 hours!
 
+## Documentation
+
+**Quick Links:**
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System overview and design decisions
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Setup, testing, and development workflow
+- **[docs/](docs/)** - Complete documentation (architecture, guides, reference)
+
+**By Topic:**
+- **Architecture**: [docs/architecture/](docs/architecture/) - Backend, frontend, data pipeline
+- **Guides**: [docs/guides/](docs/guides/) - Getting started, UI/UX guidelines
+- **Reference**: [docs/reference/](docs/reference/) - Code standards, LLM prompts
+- **Research**: [docs/research/](docs/research/) - Decision rationale
+- **History**: [docs/history/](docs/history/) - Implementation archive
+
+**For AI Agents**: [.claude/instructions.md](.claude/instructions.md)
+
 ## Project Architecture
 
 This project consists of two main components:
 
 ### 1. Web Catalog (GitHub Pages)
 
-A static website (`docs/`) that fetches data from the `data` branch and provides an interactive interface to browse templates.
+A static website (`web/`) that fetches data from the `data` branch and provides an interactive interface to browse templates.
 
 ### 2. Backend Tool (Go)
 
@@ -52,14 +68,14 @@ The web app uses ES6 modules which require a web server (cannot be opened direct
 
 **Option 1: Python**
 ```bash
-cd docs
+cd web
 python3 -m http.server 8000
 # Visit: http://localhost:8000
 ```
 
 **Option 2: Node.js**
 ```bash
-npx serve docs
+npx serve web
 # Visit: http://localhost:3000
 ```
 
