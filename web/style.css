@@ -1175,6 +1175,43 @@ footer a:hover {
     flex-shrink: 0;
 }
 
+/* Diff syntax highlighting enhancements */
+.language-diff .hljs-addition {
+    background-color: rgba(46, 160, 67, 0.15);
+    color: #22863a;
+    display: inline-block;
+    width: 100%;
+}
+
+.language-diff .hljs-deletion {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #cb2431;
+    display: inline-block;
+    width: 100%;
+}
+
+.language-diff .hljs-meta {
+    color: #6f42c1;
+    font-weight: 600;
+}
+
+/* Dark mode diff colors */
+@media (prefers-color-scheme: dark) {
+    .language-diff .hljs-addition {
+        background-color: rgba(46, 160, 67, 0.2);
+        color: #85e89d;
+    }
+
+    .language-diff .hljs-deletion {
+        background-color: rgba(248, 81, 73, 0.2);
+        color: #f97583;
+    }
+
+    .language-diff .hljs-meta {
+        color: #b392f0;
+    }
+}
+
 .modal-footer {
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--border-elevated);
