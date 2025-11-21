@@ -11,6 +11,81 @@ import { getTemplates } from './state.js';
 let currentTemplate = null;
 let releaseFocusTrap = null;
 let previouslyFocusedElement = null;
+let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
+
+/**
+ * URL parameter utilities for deep linking
+ */
+
+/**
+ * Get template ID from URL parameters
+ * @returns {string|null} Template ID if present in URL
+ */
+function getTemplateFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('template');
+}
+
+/**
+ * Check if modal should be open based on URL parameters
+ * @returns {boolean} True if modal parameter is set to 'open'
+ */
+function isModalOpenInURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('modal') === 'open';
+}
+
+/**
+ * Update URL with template ID and optional modal state
+ * @param {string} templateId - Template ID to add to URL
+ * @param {boolean} modalOpen - Whether modal is open (default: false)
+ */
+function updateURLWithTemplate(templateId, modalOpen = false) {
+    const url = new URL(window.location);
+    url.searchParams.set('template', templateId);
+    if (modalOpen) {
+        url.searchParams.set('modal', 'open');
+    } else {
+        url.searchParams.delete('modal');
+    }
+    window.history.pushState({ templateId, modalOpen }, '', url);
+}
+
+/**
+ * Update URL to set template selection (exposed for use by template cards)
+ * @param {string} templateId - Template ID to add to URL
+ */
+export function updateURLForTemplateSelection(templateId) {
+    // Only update if not already the current template in URL (avoid spam)
+    const currentTemplateId = getTemplateFromURL();
+    if (currentTemplateId !== templateId) {
+        updateURLWithTemplate(templateId, false);
+    }
+}
+
+/**
+ * Clear template ID from URL
+ */
+function clearTemplateFromURL() {
+    const url = new URL(window.location);
+    url.searchParams.delete('template');
+    url.searchParams.delete('modal');
+    window.history.pushState({}, '', url);
+}
+
+/**
+ * Close modal but keep template selected in URL
+ */
+function closeModalKeepTemplate() {
+    const templateId = getTemplateFromURL();
+    if (templateId) {
+        // Keep template in URL, just remove modal=open
+        updateURLWithTemplate(templateId, false);
+    } else {
+        // No template in URL, just clear everything
+        clearTemplateFromURL();
+    }
+}
 
 /**
  * Open preview modal for a template
@@ -61,6 +136,11 @@ export function openPreviewModal(template) {
         releaseFocusTrap = trapFocus(modal.querySelector('.modal-content'));
     }, 100);
 
+    // Update URL with template ID and modal state for deep linking (only if not handling popstate)
+    if (!isHandlingPopState) {
+        updateURLWithTemplate(template.id, true);
+    }
+
     // Fetch and display template content
     fetchTemplateContent(template);
 }
@@ -72,6 +152,9 @@ export function closePreviewModal() {
     const modal = document.getElementById('preview-modal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
+
+    // Store the template before clearing it
+    const closedTemplate = currentTemplate;
     currentTemplate = null;
 
     // Release focus trap
@@ -80,8 +163,20 @@ export function closePreviewModal() {
         releaseFocusTrap = null;
     }
 
-    // Restore focus to the element that opened the modal
-    if (previouslyFocusedElement && previouslyFocusedElement.focus) {
+    // Keep template selected in URL, just remove modal=open (only if not handling popstate)
+    if (!isHandlingPopState) {
+        closeModalKeepTemplate();
+    }
+
+    // Focus the template card if there's a template in the URL
+    const templateId = getTemplateFromURL();
+    if (templateId) {
+        // Use requestAnimationFrame to ensure modal is fully closed before focusing
+        requestAnimationFrame(() => {
+            focusTemplateCard(templateId);
+        });
+    } else if (previouslyFocusedElement && previouslyFocusedElement.focus) {
+        // Otherwise restore focus to the element that opened the modal
         previouslyFocusedElement.focus();
         previouslyFocusedElement = null;
     }
@@ -238,6 +333,97 @@ function escapeHtml(str) {
 }
 
 /**
+ * Focus a template card by template ID
+ * @param {string} templateId - Template ID to focus
+ * @param {number} retryCount - Number of retries (for timing)
+ */
+function focusTemplateCard(templateId, retryCount = 0) {
+    const card = document.querySelector(`.template-card[data-template-id="${CSS.escape(templateId)}"]`);
+    if (card) {
+        card.focus();
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return true;
+    } else if (retryCount < 5) {
+        // Card not found yet, retry after a short delay (DOM might still be rendering)
+        setTimeout(() => focusTemplateCard(templateId, retryCount + 1), 50);
+        return false;
+    } else {
+        console.warn(`Template card not found in DOM: ${templateId}`);
+        return false;
+    }
+}
+
+/**
+ * Open template from URL if template parameter exists
+ * Called on page load and popstate events
+ */
+export function openTemplateFromURL() {
+    const templateId = getTemplateFromURL();
+    const shouldOpenModal = isModalOpenInURL();
+
+    if (templateId) {
+        // Find template by ID
+        const templates = getTemplates();
+        const template = templates.find(t => t.id === templateId);
+
+        if (template) {
+            if (shouldOpenModal) {
+                // Open modal if modal=open in URL
+                openPreviewModal(template);
+            } else {
+                // Just set focus on the template card without opening modal
+                // Use requestAnimationFrame to ensure DOM is ready
+                requestAnimationFrame(() => {
+                    focusTemplateCard(templateId);
+                });
+            }
+        } else {
+            console.warn(`Template not found: ${templateId}`);
+            // Clear invalid template from URL
+            clearTemplateFromURL();
+        }
+    }
+}
+
+/**
+ * Handle browser back/forward navigation
+ */
+function handlePopState() {
+    isHandlingPopState = true;
+
+    const templateId = getTemplateFromURL();
+    const shouldOpenModal = isModalOpenInURL();
+
+    if (templateId) {
+        if (shouldOpenModal) {
+            // URL has template with modal=open - open modal if not already open
+            if (!currentTemplate || currentTemplate.id !== templateId) {
+                openTemplateFromURL();
+            }
+        } else {
+            // URL has template without modal=open - close modal if open, focus card
+            if (currentTemplate) {
+                closePreviewModal();
+            }
+            // Focus the template card
+            requestAnimationFrame(() => {
+                focusTemplateCard(templateId);
+            });
+        }
+    } else {
+        // URL has no template - close modal if open and clear focus
+        if (currentTemplate) {
+            closePreviewModal();
+        }
+    }
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+        isHandlingPopState = false;
+    }, 100);
+}
+
+/**
  * Setup modal event listeners
  */
 export function setupModalEventListeners() {
@@ -375,4 +561,7 @@ export function setupModalEventListeners() {
             });
         }
     });
+
+    // Handle browser back/forward navigation
+    window.addEventListener('popstate', handlePopState);
 }
