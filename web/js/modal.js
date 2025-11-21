@@ -273,50 +273,100 @@ function populateSimilarTemplates(template) {
     similarSection.classList.remove('hidden');
     similarList.innerHTML = '';
 
-    // Get all templates for looking up names
+    // Get all templates for looking up data
     const allTemplates = getTemplates();
     const templateMap = new Map(allTemplates.map(t => [t.id, t]));
 
-    template.similar_templates.forEach(similar => {
+    // Track selected index for keyboard navigation
+    let selectedIndex = -1;
+    const items = [];
+
+    // Make the list itself focusable as a listbox
+    similarList.setAttribute('role', 'listbox');
+    similarList.setAttribute('tabindex', '0');
+    similarList.setAttribute('aria-label', 'Similar templates');
+
+    template.similar_templates.forEach((similar, index) => {
         const similarTemplate = templateMap.get(similar.id);
-        const displayName = similarTemplate ? deriveDisplayName(similarTemplate) : similar.id;
         const similarityPercent = Math.round(similar.similarity * 100);
 
         const item = document.createElement('div');
         item.className = 'similar-template-item';
-        item.setAttribute('role', 'listitem');
-        item.setAttribute('tabindex', '0');
-        item.setAttribute('aria-label', `Similar template: ${displayName}, ${similarityPercent}% similar`);
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        item.dataset.index = index;
 
+        // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
         item.innerHTML = `
-            <div class="similar-template-info">
-                <div class="similar-template-name">${escapeHtml(displayName)}</div>
-                <div class="similar-template-similarity">From ${escapeHtml(similar.id.split('/').slice(0, 2).join('/'))}</div>
-            </div>
-            <div class="similar-template-badges">
-                ${similar.duplicate_type ? `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>` : ''}
-                <span class="similarity-percentage">${similarityPercent}%</span>
-            </div>
+            <span class="similar-template-path">${escapeHtml(similar.id)}</span>
+            ${similar.duplicate_type ? `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>` : ''}
+            <span class="similarity-percentage">${similarityPercent}%</span>
         `;
 
         // Click handler to open the similar template
-        const clickHandler = () => {
+        item.addEventListener('click', () => {
             if (similarTemplate) {
                 closePreviewModal();
                 setTimeout(() => openPreviewModal(similarTemplate), 100);
             }
-        };
-        item.addEventListener('click', clickHandler);
-
-        // Keyboard handler for accessibility
-        item.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                clickHandler();
-            }
         });
 
+        items.push({ element: item, template: similarTemplate });
         similarList.appendChild(item);
+    });
+
+    // Update selection styling
+    const updateSelection = (newIndex) => {
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+            items[selectedIndex].element.classList.remove('selected');
+            items[selectedIndex].element.setAttribute('aria-selected', 'false');
+        }
+        selectedIndex = newIndex;
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+            items[selectedIndex].element.classList.add('selected');
+            items[selectedIndex].element.setAttribute('aria-selected', 'true');
+            // Scroll into view if needed
+            items[selectedIndex].element.scrollIntoView({ block: 'nearest' });
+        }
+    };
+
+    // Keyboard navigation on the list
+    similarList.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            const newIndex = selectedIndex < items.length - 1 ? selectedIndex + 1 : 0;
+            updateSelection(newIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            const newIndex = selectedIndex > 0 ? selectedIndex - 1 : items.length - 1;
+            updateSelection(newIndex);
+        } else if ((e.key === 'Enter' || e.key === ' ') && selectedIndex >= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            const selected = items[selectedIndex];
+            if (selected && selected.template) {
+                closePreviewModal();
+                setTimeout(() => openPreviewModal(selected.template), 100);
+            }
+        }
+    });
+
+    // Select first item when list gets focus (if nothing selected)
+    similarList.addEventListener('focus', () => {
+        if (selectedIndex < 0 && items.length > 0) {
+            updateSelection(0);
+        }
+    });
+
+    // Clear selection when list loses focus
+    similarList.addEventListener('blur', () => {
+        if (selectedIndex >= 0) {
+            items[selectedIndex].element.classList.remove('selected');
+            items[selectedIndex].element.setAttribute('aria-selected', 'false');
+        }
+        selectedIndex = -1;
     });
 }
 
