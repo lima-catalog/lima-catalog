@@ -120,17 +120,33 @@ web/js/
 ### Similar Templates Detection
 
 **Display**:
+- Compact single-line format: `ORG/REPO/TEMPLATEPATH` with monospace font
 - Color-coded badges: Exact (red), Near (orange), Similar (blue)
 - Similarity percentage shown
-- Click to navigate between similar templates
+- Sorted by similarity (highest first), then alphabetically
+- Scrollable listbox showing up to 4 items
 - Hidden when no similar templates exist
+
+**Keyboard Navigation**:
+- Tab into listbox to focus and select first item
+- Arrow Up/Down to navigate between similar templates
+- Enter/Space to open the selected similar template
+- Tab out to return to YAML view and focus copy button
+
+**Diff View**:
+- When listbox is focused, YAML display shows unified diff
+- Compares current template with selected similar template
+- Syntax highlighted (green additions, red deletions)
+- Copy button hidden while showing diff
+- Original YAML restored when listbox loses focus
 
 **Implementation**:
 - Backend generates MinHash signatures
 - LSH finds similar templates (50%+ similarity)
 - Frontend displays in "Similar Templates" section of modal
+- LCS-based diff algorithm with 3 lines of context
 
-**Code**: `modal.js:createSimilarTemplatesSection()`
+**Code**: `modal.js:populateSimilarTemplates()`, `modal.js:generateUnifiedDiff()`
 
 ### Help Modal
 
