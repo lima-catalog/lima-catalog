@@ -5,6 +5,7 @@
 import { isDebugMode } from './state.js';
 import * as State from './state.js';
 import { updateSidebarOnly } from './appActions.js';
+import { updateURLForTemplateSelection } from './modal.js';
 
 /**
  * Escape HTML to prevent XSS
@@ -187,6 +188,7 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
     card.setAttribute('tabindex', '0');
     card.setAttribute('role', 'article');
     card.setAttribute('aria-label', `Template: ${deriveDisplayName(template)}`);
+    card.setAttribute('data-template-id', template.id); // For URL navigation
 
     const displayName = deriveDisplayName(template);
     const description = template.description || 'No description available';
@@ -373,6 +375,8 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         console.log('[templateCard] Setting focused template:', template.id);
         State.setFocusedTemplate(template);
         updateSidebarOnly();
+        // Update URL to reflect selected template (for sharing/deep linking)
+        updateURLForTemplateSelection(template.id);
     });
 
     return card;

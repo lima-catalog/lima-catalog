@@ -27,13 +27,40 @@ function getTemplateFromURL() {
 }
 
 /**
- * Update URL with template ID
- * @param {string} templateId - Template ID to add to URL
+ * Check if modal should be open based on URL parameters
+ * @returns {boolean} True if modal parameter is set to 'open'
  */
-function updateURLWithTemplate(templateId) {
+function isModalOpenInURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('modal') === 'open';
+}
+
+/**
+ * Update URL with template ID and optional modal state
+ * @param {string} templateId - Template ID to add to URL
+ * @param {boolean} modalOpen - Whether modal is open (default: false)
+ */
+function updateURLWithTemplate(templateId, modalOpen = false) {
     const url = new URL(window.location);
     url.searchParams.set('template', templateId);
-    window.history.pushState({ templateId }, '', url);
+    if (modalOpen) {
+        url.searchParams.set('modal', 'open');
+    } else {
+        url.searchParams.delete('modal');
+    }
+    window.history.pushState({ templateId, modalOpen }, '', url);
+}
+
+/**
+ * Update URL to set template selection (exposed for use by template cards)
+ * @param {string} templateId - Template ID to add to URL
+ */
+export function updateURLForTemplateSelection(templateId) {
+    // Only update if not already the current template in URL (avoid spam)
+    const currentTemplateId = getTemplateFromURL();
+    if (currentTemplateId !== templateId) {
+        updateURLWithTemplate(templateId, false);
+    }
 }
 
 /**
@@ -42,6 +69,7 @@ function updateURLWithTemplate(templateId) {
 function clearTemplateFromURL() {
     const url = new URL(window.location);
     url.searchParams.delete('template');
+    url.searchParams.delete('modal');
     window.history.pushState({}, '', url);
 }
 
@@ -94,9 +122,9 @@ export function openPreviewModal(template) {
         releaseFocusTrap = trapFocus(modal.querySelector('.modal-content'));
     }, 100);
 
-    // Update URL with template ID for deep linking (only if not handling popstate)
+    // Update URL with template ID and modal state for deep linking (only if not handling popstate)
     if (!isHandlingPopState) {
-        updateURLWithTemplate(template.id);
+        updateURLWithTemplate(template.id, true);
     }
 
     // Fetch and display template content
@@ -286,6 +314,7 @@ function escapeHtml(str) {
  */
 export function openTemplateFromURL() {
     const templateId = getTemplateFromURL();
+    const shouldOpenModal = isModalOpenInURL();
 
     if (templateId) {
         // Find template by ID
@@ -293,7 +322,17 @@ export function openTemplateFromURL() {
         const template = templates.find(t => t.id === templateId);
 
         if (template) {
-            openPreviewModal(template);
+            if (shouldOpenModal) {
+                // Open modal if modal=open in URL
+                openPreviewModal(template);
+            } else {
+                // Just set focus on the template card without opening modal
+                const card = document.querySelector(`.template-card[data-template-id="${CSS.escape(templateId)}"]`);
+                if (card) {
+                    card.focus();
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         } else {
             console.warn(`Template not found: ${templateId}`);
             // Clear invalid template from URL
@@ -309,14 +348,28 @@ function handlePopState() {
     isHandlingPopState = true;
 
     const templateId = getTemplateFromURL();
+    const shouldOpenModal = isModalOpenInURL();
 
     if (templateId) {
-        // URL has a template - open it if not already open
-        if (!currentTemplate || currentTemplate.id !== templateId) {
-            openTemplateFromURL();
+        if (shouldOpenModal) {
+            // URL has template with modal=open - open modal if not already open
+            if (!currentTemplate || currentTemplate.id !== templateId) {
+                openTemplateFromURL();
+            }
+        } else {
+            // URL has template without modal=open - close modal if open, focus card
+            if (currentTemplate) {
+                closePreviewModal();
+            }
+            // Focus the template card
+            const card = document.querySelector(`.template-card[data-template-id="${CSS.escape(templateId)}"]`);
+            if (card) {
+                card.focus();
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     } else {
-        // URL has no template - close modal if open
+        // URL has no template - close modal if open and clear focus
         if (currentTemplate) {
             closePreviewModal();
         }
