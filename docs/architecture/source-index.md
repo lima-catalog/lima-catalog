@@ -63,24 +63,24 @@ Quick reference for all source files and their purposes.
 | `builder.go` | Core prompt builder: gathers context, formats prompts for LLM analysis |
 | `builder_test.go` | Tests for prompt builder |
 
-#### `pkg/cache/` *(Phase 3.3)*
+#### `pkg/cache/`
 | File | Purpose |
 |------|---------|
 | `cache.go` | Thread-safe in-memory cache with TTL support for API response caching |
 | `cache_test.go` | Tests for cache (TTL, cleanup, concurrency) |
 
-#### `pkg/interfaces/` *(Phase 2.1)*
+#### `pkg/interfaces/`
 | File | Purpose |
 |------|---------|
 | `interfaces.go` | Dependency injection interfaces (HTTPClient, FileSystem, Clock) for testability |
 
-#### `pkg/validation/` *(Phase 2.4)*
+#### `pkg/validation/`
 | File | Purpose |
 |------|---------|
 | `validation.go` | Input validation functions (tokens, paths, template IDs) |
 | `validation_test.go` | Tests for validation |
 
-#### `pkg/retry/` *(Phase 2.5)*
+#### `pkg/retry/`
 | File | Purpose |
 |------|---------|
 | `retry.go` | Exponential backoff retry logic for resilient API calls |
@@ -264,10 +264,10 @@ No build step required - uses ES6 modules directly in browser.
 - **storage**: Read/write JSON Lines files to data branch
 - **combiner**: Merge data into frontend-optimized format
 - **github**: Wrap GitHub API with rate limiting and caching
-- **cache**: Thread-safe in-memory cache with TTL support *(Phase 3.3)*
-- **interfaces**: Dependency injection interfaces for testability *(Phase 2.1)*
-- **validation**: Input validation functions *(Phase 2.4)*
-- **retry**: Exponential backoff retry logic *(Phase 2.5)*
+- **cache**: Thread-safe in-memory cache with TTL support
+- **interfaces**: Dependency injection interfaces for testability
+- **validation**: Input validation functions
+- **retry**: Exponential backoff retry logic
 - **types**: Shared data structures
 - **prompt**: Generate LLM prompts for template analysis
 

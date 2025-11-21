@@ -99,7 +99,7 @@ Lima Catalog is a searchable catalog of 700+ Lima VM templates from across GitHu
    - Data on `data` branch
    - Clean separation of concerns
 
-## Current State (January 2025)
+## Current State (November 2025)
 
 **Production**:
 - ✅ 716 templates cataloged (51 official + 665 community)

@@ -4,7 +4,7 @@
 
 ---
 
-## Current State (January 2025)
+## Current State (November 2025)
 
 **Production:**
 - ✅ 716 templates cataloged (51 official + 665 community)
@@ -243,7 +243,3 @@ Content-based filtering (checking for `images:` key) eliminates ~31% false posit
 - **[Future Work](future-work.md)** - Planned features (Stages 6-7)
 - **[Source Index](source-index.md)** - Find any source file
 - **[Research](../research/)** - Decision rationale (GitHub search, duplicate detection)
-
----
-
-**For backend refactoring history**, see [Backend Refactoring](../history/backend-refactoring/)

@@ -98,7 +98,7 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - Test 4 in `scripts/test-integration.sh`
 - Validates JSON format, required fields, sorting
 
-**Frontend Integration (2025-01-16):**
+**Frontend Integration (2025-11-19):**
 - Updated frontend to use `catalog.jsonl` instead of loading `templates.jsonl` and `repos.jsonl` separately
 - Simplified data loading: single HTTP request instead of two
 - Removed repository state management and lookup code
@@ -259,7 +259,7 @@ INCREMENTAL=1    # Enable incremental mode
 
 ## Code Quality Improvements
 
-### Keyboard Navigation Refactoring (2025-01-16)
+### Keyboard Navigation Refactoring (2025-11-19)
 
 **Motivation:** External code review noted that keyboard navigation in `app.js` was imperative and hard to maintain. Modifier key handling was inconsistent across different shortcuts.
 
@@ -298,7 +298,7 @@ INCREMENTAL=1    # Enable incremental mode
 
 ---
 
-## Debug Mode for Notability Score Tuning (2025-01-18)
+## Debug Mode for Notability Score Tuning (2025-11-20)
 
 **Motivation:** Need a way to visualize notability scores on the frontend while tuning the scoring weights, without cluttering the normal user interface.
 
@@ -332,7 +332,7 @@ INCREMENTAL=1    # Enable incremental mode
 - `web/index.html` - Added "Notability" to sort dropdown
 - `web/style.css` - Debug mode styling
 
-**Comment Filtering Enhancement (2025-01-18):**
+**Comment Filtering Enhancement (2025-11-20):**
 
 **Problem:** default.yaml scored 1132 primarily from 541 comment lines. Derivative templates inherited these comments, getting artificially inflated scores.
 
@@ -362,7 +362,7 @@ INCREMENTAL=1    # Enable incremental mode
 
 ---
 
-## Debug Mode Subscore Sorting (2025-01-18)
+## Debug Mode Subscore Sorting (2025-11-20)
 
 **Motivation:** When tuning notability scoring weights, need ability to sort by individual score components to identify which templates score highest in each category.
 

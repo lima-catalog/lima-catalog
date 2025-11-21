@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document outlines code quality standards for the Lima Catalog project, with emphasis on the Go backend which has been extensively refactored for quality (60%+ test coverage, idiomatic APIs).
+This document outlines code quality standards for the Lima Catalog project, with emphasis on the Go backend which has high code quality (60%+ test coverage, idiomatic APIs).
 
 ---
 
@@ -186,10 +186,10 @@ make test
 
 ## When in Doubt
 
-1. Check [Backend Refactoring History](../history/backend-refactoring/) for past issues and solutions
-2. Look at recently refactored code (Analyzer, Discoverer, Storage)
-3. Run `make test` frequently during development
-4. If test coverage drops below 60%, add more tests
+1. Look at well-tested code examples (Analyzer, Discoverer, Storage packages)
+2. Run `make test` frequently during development
+3. If test coverage drops below 60%, add more tests
+4. Check [Backend Design](../architecture/backend-design.md) for architecture patterns
 
 ---
 
@@ -229,6 +229,3 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
 - **[.claude/instructions](../../.claude/instructions.md)** - Complete AI workflow (includes this content)
 - **[Getting Started](../guides/getting-started.md)** - Setup and development workflow
 - **[UI/UX Guidelines](../guides/ui-ux-guidelines.md)** - Frontend design system
-
-**Historical**:
-- **[Backend Refactoring History](../history/backend-refactoring/)** - How we got here
