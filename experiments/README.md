@@ -47,6 +47,6 @@ Downloads and inspects real template files to understand:
 
 ## Historical Context
 
-These experiments were conducted in November 2025 during the initial planning phase. Their findings are documented in detail in [../FINDINGS.md](../FINDINGS.md).
+These experiments were conducted in November 2025 during the initial planning phase. Their findings are documented in detail in [GitHub Search Behavior](../docs/research/github-search-behavior.md).
 
 The research led to the successful catalog architecture that now tracks 700+ templates with daily automated updates.

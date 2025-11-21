@@ -466,10 +466,10 @@ Token costs and prompt length:
 - `cmd/prompt-generator/main.go` - CLI tool
 - `cmd/prompt-generator/README.md` - CLI documentation
 - `cmd/prompt-generator/example.sh` - Usage examples
-- `LLM_ANALYST_PROMPTS.md` - This document
+- `docs/reference/llm-prompts.md` - This document
 
 ## Related Documentation
 
-- `PLAN.md` - Stage 6: LLM Descriptions section
+- [Future Work](../architecture/future-work.md) - Stage 6: LLM Descriptions section
 - `pkg/discovery/analyzer.go` - Current analysis logic (will integrate with this)
 - `pkg/discovery/parser.go` - Template parsing (used by prompt builder)

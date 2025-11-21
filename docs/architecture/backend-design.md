@@ -150,8 +150,6 @@ analyzer := NewAnalyzer(
 
 ## Backend Code Quality
 
-After 6 phases of refactoring (Nov 2024 - Jan 2025), the backend is in excellent shape:
-
 **Current State:**
 - ✅ 0 critical issues
 - ✅ 60%+ test coverage (83 tests passing)
@@ -167,8 +165,6 @@ After 6 phases of refactoring (Nov 2024 - Jan 2025), the backend is in excellent
 - **Table-Driven Tests**: One test function with []struct{} for multiple cases
 
 → See [Code Standards](../reference/code-standards.md) for detailed quality requirements
-
-→ See [Backend Refactoring History](../history/backend-refactoring/) for refactoring details
 
 ---
 
@@ -268,6 +264,5 @@ Gathers comprehensive context:
 - **[Code Standards](../reference/code-standards.md)** - Quality requirements
 - **[Source Index](source-index.md)** - Find any source file
 
-**Historical:**
-- **[Backend Refactoring](../history/backend-refactoring/)** - 6-phase refactoring
-- **[Research](../research/)** - Algorithm selection rationale
+**Related:**
+- **[Research](../research/)** - Algorithm selection rationale and decision-making
