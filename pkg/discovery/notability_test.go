@@ -207,7 +207,8 @@ func TestCalculateNotabilityScore(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			score := CalculateNotabilityScore(tt.metrics, tt.repoStars)
+			// Pass empty strings for org/repo since these tests don't have images with custom names
+			score := CalculateNotabilityScore(tt.metrics, "", "", tt.repoStars)
 			if score < tt.minScore || score > tt.maxScore {
 				t.Errorf("CalculateNotabilityScore() = %.2f, want between %.2f and %.2f", score, tt.minScore, tt.maxScore)
 			}
@@ -306,5 +307,137 @@ func TestPopulateNotabilityMetrics(t *testing.T) {
 	}
 	if len(metrics.UnusualImages) > 0 && metrics.UnusualImages[0] != "nixos.org" {
 		t.Errorf("UnusualImages[0] = %q, want %q", metrics.UnusualImages[0], "nixos.org")
+	}
+}
+
+func TestCalculateCustomImagesScore(t *testing.T) {
+	tests := []struct {
+		name     string
+		images   []string
+		org      string
+		repo     string
+		expected float64
+	}{
+		{
+			name:     "No images",
+			images:   []string{},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 0,
+		},
+		{
+			name:     "No matches",
+			images:   []string{"https://example.com/image.img", "https://ubuntu.com/cloud/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 0,
+		},
+		{
+			name:     "Org match with both boundaries",
+			images:   []string{"https://example.com/myorg/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 35, // Org both boundaries
+		},
+		{
+			name:     "Repo match with both boundaries",
+			images:   []string{"https://example.com/myrepo/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 35, // Repo both boundaries
+		},
+		{
+			name:     "Both org and repo match with both boundaries",
+			images:   []string{"https://example.com/myorg/myrepo/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 70, // Both with both boundaries: 35 + 35
+		},
+		{
+			name:     "Org match with one boundary (start)",
+			images:   []string{"https://example.com/myorgextra/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 25, // Org one boundary
+		},
+		{
+			name:     "Org match with one boundary (end)",
+			images:   []string{"https://example.com/testmyorg/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 25, // Org one boundary
+		},
+		{
+			name:     "Mixed boundaries - org both, repo one",
+			images:   []string{"https://myorg.example.com/myrepoextra/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 60, // Org both (35) + Repo one (25)
+		},
+		{
+			name:     "Mixed boundaries - org one, repo both",
+			images:   []string{"https://testmyorg.example.com/myrepo/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 60, // Org one (25) + Repo both (35)
+		},
+		{
+			name:     "Both with one boundary each",
+			images:   []string{"https://myorgextra.example.com/myrepoextra/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 50, // Org one (25) + Repo one (25)
+		},
+		{
+			name:     "Case insensitive matching",
+			images:   []string{"https://example.com/MyOrg/MyRepo/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 70, // Both with both boundaries
+		},
+		{
+			name:     "Multiple images - takes highest match",
+			images:   []string{"https://example.com/myorgextra/image1.img", "https://example.com/myorg/image2.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 35, // Second image has both boundaries
+		},
+		{
+			name:     "Org in domain name",
+			images:   []string{"https://myorg.io/images/file.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 35, // Org with both boundaries in domain
+		},
+		{
+			name:     "Org and repo in file name",
+			images:   []string{"https://example.com/images/myorg-myrepo-v1.2.3.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 70, // Both with both boundaries (hyphen is word boundary)
+		},
+		{
+			name:     "Match with left boundary only when part of longer word",
+			images:   []string{"https://example.com/myorganization/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 25, // "myorg" has left boundary (/) but right boundary is 'a'
+		},
+		{
+			name:     "Empty org and repo names",
+			images:   []string{"https://example.com/test/image.img"},
+			org:      "",
+			repo:     "",
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := CalculateCustomImagesScore(tt.images, tt.org, tt.repo)
+			if result != tt.expected {
+				t.Errorf("CalculateCustomImagesScore() = %.0f, want %.0f", result, tt.expected)
+			}
+		})
 	}
 }

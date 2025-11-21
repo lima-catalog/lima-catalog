@@ -84,6 +84,7 @@ type NotabilityMetrics struct {
 	EnvCount                 int      `json:"env_count"`                           // Number of environment variables
 	CommentLineCount         int      `json:"comment_line_count"`                  // Number of unique comment lines in template
 	UnusualImages            []string `json:"unusual_images,omitempty"`            // Images not in official templates
+	AllImages                []string `json:"all_images,omitempty"`                // All image locations (for org/repo name matching)
 }
 
 // Repository represents a GitHub repository containing templates
