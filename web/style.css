@@ -902,9 +902,15 @@ footer a:hover {
     white-space: nowrap;
 }
 
-.copy-button-inline:hover,
+.copy-button-inline:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 .copy-button-inline:focus {
-    outline: none;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
     background: var(--surface);
     border-color: var(--primary);
     color: var(--primary);
@@ -946,9 +952,15 @@ footer a:hover {
     z-index: 10;
 }
 
-.copy-yaml-button:hover,
+.copy-yaml-button:hover {
+    background: var(--surface);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
 .copy-yaml-button:focus {
-    outline: none;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
     background: var(--surface);
     color: var(--primary);
     border-color: var(--primary);
