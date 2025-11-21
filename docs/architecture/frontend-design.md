@@ -179,35 +179,53 @@ github://owner/repo/path/template.yaml?ref=sha
 
 ### URL Deep Linking
 
-**Purpose**: Share direct links to specific templates with or without modal open
+**Purpose**: Share direct links to specific templates with full filter state preserved
 
-**URL Formats**:
-- `?template=<id>` - Focus on template, modal closed
-- `?template=<id>&modal=open` - Open template modal overlay
+**URL Parameters**:
+- `template=<id>` - Focus on template (required for template selection)
+- `modal=open` - Open template modal overlay
+- `search=<term>` - Search term
+- `keywords=<k1>,<k2>` - Comma-separated keywords (URL-encoded)
+- `category=<name>` - Selected category
+- `official=<bool>` - Show official templates (default: true)
+- `community=<bool>` - Show community templates (default: true)
+- `duplicates=true` - Show duplicates (only included when true)
+- `sort=<field>` - Sort order (only included when not "name")
+
+**Example URLs**:
+- `?template=lima-vm/lima/templates/alpine.yaml` - Focus template
+- `?template=...&modal=open` - Open modal
+- `?search=alpine&keywords=docker%2Clinux&category=containers&sort=stars` - Filters only
+- `?search=alpine&template=...&modal=open` - Full state
 
 **Features**:
 - URL updates automatically during keyboard navigation
+- Filter changes update URL via `replaceState` (no history pollution)
 - Pasting URL focuses and scrolls to template
 - Browser back/forward buttons work correctly
 - Template stays selected when modal closes
 - Retry logic handles DOM timing issues
 
 **Behavior**:
+- **Filter Changes**: URL updated via `replaceState` to avoid history spam
 - **Keyboard Navigation**: URL updates as you navigate with arrow keys
 - **Opening Modal**: Adds `&modal=open` to URL
 - **Closing Modal**: Removes `&modal=open`, keeps template selected
 - **Browser Back**: From open modal → closes modal, keeps template selected
 - **Browser Back**: From selected template → clears selection
-- **Page Load**: Parses URL and restores state (focus + modal if specified)
+- **Page Load**: Parses URL and restores full state (filters + focus + modal)
 
 **Implementation**:
+- `getFiltersFromURL()` - Parse filter state from URL parameters
+- `updateURLWithFilters()` - Sync current filter state to URL
+- `applyFiltersFromURL()` - Apply URL filter state to UI and app state
 - `updateURLForTemplateSelection()` - Called on template card focus events
 - `focusTemplateCard()` - Focus and scroll with retry logic (up to 5 attempts)
 - `closeModalKeepTemplate()` - Remove modal parameter but keep template
-- `handlePopState()` - Sync state with browser history
+- `handlePopState()` - Sync state with browser history (filters + templates)
 - `data-template-id` attribute on cards for DOM queries
 
-**Code**: `modal.js:updateURLForTemplateSelection()`, `modal.js:handlePopState()`, `templateCard.js` (focus handler)
+**Code**: `modal.js` (URL functions), `appActions.js` (filter sync), `templateCard.js` (focus handler)
 
 ### Theme Switching
 
