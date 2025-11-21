@@ -519,9 +519,18 @@ function populateSimilarTemplates(template) {
         item.dataset.index = index;
 
         // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
+        // For exact duplicates, show "ORIGINAL" (blue) if is_original is true, otherwise "EXACT" (red)
+        let badgeHtml = '';
+        if (similar.duplicate_type) {
+            if (similar.duplicate_type === 'exact' && similar.is_original) {
+                badgeHtml = `<span class="duplicate-badge original">original</span>`;
+            } else {
+                badgeHtml = `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>`;
+            }
+        }
         item.innerHTML = `
             <span class="similar-template-path">${escapeHtml(similar.id)}</span>
-            ${similar.duplicate_type ? `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>` : ''}
+            ${badgeHtml}
             <span class="similarity-percentage">${similarityPercent}%</span>
         `;
 

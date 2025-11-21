@@ -467,8 +467,195 @@ func (a *Analyzer) AnalyzeTemplates(ctx context.Context, templates []types.Templ
 				}
 			}
 			fmt.Printf("Found duplicates for %d templates\n", count)
+
+			// Identify originals among exact duplicates
+			identifyOriginals(analyzed, repoMap)
+
+			// Count templates marked as copies
+			copies := 0
+			for _, t := range analyzed {
+				if t.OriginalID != "" {
+					copies++
+				}
+			}
+			if copies > 0 {
+				fmt.Printf("Identified %d templates as copies of originals\n", copies)
+			}
 		}
 	}
 
 	return analyzed, nil
+}
+
+// identifyOriginals determines which template is the "original" among exact duplicates.
+// For each group of exact duplicates (similarity > 0.9), the original is determined by:
+//  1. Official templates (lima-vm/lima) are always originals
+//  2. Oldest repo creation date
+//  3. Tie-breaker: higher star count
+//  4. Final tie-breaker: alphabetically first (deterministic)
+//
+// Non-original templates get their OriginalID field set.
+// The IsOriginal flag is set on SimilarTemplate entries.
+func identifyOriginals(templates []types.Template, repoMap map[string]*types.Repository) {
+	// Build a map for quick lookup
+	templateMap := make(map[string]*types.Template)
+	for i := range templates {
+		templateMap[templates[i].ID] = &templates[i]
+	}
+
+	// Use union-find to group exact duplicates
+	groups := buildExactDuplicateGroups(templates)
+
+	// For each group, identify the original
+	for _, group := range groups {
+		if len(group) <= 1 {
+			continue
+		}
+
+		// Find the original using heuristics
+		originalID := findOriginal(group, templateMap, repoMap)
+
+		// Mark all non-originals with OriginalID and update IsOriginal flags
+		for _, id := range group {
+			t := templateMap[id]
+			if t == nil {
+				continue
+			}
+
+			if id != originalID {
+				t.OriginalID = originalID
+			}
+
+			// Update IsOriginal flag in SimilarTemplates
+			for i := range t.SimilarTemplates {
+				if t.SimilarTemplates[i].DuplicateType == "exact" {
+					t.SimilarTemplates[i].IsOriginal = (t.SimilarTemplates[i].ID == originalID)
+				}
+			}
+		}
+	}
+}
+
+// buildExactDuplicateGroups uses union-find to group templates that are exact duplicates.
+// Returns a list of groups, where each group is a list of template IDs.
+func buildExactDuplicateGroups(templates []types.Template) [][]string {
+	// Union-find data structure
+	parent := make(map[string]string)
+
+	// Find with path compression
+	var find func(id string) string
+	find = func(id string) string {
+		if parent[id] == "" {
+			parent[id] = id
+		}
+		if parent[id] != id {
+			parent[id] = find(parent[id])
+		}
+		return parent[id]
+	}
+
+	// Union two sets
+	union := func(a, b string) {
+		rootA, rootB := find(a), find(b)
+		if rootA != rootB {
+			parent[rootA] = rootB
+		}
+	}
+
+	// Initialize all templates
+	for i := range templates {
+		parent[templates[i].ID] = templates[i].ID
+	}
+
+	// Union exact duplicates
+	for i := range templates {
+		t := &templates[i]
+		for _, similar := range t.SimilarTemplates {
+			if similar.DuplicateType == "exact" {
+				union(t.ID, similar.ID)
+			}
+		}
+	}
+
+	// Group by root
+	groups := make(map[string][]string)
+	for id := range parent {
+		root := find(id)
+		groups[root] = append(groups[root], id)
+	}
+
+	// Convert to slice
+	result := make([][]string, 0, len(groups))
+	for _, group := range groups {
+		if len(group) > 1 {
+			result = append(result, group)
+		}
+	}
+
+	return result
+}
+
+// findOriginal determines which template in the group is the original.
+// Priority: IsOfficial > oldest repo CreatedAt > highest Stars > alphabetical
+func findOriginal(group []string, templateMap map[string]*types.Template, repoMap map[string]*types.Repository) string {
+	var best string
+	var bestRepo *types.Repository
+
+	for _, id := range group {
+		t := templateMap[id]
+		if t == nil {
+			continue
+		}
+
+		// Official templates always win
+		if t.IsOfficial {
+			return id
+		}
+
+		var repo *types.Repository
+		if repoMap != nil {
+			repo = repoMap[t.Repo]
+		}
+
+		// First candidate
+		if best == "" {
+			best = id
+			bestRepo = repo
+			continue
+		}
+
+		// Compare by repo creation date (older is better)
+		if repo != nil && bestRepo != nil {
+			if repo.CreatedAt.Before(bestRepo.CreatedAt) {
+				best = id
+				bestRepo = repo
+				continue
+			} else if bestRepo.CreatedAt.Before(repo.CreatedAt) {
+				continue
+			}
+			// Same creation date, compare by stars
+			if repo.Stars > bestRepo.Stars {
+				best = id
+				bestRepo = repo
+				continue
+			} else if bestRepo.Stars > repo.Stars {
+				continue
+			}
+		} else if repo != nil && bestRepo == nil {
+			// Prefer templates with repo info
+			best = id
+			bestRepo = repo
+			continue
+		} else if repo == nil && bestRepo != nil {
+			continue
+		}
+
+		// Final tie-breaker: alphabetical (smaller ID wins for consistency)
+		if id < best {
+			best = id
+			bestRepo = repo
+		}
+	}
+
+	return best
 }

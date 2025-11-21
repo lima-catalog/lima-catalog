@@ -32,6 +32,7 @@ function setupEventListeners() {
     // Immediate filtering for checkboxes and dropdown
     document.getElementById('show-official').addEventListener('change', filterAndRender);
     document.getElementById('show-community').addEventListener('change', filterAndRender);
+    document.getElementById('show-duplicates').addEventListener('change', filterAndRender);
     document.getElementById('sort').addEventListener('change', filterAndRender);
 
     // Clear keywords button

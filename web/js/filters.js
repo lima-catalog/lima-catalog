@@ -141,9 +141,10 @@ export function getCategoryCounts(templateList) {
  * @param {string} options.typeFilter - Type filter ('official', 'community', or '')
  * @param {string} options.selectedCategory - Selected category
  * @param {Set} options.selectedKeywords - Selected keywords
+ * @param {boolean} options.showDuplicates - Whether to show duplicate templates (default: false)
  * @returns {Array} Filtered templates
  */
-export function applyFilters(templates, { searchTerm = '', typeFilter = '', selectedCategory = null, selectedKeywords = new Set() }) {
+export function applyFilters(templates, { searchTerm = '', typeFilter = '', selectedCategory = null, selectedKeywords = new Set(), showDuplicates = false }) {
     return templates.filter(template => {
         // Search filter
         if (searchTerm) {
@@ -187,6 +188,9 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
         // Type filter
         if (typeFilter === 'official' && !template.official) return false;
         if (typeFilter === 'community' && template.official) return false;
+
+        // Duplicate filter - hide templates that are copies unless showDuplicates is enabled
+        if (!showDuplicates && template.original_id) return false;
 
         return true;
     });

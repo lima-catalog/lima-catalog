@@ -53,6 +53,7 @@ type Template struct {
 	Notability       *NotabilityMetrics `json:"notability,omitempty"` // Metrics for calculating notability score
 	MinHashSignature []uint32  `json:"minhash_signature,omitempty"` // MinHash signature for duplicate detection (128 hash values)
 	SimilarTemplates []SimilarTemplate `json:"similar_templates,omitempty"` // Templates similar to this one (populated during duplicate detection)
+	OriginalID       string    `json:"original_id,omitempty"`       // If this is a copy, the ID of the original template
 }
 
 // SimilarTemplate represents a template that is similar to another template
@@ -61,6 +62,7 @@ type SimilarTemplate struct {
 	Similarity     float64 `json:"similarity"`               // Jaccard similarity (0.0-1.0)
 	DuplicateType  string  `json:"duplicate_type,omitempty"` // "exact" (>0.9), "near" (0.7-0.9), "similar" (0.5-0.7)
 	SharedBands    int     `json:"shared_bands,omitempty"`   // Number of LSH bands shared (for debugging)
+	IsOriginal     bool    `json:"is_original,omitempty"`    // True if this is the original among exact duplicates
 }
 
 // NotabilityMetrics contains raw observations used to calculate template notability score
@@ -97,8 +99,6 @@ type Repository struct {
 	UpdatedAt     time.Time `json:"updated_at"`     // last update date
 	PushedAt      time.Time `json:"pushed_at"`      // last push date
 	Homepage      string    `json:"homepage"`       // homepage URL
-	IsFork        bool      `json:"is_fork"`        // is this a fork?
-	Parent        string    `json:"parent"`         // parent repo if fork (owner/repo)
 	LastFetched   time.Time `json:"last_fetched"`   // when we fetched this data
 }
 
