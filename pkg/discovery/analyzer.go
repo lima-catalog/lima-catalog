@@ -179,13 +179,8 @@ func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template
 	// Step 2: Parse template content
 	templateInfo, err := ParseTemplate(template.URL, a.HTTPClient)
 	if err != nil {
-		// If parsing fails, use basic info
-		fmt.Printf("Warning: failed to parse template %s: %v\n", template.ID, err)
-		templateInfo = &TemplateInfo{
-			Images:     []string{},
-			Keywords:   []string{},
-			Categories: []string{},
-		}
+		// Return error for invalid templates (e.g., missing required 'images' field)
+		return fmt.Errorf("failed to parse template: %w", err)
 	}
 
 	// Populate parsed fields
