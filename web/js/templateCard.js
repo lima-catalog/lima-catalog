@@ -368,15 +368,6 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
                 }
             });
             popup.addEventListener('mouseleave', hidePopup);
-
-            // Clean up popup when card is removed from DOM
-            const observer = new MutationObserver((mutations) => {
-                if (!document.body.contains(card)) {
-                    popup.remove();
-                    observer.disconnect();
-                }
-            });
-            observer.observe(card.parentElement, { childList: true });
         }
     }
 
@@ -502,6 +493,9 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
  * @param {string} sortBy - Current sort field (optional)
  */
 export function renderTemplateGrid(templates, gridElement, onCardClick, sortBy = 'name') {
+    // Clean up any existing debug popups before rendering
+    document.querySelectorAll('.debug-score-popup').forEach(popup => popup.remove());
+
     gridElement.innerHTML = '';
 
     if (templates.length === 0) {
