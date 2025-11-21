@@ -13,6 +13,7 @@ let currentYamlContent = null; // Store original YAML for diff comparison
 let releaseFocusTrap = null;
 let previouslyFocusedElement = null;
 let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
+let onYamlLoadedCallback = null; // Callback for when YAML content is loaded
 
 /**
  * Get similarity badge HTML based on similarity percentage
@@ -395,7 +396,10 @@ async function fetchTemplateContent(template) {
         modalContent.classList.add('ready');
 
         // Trigger diff stats fetching now that YAML is available
-        document.dispatchEvent(new CustomEvent('yamlLoaded'));
+        if (onYamlLoadedCallback) {
+            onYamlLoadedCallback();
+            onYamlLoadedCallback = null;
+        }
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
@@ -594,12 +598,10 @@ function populateSimilarTemplates(template) {
         }
     };
 
-    // Wait for YAML to load before fetching diff stats
-    const handleYamlLoaded = () => {
-        document.removeEventListener('yamlLoaded', handleYamlLoaded);
+    // Set callback to fetch diff stats once YAML is loaded
+    onYamlLoadedCallback = () => {
         items.forEach(item => fetchDiffStats(item, item.template));
     };
-    document.addEventListener('yamlLoaded', handleYamlLoaded);
 
     // Update selection styling and show diff
     const updateSelection = async (newIndex) => {
