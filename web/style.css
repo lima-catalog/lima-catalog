@@ -842,8 +842,7 @@ footer a:hover {
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
     width: 100%;
     max-width: 900px;
-    min-height: 600px;
-    max-height: 90vh;
+    height: 90vh;
     display: flex;
     flex-direction: column;
     opacity: 0;
@@ -1061,78 +1060,87 @@ footer a:hover {
 
 /* Similar Templates Section */
 .similar-templates-section {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .similar-templates-title {
-    margin: 0 0 1rem 0;
-    font-size: 1rem;
+    margin: 0 0 0.25rem 0;
+    padding-left: 0.25rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .similar-templates-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    max-height: calc(4 * 1.75rem); /* 4 lines, each ~1.75rem tall */
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    background: var(--bg-secondary);
+}
+
+.similar-templates-list:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
 }
 
 .similar-template-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 0.375rem;
-    transition: all 0.2s;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    min-height: 1.75rem;
+    box-sizing: border-box;
+}
+
+.similar-template-item:last-child {
+    border-bottom: none;
 }
 
 .similar-template-item:hover {
     background: var(--bg-elevated);
-    border-color: var(--primary);
-    transform: translateX(4px);
 }
 
-.similar-template-info {
+.similar-template-item.selected {
+    background: var(--primary);
+    color: white;
+}
+
+.similar-template-item.selected .similar-template-path {
+    color: white;
+}
+
+.similar-template-item.selected .similarity-percentage {
+    color: rgba(255,255,255,0.9);
+}
+
+.similar-template-path {
     flex: 1;
     min-width: 0;
-    margin-right: 1rem;
-}
-
-.similar-template-name {
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 0.25rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.similar-template-similarity {
-    font-size: 0.875rem;
-    color: var(--text-light);
-}
-
-.similar-template-badges {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    flex-shrink: 0;
+    color: var(--text-primary);
+    font-family: var(--font-mono, monospace);
 }
 
 .duplicate-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
+    padding: 0.0625rem 0.25rem;
+    border-radius: 0.1875rem;
+    font-size: 0.625rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.025em;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .duplicate-badge.exact {
@@ -1151,11 +1159,50 @@ footer a:hover {
 }
 
 .similarity-percentage {
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--text-light);
-    min-width: 3rem;
+    min-width: 2rem;
     text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Diff syntax highlighting enhancements */
+.language-diff .hljs-addition {
+    background-color: rgba(46, 160, 67, 0.15);
+    color: #22863a;
+    display: inline-block;
+    width: 100%;
+}
+
+.language-diff .hljs-deletion {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #cb2431;
+    display: inline-block;
+    width: 100%;
+}
+
+.language-diff .hljs-meta {
+    color: #6f42c1;
+    font-weight: 600;
+}
+
+/* Dark mode diff colors */
+@media (prefers-color-scheme: dark) {
+    .language-diff .hljs-addition {
+        background-color: rgba(46, 160, 67, 0.2);
+        color: #85e89d;
+    }
+
+    .language-diff .hljs-deletion {
+        background-color: rgba(248, 81, 73, 0.2);
+        color: #f97583;
+    }
+
+    .language-diff .hljs-meta {
+        color: #b392f0;
+    }
 }
 
 .modal-footer {

@@ -9,9 +9,162 @@ import { getTemplates } from './state.js';
 
 // Modal state
 let currentTemplate = null;
+let currentYamlContent = null; // Store original YAML for diff comparison
 let releaseFocusTrap = null;
 let previouslyFocusedElement = null;
 let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
+
+/**
+ * Generate a unified diff between two texts
+ * @param {string} originalText - Original text
+ * @param {string} newText - New text to compare
+ * @param {string} originalName - Name for original file
+ * @param {string} newName - Name for new file
+ * @returns {string} Unified diff output
+ */
+function generateUnifiedDiff(originalText, newText, originalName = 'original', newName = 'similar') {
+    const originalLines = originalText.split('\n');
+    const newLines = newText.split('\n');
+
+    // Simple LCS-based diff algorithm
+    const lcs = computeLCS(originalLines, newLines);
+    const diff = buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName);
+
+    return diff;
+}
+
+/**
+ * Compute Longest Common Subsequence for diff
+ */
+function computeLCS(a, b) {
+    const m = a.length;
+    const n = b.length;
+    const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            if (a[i - 1] === b[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+
+    // Backtrack to find LCS indices
+    const result = [];
+    let i = m, j = n;
+    while (i > 0 && j > 0) {
+        if (a[i - 1] === b[j - 1]) {
+            result.unshift({ aIndex: i - 1, bIndex: j - 1 });
+            i--;
+            j--;
+        } else if (dp[i - 1][j] > dp[i][j - 1]) {
+            i--;
+        } else {
+            j--;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Build unified diff output from LCS
+ */
+function buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName) {
+    const hunks = [];
+    let currentHunk = null;
+    let aPos = 0, bPos = 0;
+    let lcsIndex = 0;
+
+    const contextLines = 3;
+
+    while (aPos < originalLines.length || bPos < newLines.length) {
+        // Find next LCS match
+        const nextMatch = lcs[lcsIndex];
+
+        if (nextMatch && aPos === nextMatch.aIndex && bPos === nextMatch.bIndex) {
+            // Matching line
+            if (currentHunk) {
+                currentHunk.lines.push({ type: ' ', text: originalLines[aPos] });
+            }
+            aPos++;
+            bPos++;
+            lcsIndex++;
+        } else {
+            // Difference found - start or continue a hunk
+            if (!currentHunk) {
+                // Start new hunk with context
+                const contextStart = Math.max(0, aPos - contextLines);
+                currentHunk = {
+                    aStart: contextStart + 1,
+                    bStart: Math.max(0, bPos - contextLines) + 1,
+                    lines: []
+                };
+                // Add leading context
+                for (let c = contextStart; c < aPos; c++) {
+                    currentHunk.lines.push({ type: ' ', text: originalLines[c] });
+                }
+            }
+
+            // Add removed lines from original
+            const aEnd = nextMatch ? nextMatch.aIndex : originalLines.length;
+            while (aPos < aEnd) {
+                currentHunk.lines.push({ type: '-', text: originalLines[aPos] });
+                aPos++;
+            }
+
+            // Add added lines from new
+            const bEnd = nextMatch ? nextMatch.bIndex : newLines.length;
+            while (bPos < bEnd) {
+                currentHunk.lines.push({ type: '+', text: newLines[bPos] });
+                bPos++;
+            }
+        }
+
+        // Check if we should close the hunk (enough context after changes)
+        if (currentHunk) {
+            const lastChangeIndex = currentHunk.lines.length - 1 -
+                currentHunk.lines.slice().reverse().findIndex(l => l.type !== ' ');
+            const contextAfter = currentHunk.lines.length - 1 - lastChangeIndex;
+
+            if (contextAfter >= contextLines || (aPos >= originalLines.length && bPos >= newLines.length)) {
+                // Trim excess context
+                while (currentHunk.lines.length > 0 &&
+                       currentHunk.lines[currentHunk.lines.length - 1].type === ' ' &&
+                       currentHunk.lines.length - 1 - lastChangeIndex > contextLines) {
+                    currentHunk.lines.pop();
+                }
+                hunks.push(currentHunk);
+                currentHunk = null;
+            }
+        }
+    }
+
+    if (currentHunk && currentHunk.lines.some(l => l.type !== ' ')) {
+        hunks.push(currentHunk);
+    }
+
+    // Build output
+    if (hunks.length === 0) {
+        return '# No differences found';
+    }
+
+    let output = `--- ${originalName}\n+++ ${newName}\n`;
+
+    for (const hunk of hunks) {
+        const aCount = hunk.lines.filter(l => l.type !== '+').length;
+        const bCount = hunk.lines.filter(l => l.type !== '-').length;
+        output += `@@ -${hunk.aStart},${aCount} +${hunk.bStart},${bCount} @@\n`;
+
+        for (const line of hunk.lines) {
+            output += `${line.type}${line.text}\n`;
+        }
+    }
+
+    return output;
+}
 
 /**
  * URL parameter utilities for deep linking
@@ -202,6 +355,9 @@ async function fetchTemplateContent(template) {
         }
         const content = await response.text();
 
+        // Store original YAML for diff comparison
+        currentYamlContent = content;
+
         // Apply syntax highlighting with highlight.js
         modalCodeContent.textContent = content;
         modalCodeContent.removeAttribute('data-highlighted');
@@ -262,6 +418,8 @@ async function copyToClipboard(text, button) {
 function populateSimilarTemplates(template) {
     const similarSection = document.getElementById('similar-templates-section');
     const similarList = document.getElementById('similar-templates-list');
+    const modalCodeContent = document.getElementById('modal-code-content');
+    const copyYamlButton = document.getElementById('copy-yaml');
 
     // Check if template has similar templates
     if (!template.similar_templates || template.similar_templates.length === 0) {
@@ -273,50 +431,181 @@ function populateSimilarTemplates(template) {
     similarSection.classList.remove('hidden');
     similarList.innerHTML = '';
 
-    // Get all templates for looking up names
+    // Get all templates for looking up data
     const allTemplates = getTemplates();
     const templateMap = new Map(allTemplates.map(t => [t.id, t]));
 
-    template.similar_templates.forEach(similar => {
+    // Track selected index for keyboard navigation
+    let selectedIndex = -1;
+    const items = [];
+    const yamlCache = new Map(); // Cache fetched YAML content
+    let isShowingDiff = false;
+
+    // Make the list itself focusable as a listbox
+    similarList.setAttribute('role', 'listbox');
+    similarList.setAttribute('tabindex', '0');
+    similarList.setAttribute('aria-label', 'Similar templates');
+
+    // Restore original YAML display
+    const restoreOriginalYaml = () => {
+        if (currentYamlContent && isShowingDiff) {
+            modalCodeContent.textContent = currentYamlContent;
+            modalCodeContent.className = 'language-yaml';
+            modalCodeContent.removeAttribute('data-highlighted');
+            hljs.highlightElement(modalCodeContent);
+            copyYamlButton.style.display = 'block';
+            isShowingDiff = false;
+        }
+    };
+
+    // Show diff for selected similar template
+    const showDiffForTemplate = async (similarTemplate) => {
+        if (!similarTemplate || !currentYamlContent) return;
+
+        // Hide copy button when showing diff
+        copyYamlButton.style.display = 'none';
+
+        // Check cache first
+        let similarYaml = yamlCache.get(similarTemplate.id);
+        if (!similarYaml) {
+            try {
+                const response = await fetch(similarTemplate.raw_url);
+                if (response.ok) {
+                    similarYaml = await response.text();
+                    yamlCache.set(similarTemplate.id, similarYaml);
+                } else {
+                    modalCodeContent.textContent = `# Error loading ${similarTemplate.id}`;
+                    isShowingDiff = true;
+                    return;
+                }
+            } catch (error) {
+                modalCodeContent.textContent = `# Error loading ${similarTemplate.id}: ${error.message}`;
+                isShowingDiff = true;
+                return;
+            }
+        }
+
+        // Generate and display diff
+        const diff = generateUnifiedDiff(
+            currentYamlContent,
+            similarYaml,
+            currentTemplate.id,
+            similarTemplate.id
+        );
+
+        modalCodeContent.textContent = diff;
+        modalCodeContent.className = 'language-diff';
+        modalCodeContent.removeAttribute('data-highlighted');
+        hljs.highlightElement(modalCodeContent);
+        isShowingDiff = true;
+    };
+
+    // Sort by similarity (descending), then by id (ascending)
+    const sortedSimilarTemplates = [...template.similar_templates].sort((a, b) => {
+        if (b.similarity !== a.similarity) {
+            return b.similarity - a.similarity;
+        }
+        return a.id.localeCompare(b.id);
+    });
+
+    sortedSimilarTemplates.forEach((similar, index) => {
         const similarTemplate = templateMap.get(similar.id);
-        const displayName = similarTemplate ? deriveDisplayName(similarTemplate) : similar.id;
         const similarityPercent = Math.round(similar.similarity * 100);
 
         const item = document.createElement('div');
         item.className = 'similar-template-item';
-        item.setAttribute('role', 'listitem');
-        item.setAttribute('tabindex', '0');
-        item.setAttribute('aria-label', `Similar template: ${displayName}, ${similarityPercent}% similar`);
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        item.dataset.index = index;
 
+        // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
         item.innerHTML = `
-            <div class="similar-template-info">
-                <div class="similar-template-name">${escapeHtml(displayName)}</div>
-                <div class="similar-template-similarity">From ${escapeHtml(similar.id.split('/').slice(0, 2).join('/'))}</div>
-            </div>
-            <div class="similar-template-badges">
-                ${similar.duplicate_type ? `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>` : ''}
-                <span class="similarity-percentage">${similarityPercent}%</span>
-            </div>
+            <span class="similar-template-path">${escapeHtml(similar.id)}</span>
+            ${similar.duplicate_type ? `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>` : ''}
+            <span class="similarity-percentage">${similarityPercent}%</span>
         `;
 
         // Click handler to open the similar template
-        const clickHandler = () => {
+        item.addEventListener('click', () => {
             if (similarTemplate) {
                 closePreviewModal();
                 setTimeout(() => openPreviewModal(similarTemplate), 100);
             }
-        };
-        item.addEventListener('click', clickHandler);
-
-        // Keyboard handler for accessibility
-        item.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                clickHandler();
-            }
         });
 
+        items.push({ element: item, template: similarTemplate, id: similar.id });
         similarList.appendChild(item);
+    });
+
+    // Update selection styling and show diff
+    const updateSelection = async (newIndex) => {
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+            items[selectedIndex].element.classList.remove('selected');
+            items[selectedIndex].element.setAttribute('aria-selected', 'false');
+        }
+        selectedIndex = newIndex;
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+            items[selectedIndex].element.classList.add('selected');
+            items[selectedIndex].element.setAttribute('aria-selected', 'true');
+            // Scroll into view if needed
+            items[selectedIndex].element.scrollIntoView({ block: 'nearest' });
+            // Show diff for selected template
+            await showDiffForTemplate(items[selectedIndex].template);
+        }
+    };
+
+    // Keyboard navigation on the list
+    similarList.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            const newIndex = selectedIndex < items.length - 1 ? selectedIndex + 1 : 0;
+            updateSelection(newIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            const newIndex = selectedIndex > 0 ? selectedIndex - 1 : items.length - 1;
+            updateSelection(newIndex);
+        } else if ((e.key === 'Enter' || e.key === ' ') && selectedIndex >= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            const selected = items[selectedIndex];
+            if (selected && selected.template) {
+                closePreviewModal();
+                setTimeout(() => openPreviewModal(selected.template), 100);
+            }
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+            // Tab forward: restore YAML and focus copy button
+            e.preventDefault();
+            e.stopPropagation();
+            if (selectedIndex >= 0) {
+                items[selectedIndex].element.classList.remove('selected');
+                items[selectedIndex].element.setAttribute('aria-selected', 'false');
+            }
+            selectedIndex = -1;
+            restoreOriginalYaml();
+            copyYamlButton.focus();
+        }
+    });
+
+    // Select first item when list gets focus and show diff
+    similarList.addEventListener('focus', () => {
+        if (selectedIndex < 0 && items.length > 0) {
+            updateSelection(0);
+        } else if (selectedIndex >= 0) {
+            // Re-show diff if already had selection
+            showDiffForTemplate(items[selectedIndex].template);
+        }
+    });
+
+    // Restore original YAML when list loses focus
+    similarList.addEventListener('blur', () => {
+        if (selectedIndex >= 0) {
+            items[selectedIndex].element.classList.remove('selected');
+            items[selectedIndex].element.setAttribute('aria-selected', 'false');
+        }
+        selectedIndex = -1;
+        restoreOriginalYaml();
     });
 }
 
@@ -429,16 +718,12 @@ function handlePopState() {
 export function setupModalEventListeners() {
     const modal = document.getElementById('preview-modal');
     const modalOverlay = modal.querySelector('.modal-overlay');
-    const modalClose = document.getElementById('modal-close');
     const modalCloseButton = document.getElementById('modal-close-button');
     const copyGithubUrlButton = document.getElementById('copy-github-url');
     const copyYamlButton = document.getElementById('copy-yaml');
 
     // Close on overlay click
     modalOverlay.addEventListener('click', closePreviewModal);
-
-    // Close on X button click
-    modalClose.addEventListener('click', closePreviewModal);
 
     // Close on Close button click
     modalCloseButton.addEventListener('click', closePreviewModal);
