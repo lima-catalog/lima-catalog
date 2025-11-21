@@ -99,6 +99,41 @@ web/js/
 
 **Code**: `sidebar.js:renderCategories()`
 
+### Debug Mode Features
+
+**Activation**: Press `D` to toggle debug mode globally
+
+**Notability Score Breakdown Popup**:
+- Appears when hovering over template badge in debug mode
+- Shows detailed breakdown of notability score components:
+  - Message, Provision, Parameters, Env Vars, Probes
+  - Unusual Images, Custom Images, Comments, Stars
+  - Total score
+- Each metric displays score value and rank in catalog
+- Ranks handle ties (templates with same score get same rank)
+- Ranks calculated against full catalog (not filtered templates)
+- Grid layout with three columns: Label | Value | Rank
+
+**Debug Sort Options**:
+When debug mode is enabled, sort dropdown includes breakdown components:
+- [Debug] Message
+- [Debug] Provision Scripts
+- [Debug] Parameters
+- [Debug] Environment Variables
+- [Debug] Probes
+- [Debug] Unusual Images
+- [Debug] Custom Images
+- [Debug] YAML Comments
+- [Debug] Repository Stars
+
+**Badge Behavior in Debug Mode**:
+- Template cards show notability score instead of "Official"/"Community"
+- When sorting by specific breakdown component, badge shows that component's score
+- Badge tooltip indicates which score component is displayed
+- Click template to open modal and see full breakdown
+
+**Code**: `templateCard.js:createDebugScorePopup()`, `templateCard.js:calculateRank()`, `appActions.js:updateSortDropdown()`
+
 ### Template Preview Modal
 
 **Features**:
@@ -116,7 +151,14 @@ web/js/
 - Escape key to close
 - ARIA labels on all interactive elements
 
-**Code**: `modal.js:showTemplatePreview()`
+**Debug Mode** (`@` key):
+- Toggle between YAML and JSON view of internal template object
+- Displays pretty-printed JSON with syntax highlighting
+- Persists when navigating between templates with Ctrl+Arrow
+- Resets when opening new modal (not through Ctrl+Arrow navigation)
+- Disabled during diff view (similar templates comparison)
+
+**Code**: `modal.js:showTemplatePreview()`, `modal.js:toggleDebugMode()`
 
 ### Similar Templates Detection
 
@@ -268,6 +310,7 @@ github://owner/repo/path/template.yaml?ref=sha
 | `Ctrl+←` / `Ctrl+→` | Previous / next template |
 | `Ctrl+↑` / `Ctrl+↓` | Previous / next row |
 | `↑` / `↓` / `←` / `→` | Scroll YAML content |
+| `@` | Toggle debug mode (YAML ↔ JSON) |
 | `Escape` | Close modal |
 
 ### Focus Management
