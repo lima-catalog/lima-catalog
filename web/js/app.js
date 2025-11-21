@@ -4,7 +4,7 @@
 
 import { loadAllData } from './data.js';
 import * as State from './state.js';
-import { filterAndRender, updateSortDropdown } from './appActions.js';
+import { filterAndRender, updateSortDropdown, applyFiltersFromURL } from './appActions.js';
 import { setupSidebarNavigation } from './sidebar.js';
 import { setupModalEventListeners, openTemplateFromURL } from './modal.js';
 import { initializeTheme } from './theme.js';
@@ -89,6 +89,9 @@ async function initialize() {
 
         // Initialize sort dropdown (sets base options)
         updateSortDropdown();
+
+        // Restore filter state from URL (before initial render)
+        applyFiltersFromURL();
 
         // Initial render
         filterAndRender();
