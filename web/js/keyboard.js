@@ -4,6 +4,7 @@
 
 import { clearSearch, filterAndRender, updateSortDropdown, showDebugModeNotification } from './appActions.js';
 import * as State from './state.js';
+import { trapFocus } from './utils.js';
 
 function getFirstVisibleTemplateCard() {
     const cards = Array.from(document.querySelectorAll('.template-card'));
@@ -759,7 +760,7 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                     Keyboard Help
                 </button>
             </div>
-            <div class="keyboard-help-body">
+            <div class="keyboard-help-body" tabindex="-1">
                 <div id="tab-about" class="tab-content ${initialTab === 'about' ? 'active' : ''}" role="tabpanel" aria-labelledby="tab-about-label">
                     <h3 id="tab-about-label">About Lima Catalog</h3>
                     <p>
@@ -918,35 +919,16 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
         });
     });
 
-    // Get all focusable elements in the modal for focus trap
-    const focusableElements = content.querySelectorAll('button, a, [tabindex="0"]');
-    const firstFocusable = focusableElements[0];
-    const lastFocusable = focusableElements[focusableElements.length - 1];
+    // Trap focus within modal for accessibility
+    trapFocus(content);
 
-    // Handle keyboard events - ESC, ?, and focus trap
+    // Handle keyboard events - ESC, ?, and shortcuts
     overlay.addEventListener('keydown', (e) => {
         // Close on Escape or ?
         if (e.key === 'Escape' || e.key === '?') {
             e.preventDefault();
             closeKeyboardHelp(returnFocusToSearch);
             return;
-        }
-
-        // Focus trap - keep Tab within modal
-        if (e.key === 'Tab') {
-            if (e.shiftKey) {
-                // Shift+Tab
-                if (document.activeElement === firstFocusable) {
-                    e.preventDefault();
-                    lastFocusable.focus();
-                }
-            } else {
-                // Tab
-                if (document.activeElement === lastFocusable) {
-                    e.preventDefault();
-                    firstFocusable.focus();
-                }
-            }
         }
 
         // Handle shortcuts - close modal and execute shortcut
