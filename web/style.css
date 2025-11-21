@@ -1684,8 +1684,8 @@ footer a:hover {
 }
 
 .debug-popup-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
     gap: 1rem;
     font-size: 0.6875rem;
 }
@@ -1698,6 +1698,15 @@ footer a:hover {
     color: var(--text);
     font-weight: 600;
     font-family: monospace;
+    text-align: right;
+}
+
+.debug-popup-rank {
+    color: var(--text-light);
+    font-family: monospace;
+    font-size: 0.625rem;
+    text-align: right;
+    min-width: 2rem;
 }
 
 .debug-popup-divider {

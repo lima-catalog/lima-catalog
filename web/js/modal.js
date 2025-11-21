@@ -15,6 +15,7 @@ let releaseFocusTrap = null;
 let previouslyFocusedElement = null;
 let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
 let onYamlLoadedCallback = null; // Callback for when YAML content is loaded
+let isDebugMode = false; // Debug mode for showing template object as JSON
 
 /**
  * Get similarity badge HTML based on similarity percentage
@@ -363,9 +364,15 @@ function closeModalKeepTemplate() {
 /**
  * Open preview modal for a template
  * @param {Object} template - Template object
+ * @param {boolean} preserveDebugMode - Whether to preserve debug mode state (default: false)
  */
-export function openPreviewModal(template) {
+export function openPreviewModal(template, preserveDebugMode = false) {
     currentTemplate = template;
+
+    // Reset debug mode when opening a new modal (unless navigating with Ctrl+Arrow)
+    if (!preserveDebugMode) {
+        isDebugMode = false;
+    }
 
     // Store the currently focused element to restore later
     previouslyFocusedElement = document.activeElement;
@@ -478,10 +485,15 @@ async function fetchTemplateContent(template) {
         // Store original YAML for diff comparison
         currentYamlContent = content;
 
-        // Apply syntax highlighting with highlight.js
-        modalCodeContent.textContent = content;
-        modalCodeContent.removeAttribute('data-highlighted');
-        hljs.highlightElement(modalCodeContent);
+        // Display either debug JSON or YAML based on debug mode
+        if (isDebugMode) {
+            showDebugJson();
+        } else {
+            modalCodeContent.textContent = content;
+            modalCodeContent.className = 'language-yaml';
+            modalCodeContent.removeAttribute('data-highlighted');
+            hljs.highlightElement(modalCodeContent);
+        }
 
         // Show code and copy button, hide loading
         modalLoading.classList.add('hidden');
@@ -507,6 +519,59 @@ async function fetchTemplateContent(template) {
         const modal = document.getElementById('preview-modal');
         const modalContent = modal.querySelector('.modal-content');
         modalContent.classList.add('ready');
+    }
+}
+
+/**
+ * Display the template object as pretty-printed JSON
+ */
+function showDebugJson() {
+    if (!currentTemplate) return;
+
+    const modalCodeContent = document.getElementById('modal-code-content');
+
+    // Serialize template object as pretty-printed JSON
+    const jsonContent = JSON.stringify(currentTemplate, null, 2);
+
+    modalCodeContent.textContent = jsonContent;
+    modalCodeContent.className = 'language-json';
+    modalCodeContent.removeAttribute('data-highlighted');
+    hljs.highlightElement(modalCodeContent);
+}
+
+/**
+ * Restore YAML display from debug mode
+ */
+function showYamlContent() {
+    if (!currentYamlContent) return;
+
+    const modalCodeContent = document.getElementById('modal-code-content');
+
+    modalCodeContent.textContent = currentYamlContent;
+    modalCodeContent.className = 'language-yaml';
+    modalCodeContent.removeAttribute('data-highlighted');
+    hljs.highlightElement(modalCodeContent);
+}
+
+/**
+ * Toggle debug mode
+ */
+function toggleDebugMode() {
+    // Only toggle if we're not showing a diff (similar template comparison)
+    const similarList = document.getElementById('similar-templates-list');
+    const hasFocusOnSimilarList = similarList && similarList.contains(document.activeElement);
+
+    if (hasFocusOnSimilarList) {
+        // Don't toggle debug mode when user is viewing a diff
+        return;
+    }
+
+    isDebugMode = !isDebugMode;
+
+    if (isDebugMode) {
+        showDebugJson();
+    } else {
+        showYamlContent();
     }
 }
 
@@ -575,13 +640,17 @@ function populateSimilarTemplates(template) {
     similarList.setAttribute('tabindex', '0');
     similarList.setAttribute('aria-label', 'Similar templates');
 
-    // Restore original YAML display
+    // Restore original YAML display (or debug JSON if in debug mode)
     const restoreOriginalYaml = () => {
         if (currentYamlContent && isShowingDiff) {
-            modalCodeContent.textContent = currentYamlContent;
-            modalCodeContent.className = 'language-yaml';
-            modalCodeContent.removeAttribute('data-highlighted');
-            hljs.highlightElement(modalCodeContent);
+            if (isDebugMode) {
+                showDebugJson();
+            } else {
+                modalCodeContent.textContent = currentYamlContent;
+                modalCodeContent.className = 'language-yaml';
+                modalCodeContent.removeAttribute('data-highlighted');
+                hljs.highlightElement(modalCodeContent);
+            }
             copyYamlButton.style.display = 'block';
             isShowingDiff = false;
         }
@@ -968,6 +1037,13 @@ export function setupModalEventListeners() {
             return;
         }
 
+        // Toggle debug mode with '@' key
+        if (e.key === '@') {
+            e.preventDefault();
+            toggleDebugMode();
+            return;
+        }
+
         // Ctrl+Arrow: Navigate to adjacent template in the list
         if (e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
             e.preventDefault();
@@ -998,7 +1074,7 @@ export function setupModalEventListeners() {
             // Navigate to adjacent template if within bounds
             if (nextIndex >= 0 && nextIndex < filteredTemplates.length) {
                 const nextTemplate = filteredTemplates[nextIndex];
-                openPreviewModal(nextTemplate);
+                openPreviewModal(nextTemplate, true); // Preserve debug mode when navigating
             }
             return;
         }
