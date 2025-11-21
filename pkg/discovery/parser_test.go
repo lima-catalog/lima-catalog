@@ -182,6 +182,35 @@ arch:
 			content: `invalid: yaml: content: [[[`,
 			wantErr: true,
 		},
+		{
+			name: "Missing images field",
+			content: `
+# Valid YAML but not a Lima template
+provision:
+  - mode: system
+    script: echo hello
+`,
+			wantErr: true,
+		},
+		{
+			name: "Empty images list",
+			content: `
+images: []
+provision:
+  - mode: system
+    script: echo hello
+`,
+			wantErr: true,
+		},
+		{
+			name: "Non-Lima YAML file (word frequency)",
+			content: `
+word1: 5
+word2: 3
+another: 10
+`,
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
