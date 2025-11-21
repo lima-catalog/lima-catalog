@@ -670,3 +670,92 @@ func TestFormatDate(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateScoreStatistics(t *testing.T) {
+	tests := []struct {
+		name            string
+		values          []float64
+		expectedMin     float64
+		expectedMax     float64
+		expectedMed     float64
+		expectedAvg     float64
+		expectedZeroPct float64
+	}{
+		{
+			name:            "Basic statistics",
+			values:          []float64{1.0, 2.0, 3.0, 4.0, 5.0},
+			expectedMin:     1.0,
+			expectedMax:     5.0,
+			expectedMed:     3.0,
+			expectedAvg:     3.0,
+			expectedZeroPct: 0.0,
+		},
+		{
+			name:            "With zeros",
+			values:          []float64{0, 0, 5.0, 10.0, 0},
+			expectedMin:     0,
+			expectedMax:     10.0,
+			expectedMed:     0,
+			expectedAvg:     3.0,
+			expectedZeroPct: 60.0,
+		},
+		{
+			name:            "Even number of values",
+			values:          []float64{1.0, 2.0, 3.0, 4.0},
+			expectedMin:     1.0,
+			expectedMax:     4.0,
+			expectedMed:     2.5, // Average of 2.0 and 3.0
+			expectedAvg:     2.5,
+			expectedZeroPct: 0.0,
+		},
+		{
+			name:            "Single value",
+			values:          []float64{42.0},
+			expectedMin:     42.0,
+			expectedMax:     42.0,
+			expectedMed:     42.0,
+			expectedAvg:     42.0,
+			expectedZeroPct: 0.0,
+		},
+		{
+			name:            "All zeros",
+			values:          []float64{0, 0, 0},
+			expectedMin:     0,
+			expectedMax:     0,
+			expectedMed:     0,
+			expectedAvg:     0,
+			expectedZeroPct: 100.0,
+		},
+		{
+			name:            "Realistic notability scores",
+			values:          []float64{25.5, 150.0, 0, 80.0, 200.5, 45.0, 0, 120.0},
+			expectedMin:     0,
+			expectedMax:     200.5,
+			expectedMed:     62.5, // Average of 45.0 and 80.0
+			expectedAvg:     77.625,
+			expectedZeroPct: 25.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stats := calculateScoreStatistics("test", tt.values)
+
+			if stats.Min != tt.expectedMin {
+				t.Errorf("Min: expected %v, got %v", tt.expectedMin, stats.Min)
+			}
+			if stats.Max != tt.expectedMax {
+				t.Errorf("Max: expected %v, got %v", tt.expectedMax, stats.Max)
+			}
+			if stats.Median != tt.expectedMed {
+				t.Errorf("Median: expected %v, got %v", tt.expectedMed, stats.Median)
+			}
+			if stats.Average != tt.expectedAvg {
+				t.Errorf("Average: expected %v, got %v", tt.expectedAvg, stats.Average)
+			}
+			if stats.ZeroPercent != tt.expectedZeroPct {
+				t.Errorf("Zero percent: expected %v, got %v", tt.expectedZeroPct, stats.ZeroPercent)
+			}
+		})
+	}
+}

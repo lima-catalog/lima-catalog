@@ -80,6 +80,86 @@ func IdentifyUnusualImages(images []string, officialDomains map[string]bool) []s
 	return unusual
 }
 
+// CalculateCustomImagesScore checks if images match the org or repo name
+// Scores:
+// - 25 points for one word boundary match (\bNAME or NAME\b)
+// - 35 points for both word boundaries (\bNAME\b)
+// Returns the sum of highest org match + highest repo match (0-70 points)
+func CalculateCustomImagesScore(images []string, orgName string, repoName string) float64 {
+	if len(images) == 0 {
+		return 0
+	}
+
+	// Helper function to check word boundary matches
+	checkMatch := func(str, name string) int {
+		if name == "" {
+			return 0
+		}
+
+		// Convert to lowercase for case-insensitive matching
+		strLower := strings.ToLower(str)
+		nameLower := strings.ToLower(name)
+
+		// Check if name appears in the string
+		if !strings.Contains(strLower, nameLower) {
+			return 0
+		}
+
+		// Find all occurrences and check word boundaries
+		bestMatch := 0
+		idx := 0
+		for {
+			pos := strings.Index(strLower[idx:], nameLower)
+			if pos == -1 {
+				break
+			}
+			pos += idx
+
+			// Check word boundaries
+			leftBoundary := pos == 0 || !isAlphanumericOrUnderscore(strLower[pos-1])
+			rightBoundary := pos+len(nameLower) >= len(strLower) || !isAlphanumericOrUnderscore(strLower[pos+len(nameLower)])
+
+			var score int
+			if leftBoundary && rightBoundary {
+				score = 35 // Both boundaries
+			} else if leftBoundary || rightBoundary {
+				score = 25 // One boundary
+			}
+
+			if score > bestMatch {
+				bestMatch = score
+			}
+
+			idx = pos + 1
+		}
+
+		return bestMatch
+	}
+
+	// Check all images for org and repo matches
+	highestOrgMatch := 0
+	highestRepoMatch := 0
+
+	for _, img := range images {
+		orgMatch := checkMatch(img, orgName)
+		if orgMatch > highestOrgMatch {
+			highestOrgMatch = orgMatch
+		}
+
+		repoMatch := checkMatch(img, repoName)
+		if repoMatch > highestRepoMatch {
+			highestRepoMatch = repoMatch
+		}
+	}
+
+	return float64(highestOrgMatch + highestRepoMatch)
+}
+
+// isAlphanumericOrUnderscore checks if a byte is alphanumeric or underscore
+func isAlphanumericOrUnderscore(b byte) bool {
+	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_'
+}
+
 // NotabilityScoreBreakdown contains the individual components of the notability score
 type NotabilityScoreBreakdown struct {
 	Message       float64 `json:"message"`        // 100 if has message
@@ -88,6 +168,7 @@ type NotabilityScoreBreakdown struct {
 	EnvVars       float64 `json:"env_vars"`       // 10 per var
 	Probes        float64 `json:"probes"`         // 5 per probe + 1 per 10 lines
 	UnusualImages float64 `json:"unusual_images"` // 30 if any unusual domains
+	CustomImages  float64 `json:"custom_images"`  // 25-70 if images match org/repo names
 	Comments      float64 `json:"comments"`       // 2 per comment line
 	Stars         float64 `json:"stars"`          // 1 per 10 stars (capped at 50)
 	Total         float64 `json:"total"`          // Sum of all components
@@ -103,15 +184,16 @@ type NotabilityScoreBreakdown struct {
 // - Environment vars: 10 points per var
 // - Probes: 5 points per probe + 1 point per 10 lines
 // - Unusual images: 30 points if any unusual image domains (Lima uses first available)
+// - Custom images: 25-70 points if images contain org/repo names
 // - Comment lines: 2 points per comment line (indicates documentation quality)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
-func CalculateNotabilityScore(metrics *types.NotabilityMetrics, repoStars int) float64 {
-	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, repoStars)
+func CalculateNotabilityScore(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) float64 {
+	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, orgName, repoName, repoStars)
 	return breakdown.Total
 }
 
 // CalculateNotabilityScoreWithBreakdown computes the score and returns the breakdown
-func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, repoStars int) NotabilityScoreBreakdown {
+func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) NotabilityScoreBreakdown {
 	breakdown := NotabilityScoreBreakdown{}
 
 	if metrics == nil {
@@ -154,6 +236,10 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 		breakdown.UnusualImages = weights.UnusualImage
 	}
 
+	// Custom images (images matching org/repo names indicate custom builds)
+	// Score: 0-70 based on word boundary matches
+	breakdown.CustomImages = CalculateCustomImagesScore(metrics.AllImages, orgName, repoName)
+
 	// Comment lines (indicates documentation quality)
 	breakdown.Comments = float64(metrics.CommentLineCount) * weights.CommentLine
 
@@ -166,7 +252,7 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, rep
 
 	// Calculate total
 	breakdown.Total = breakdown.Message + breakdown.Provision + breakdown.Parameters +
-		breakdown.EnvVars + breakdown.Probes + breakdown.UnusualImages +
+		breakdown.EnvVars + breakdown.Probes + breakdown.UnusualImages + breakdown.CustomImages +
 		breakdown.Comments + breakdown.Stars
 
 	return breakdown
@@ -366,6 +452,7 @@ func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types
 		EnvCount:             info.EnvCount,
 		CommentLineCount:     uniqueCommentCount,
 		UnusualImages:        IdentifyUnusualImages(info.Images, officialImages),
+		AllImages:            info.Images,
 	}
 }
 

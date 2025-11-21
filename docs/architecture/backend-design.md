@@ -85,8 +85,12 @@ Weighted sum of metrics:
 4. **Environment vars**: 10 points per var (shows configuration effort)
 5. **Probes**: 5 points per probe + 1 point per 10 lines
 6. **Unusual images**: 30 points if any unusual domains present
-7. **Comment lines**: 2 points per comment line (documentation quality)
-8. **Repository stars**: 1 point per 10 stars (capped at 50 points)
+7. **Custom images**: 0-70 points if images match org/repo names
+   - 25 points for one word boundary match (`\bNAME` or `NAME\b`)
+   - 35 points for both word boundaries (`\bNAME\b`)
+   - Org and repo scored separately and summed (max 70)
+8. **Comment lines**: 2 points per comment line (documentation quality)
+9. **Repository stars**: 1 point per 10 stars (capped at 50 points)
 
 ### Usage
 

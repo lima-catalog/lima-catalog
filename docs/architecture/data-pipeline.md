@@ -162,6 +162,7 @@ Calculate template "interestingness" score:
 - Environment vars: 10 points/var
 - Probes: 5 points/probe + 1 point/10 lines
 - Unusual images: 30 points if present
+- Custom images: 0-70 points (org/repo name matches)
 - Comment lines: 2 points/line (filtered)
 - Repository stars: 1 point/10 stars (max 50)
 
