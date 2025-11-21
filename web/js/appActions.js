@@ -37,6 +37,7 @@ export function filterAndRender(options = {}) {
     const searchTerm = document.getElementById('search').value;
     const showOfficial = document.getElementById('show-official').checked;
     const showCommunity = document.getElementById('show-community').checked;
+    const showDuplicates = document.getElementById('show-duplicates').checked;
     const sortBy = document.getElementById('sort').value;
 
     // Determine type filter based on checkboxes
@@ -53,7 +54,8 @@ export function filterAndRender(options = {}) {
         searchTerm,
         typeFilter,
         selectedCategory,
-        selectedKeywords
+        selectedKeywords,
+        showDuplicates
     });
 
     // Sort templates

@@ -61,6 +61,7 @@ type CombinedTemplate struct {
 	NotabilityScore         float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
 	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown   `json:"notability_score_breakdown,omitempty"` // Debug: score components
 	SimilarTemplates        []types.SimilarTemplate                `json:"similar_templates,omitempty"` // Similar/duplicate templates detected by MinHash+LSH
+	OriginalID              string                                 `json:"original_id,omitempty"`      // If this is a copy, the ID of the original template
 }
 
 // Combiner combines templates with repo/org metadata for frontend consumption
@@ -147,6 +148,7 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 			NotabilityScore:         breakdown.Total,
 			NotabilityScoreBreakdown: &breakdown,
 			SimilarTemplates:        template.SimilarTemplates,
+			OriginalID:              template.OriginalID,
 		})
 	}
 
