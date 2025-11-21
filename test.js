@@ -4,7 +4,7 @@
  * Runs all unit tests and reports results
  */
 
-import { runner } from './docs/js/test-framework.js';
+import { runner } from './web/js/test-framework.js';
 
 // Mock minimal DOM for Node.js environment
 // Mimics browser behavior: textContent escapes <, >, & but not quotes
@@ -32,11 +32,11 @@ global.document = {
 };
 
 // Import all test files
-await import('./docs/js/urlHelpers.test.js');
-await import('./docs/js/data.test.js');
-await import('./docs/js/filters.test.js');
-await import('./docs/js/templateCard.test.js');
-await import('./docs/js/theme.test.js');
+await import('./web/js/urlHelpers.test.js');
+await import('./web/js/data.test.js');
+await import('./web/js/filters.test.js');
+await import('./web/js/templateCard.test.js');
+await import('./web/js/theme.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');
