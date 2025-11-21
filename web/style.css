@@ -1163,6 +1163,9 @@ footer a:hover {
     letter-spacing: 0.025em;
     white-space: nowrap;
     flex-shrink: 0;
+    min-width: 3.5rem;
+    text-align: center;
+    display: inline-block;
 }
 
 .duplicate-badge.exact {
