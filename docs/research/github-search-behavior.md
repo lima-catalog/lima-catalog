@@ -135,8 +135,7 @@ The catalog is **very manageable**:
 
 4. **Filtering**: Post-process search results
    - Filter out lima-vm/lima (if included in results)
-   - Check `is_fork` field in metadata
-   - For forks, could optionally check if they're forks of lima-vm/lima
+   - Note: GitHub code search doesn't return forks, so no fork filtering needed
 
 ## Updated Plan
 

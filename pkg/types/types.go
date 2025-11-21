@@ -99,8 +99,6 @@ type Repository struct {
 	UpdatedAt     time.Time `json:"updated_at"`     // last update date
 	PushedAt      time.Time `json:"pushed_at"`      // last push date
 	Homepage      string    `json:"homepage"`       // homepage URL
-	IsFork        bool      `json:"is_fork"`        // is this a fork?
-	Parent        string    `json:"parent"`         // parent repo if fork (owner/repo)
 	LastFetched   time.Time `json:"last_fetched"`   // when we fetched this data
 }
 

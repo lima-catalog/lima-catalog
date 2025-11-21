@@ -134,11 +134,27 @@ analyzer := NewAnalyzer(
 4. Combiner copies to `catalog.jsonl` for frontend
 5. Modal displays "Similar Templates" section with badges
 
+### Original Detection
+
+Among exact duplicates (>90% similarity), the system identifies which template is the "original" using these heuristics:
+
+1. **Official templates** (lima-vm/lima) are always considered originals
+2. **Oldest repo creation date** - the repo that was created first is likely the original
+3. **Higher star count** - tie-breaker for repos created on the same date
+4. **Alphabetical order** - final tie-breaker for consistency
+
+Non-original templates get their `original_id` field set, pointing to the original.
+
+**Note**: Ideally we would use the template file's creation date (first git commit), but this would require expensive API calls or cloning repos. Repository creation date is a reasonable approximation.
+
+**Important**: GitHub code search does not return results from forked repositories (unless the fork has more stars than the parent). This means all templates in our catalog are from non-fork repos, simplifying original detection.
+
 ### UI Features
 
-- Color-coded badges: Exact (red), Near (orange), Similar (blue)
+- Color-coded badges: Original (green), Exact (red), Near (orange), Similar (blue)
 - Similarity percentage displayed
 - Click to navigate between similar templates
+- "Duplicates" checkbox to show/hide copies (hidden by default)
 - Full keyboard accessibility
 - Hidden when no similar templates exist
 

@@ -75,7 +75,6 @@ func (m *MetadataCollector) CollectRepositoryMetadata(repoFullName string) (*typ
 		Language:      ghRepo.GetLanguage(),
 		DefaultBranch: ghRepo.GetDefaultBranch(),
 		Homepage:      ghRepo.GetHomepage(),
-		IsFork:        ghRepo.GetFork(),
 		LastFetched:   time.Now(),
 	}
 
@@ -93,10 +92,6 @@ func (m *MetadataCollector) CollectRepositoryMetadata(repoFullName string) (*typ
 
 	if ghRepo.PushedAt != nil {
 		repository.PushedAt = ghRepo.PushedAt.Time
-	}
-
-	if ghRepo.Parent != nil {
-		repository.Parent = ghRepo.Parent.GetFullName()
 	}
 
 	return repository, nil

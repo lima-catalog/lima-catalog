@@ -439,7 +439,6 @@ func convertGitHubRepo(ghRepo *github.Repository, owner, repo string) *types.Rep
 		Language:      ghRepo.GetLanguage(),
 		Description:   ghRepo.GetDescription(),
 		Homepage:      ghRepo.GetHomepage(),
-		IsFork:        ghRepo.GetFork(),
 		LastFetched:   time.Now(),
 	}
 
