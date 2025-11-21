@@ -6,7 +6,7 @@ import { loadAllData } from './data.js';
 import * as State from './state.js';
 import { filterAndRender, updateSortDropdown } from './appActions.js';
 import { setupSidebarNavigation } from './sidebar.js';
-import { setupModalEventListeners } from './modal.js';
+import { setupModalEventListeners, openTemplateFromURL } from './modal.js';
 import { initializeTheme } from './theme.js';
 import { setupKeyboardShortcuts, showKeyboardHelp } from './keyboard.js';
 import { debounce } from './utils.js';
@@ -92,8 +92,14 @@ async function initialize() {
         // Initial render
         filterAndRender();
 
-        // Auto-focus search box for immediate typing
-        document.getElementById('search').focus();
+        // Check URL for template parameter and open if present
+        openTemplateFromURL();
+
+        // Auto-focus search box for immediate typing (only if no modal opened)
+        const modal = document.getElementById('preview-modal');
+        if (!modal || modal.style.display === 'none') {
+            document.getElementById('search').focus();
+        }
 
     } catch (err) {
         console.error('Error loading data:', err);

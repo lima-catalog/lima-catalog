@@ -11,6 +11,39 @@ import { getTemplates } from './state.js';
 let currentTemplate = null;
 let releaseFocusTrap = null;
 let previouslyFocusedElement = null;
+let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
+
+/**
+ * URL parameter utilities for deep linking
+ */
+
+/**
+ * Get template ID from URL parameters
+ * @returns {string|null} Template ID if present in URL
+ */
+function getTemplateFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('template');
+}
+
+/**
+ * Update URL with template ID
+ * @param {string} templateId - Template ID to add to URL
+ */
+function updateURLWithTemplate(templateId) {
+    const url = new URL(window.location);
+    url.searchParams.set('template', templateId);
+    window.history.pushState({ templateId }, '', url);
+}
+
+/**
+ * Clear template ID from URL
+ */
+function clearTemplateFromURL() {
+    const url = new URL(window.location);
+    url.searchParams.delete('template');
+    window.history.pushState({}, '', url);
+}
 
 /**
  * Open preview modal for a template
@@ -61,6 +94,11 @@ export function openPreviewModal(template) {
         releaseFocusTrap = trapFocus(modal.querySelector('.modal-content'));
     }, 100);
 
+    // Update URL with template ID for deep linking (only if not handling popstate)
+    if (!isHandlingPopState) {
+        updateURLWithTemplate(template.id);
+    }
+
     // Fetch and display template content
     fetchTemplateContent(template);
 }
@@ -84,6 +122,11 @@ export function closePreviewModal() {
     if (previouslyFocusedElement && previouslyFocusedElement.focus) {
         previouslyFocusedElement.focus();
         previouslyFocusedElement = null;
+    }
+
+    // Clear template ID from URL (only if not handling popstate)
+    if (!isHandlingPopState) {
+        clearTemplateFromURL();
     }
 }
 
@@ -238,6 +281,54 @@ function escapeHtml(str) {
 }
 
 /**
+ * Open template from URL if template parameter exists
+ * Called on page load and popstate events
+ */
+export function openTemplateFromURL() {
+    const templateId = getTemplateFromURL();
+
+    if (templateId) {
+        // Find template by ID
+        const templates = getTemplates();
+        const template = templates.find(t => t.id === templateId);
+
+        if (template) {
+            openPreviewModal(template);
+        } else {
+            console.warn(`Template not found: ${templateId}`);
+            // Clear invalid template from URL
+            clearTemplateFromURL();
+        }
+    }
+}
+
+/**
+ * Handle browser back/forward navigation
+ */
+function handlePopState() {
+    isHandlingPopState = true;
+
+    const templateId = getTemplateFromURL();
+
+    if (templateId) {
+        // URL has a template - open it if not already open
+        if (!currentTemplate || currentTemplate.id !== templateId) {
+            openTemplateFromURL();
+        }
+    } else {
+        // URL has no template - close modal if open
+        if (currentTemplate) {
+            closePreviewModal();
+        }
+    }
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+        isHandlingPopState = false;
+    }, 100);
+}
+
+/**
  * Setup modal event listeners
  */
 export function setupModalEventListeners() {
@@ -375,4 +466,7 @@ export function setupModalEventListeners() {
             });
         }
     });
+
+    // Handle browser back/forward navigation
+    window.addEventListener('popstate', handlePopState);
 }
