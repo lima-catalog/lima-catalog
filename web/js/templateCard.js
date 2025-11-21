@@ -134,8 +134,8 @@ function createDebugScorePopup(template) {
 
     const breakdown = template.notability_score_breakdown;
 
-    // Get all filtered templates for ranking
-    const allTemplates = State.getFilteredTemplates();
+    // Get all templates for ranking (not filtered, to show true rank in catalog)
+    const allTemplates = State.getTemplates();
 
     // Calculate ranks for each metric
     const ranks = {
