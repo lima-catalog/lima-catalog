@@ -169,11 +169,15 @@ export function updateSortDropdown() {
 
     // Debug options (only in debug mode)
     const debugOptions = [
-        { value: 'breakdown-message', label: '[Debug] Message Length' },
+        { value: 'breakdown-message', label: '[Debug] Message' },
         { value: 'breakdown-provision', label: '[Debug] Provision Scripts' },
-        { value: 'breakdown-parameters', label: '[Debug] Parameters + Env' },
+        { value: 'breakdown-parameters', label: '[Debug] Parameters' },
+        { value: 'breakdown-env_vars', label: '[Debug] Environment Variables' },
+        { value: 'breakdown-probes', label: '[Debug] Probes' },
+        { value: 'breakdown-unusual_images', label: '[Debug] Unusual Images' },
+        { value: 'breakdown-custom_images', label: '[Debug] Custom Images' },
         { value: 'breakdown-comments', label: '[Debug] YAML Comments' },
-        { value: 'breakdown-unusual_images', label: '[Debug] Unusual Images' }
+        { value: 'breakdown-stars', label: '[Debug] Repository Stars' }
     ];
 
     // Combine options based on debug mode

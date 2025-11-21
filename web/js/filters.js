@@ -227,6 +227,8 @@ export function sortTemplates(templates, sortBy) {
                 return (b.notability_score_breakdown?.probes || 0) - (a.notability_score_breakdown?.probes || 0);
             case 'breakdown-unusual_images':
                 return (b.notability_score_breakdown?.unusual_images || 0) - (a.notability_score_breakdown?.unusual_images || 0);
+            case 'breakdown-custom_images':
+                return (b.notability_score_breakdown?.custom_images || 0) - (a.notability_score_breakdown?.custom_images || 0);
             case 'breakdown-comments':
                 return (b.notability_score_breakdown?.comments || 0) - (a.notability_score_breakdown?.comments || 0);
             case 'breakdown-stars':
