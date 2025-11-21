@@ -109,6 +109,11 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
+	// Validate required fields: images must be a non-empty list
+	if len(template.Images) == 0 {
+		return nil, fmt.Errorf("invalid Lima template: missing required 'images' field")
+	}
+
 	info := &TemplateInfo{
 		Images:               []string{},
 		Arch:                 []string{},
