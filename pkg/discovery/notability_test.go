@@ -451,10 +451,10 @@ func TestCalculateCustomImagesScore(t *testing.T) {
 		},
 		{
 			name:     "Filters out local images (only considers http/https)",
-			images:   []string{"template://ubuntu", "/local/path/myorg/myrepo.img", "https://example.com/myorg/myrepo/image.img"},
+			images:   []string{"template://ubuntu", "/local/path/myorg/myrepo.img", "https://example.com/test/image.img"},
 			org:      "myorg",
 			repo:     "myrepo",
-			expected: 70, // Both match with both boundaries from the https:// URL only
+			expected: 0, // Remote URL has no matches; local paths should be ignored even though they contain org/repo
 		},
 	}
 
