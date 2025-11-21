@@ -157,6 +157,38 @@ github://owner/repo/path/template.yaml?ref=sha
 
 **Code**: `urlHelpers.js:generateLimaUrl()`
 
+### URL Deep Linking
+
+**Purpose**: Share direct links to specific templates with or without modal open
+
+**URL Formats**:
+- `?template=<id>` - Focus on template, modal closed
+- `?template=<id>&modal=open` - Open template modal overlay
+
+**Features**:
+- URL updates automatically during keyboard navigation
+- Pasting URL focuses and scrolls to template
+- Browser back/forward buttons work correctly
+- Template stays selected when modal closes
+- Retry logic handles DOM timing issues
+
+**Behavior**:
+- **Keyboard Navigation**: URL updates as you navigate with arrow keys
+- **Opening Modal**: Adds `&modal=open` to URL
+- **Closing Modal**: Removes `&modal=open`, keeps template selected
+- **Browser Back**: From open modal → closes modal, keeps template selected
+- **Browser Back**: From selected template → clears selection
+- **Page Load**: Parses URL and restores state (focus + modal if specified)
+
+**Implementation**:
+- `updateURLForTemplateSelection()` - Called on template card focus events
+- `focusTemplateCard()` - Focus and scroll with retry logic (up to 5 attempts)
+- `closeModalKeepTemplate()` - Remove modal parameter but keep template
+- `handlePopState()` - Sync state with browser history
+- `data-template-id` attribute on cards for DOM queries
+
+**Code**: `modal.js:updateURLForTemplateSelection()`, `modal.js:handlePopState()`, `templateCard.js` (focus handler)
+
 ### Theme Switching
 
 **Modes**:
