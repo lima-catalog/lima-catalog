@@ -707,16 +707,12 @@ function handlePopState() {
 export function setupModalEventListeners() {
     const modal = document.getElementById('preview-modal');
     const modalOverlay = modal.querySelector('.modal-overlay');
-    const modalClose = document.getElementById('modal-close');
     const modalCloseButton = document.getElementById('modal-close-button');
     const copyGithubUrlButton = document.getElementById('copy-github-url');
     const copyYamlButton = document.getElementById('copy-yaml');
 
     // Close on overlay click
     modalOverlay.addEventListener('click', closePreviewModal);
-
-    // Close on X button click
-    modalClose.addEventListener('click', closePreviewModal);
 
     // Close on Close button click
     modalCloseButton.addEventListener('click', closePreviewModal);
