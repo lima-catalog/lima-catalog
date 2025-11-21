@@ -17,6 +17,15 @@ This file contains persistent instructions for Claude when working on this proje
 - Data pipeline changes → Update [docs/architecture/data-pipeline.md](../docs/architecture/data-pipeline.md)
 - Bug fixes → May not need doc updates (use judgment)
 
+**⚠️ CRITICAL: Keep docs focused on current state**
+- Active documentation (everything except `docs/history/`) should describe **what is**, not **what was**
+- When implementing planned features from `future-work.md`:
+  1. Update current docs (overview.md, backend-design.md, etc.) with the new implementation
+  2. Remove completed items from future-work.md
+  3. Add implementation details to `docs/history/implementation-details.md` if noteworthy
+- Avoid phrases like "after refactoring", "recently added", "Phase X" outside `docs/history/`
+- Historical context belongs in `docs/history/` - keep active docs evergreen
+
 **Then commit documentation updates:**
 ```bash
 git add docs/
