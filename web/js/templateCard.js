@@ -110,11 +110,12 @@ function calculateRank(score, metricName, templates) {
     // Find rank (1-based, with ties)
     let rank = 1;
     for (let i = 0; i < sortedScores.length; i++) {
-        if (sortedScores[i] === score) {
-            return rank;
-        }
+        // Update rank before checking if we found the score
         if (i > 0 && sortedScores[i] !== sortedScores[i - 1]) {
             rank = i + 1;
+        }
+        if (sortedScores[i] === score) {
+            return rank;
         }
     }
 
