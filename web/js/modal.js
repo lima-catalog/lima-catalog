@@ -500,10 +500,14 @@ function populateSimilarTemplates(template) {
         isShowingDiff = true;
     };
 
-    // Sort by similarity (descending), then by id (ascending)
+    // Sort by similarity (descending), then originals first, then by id (ascending)
     const sortedSimilarTemplates = [...template.similar_templates].sort((a, b) => {
         if (b.similarity !== a.similarity) {
             return b.similarity - a.similarity;
+        }
+        // Within same similarity, originals come first
+        if (a.is_original !== b.is_original) {
+            return a.is_original ? -1 : 1;
         }
         return a.id.localeCompare(b.id);
     });
@@ -519,13 +523,21 @@ function populateSimilarTemplates(template) {
         item.dataset.index = index;
 
         // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
-        // For exact duplicates, show "ORIGINAL" (blue) if is_original is true, otherwise "EXACT" (red)
+        // Badge based on similarity: 100% = ORIGINAL/EXACT, <100% = NEAR, others = SIMILAR
         let badgeHtml = '';
         if (similar.duplicate_type) {
-            if (similar.duplicate_type === 'exact' && similar.is_original) {
-                badgeHtml = `<span class="duplicate-badge original">original</span>`;
+            if (similarityPercent === 100) {
+                if (similar.is_original) {
+                    badgeHtml = `<span class="duplicate-badge original">original</span>`;
+                } else {
+                    badgeHtml = `<span class="duplicate-badge exact">exact</span>`;
+                }
+            } else if (similar.duplicate_type === 'exact') {
+                // Less than 100% but marked as exact duplicate - show as "near"
+                badgeHtml = `<span class="duplicate-badge near">near</span>`;
             } else {
-                badgeHtml = `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>`;
+                // Near duplicates - show as "similar"
+                badgeHtml = `<span class="duplicate-badge similar">similar</span>`;
             }
         }
         item.innerHTML = `
