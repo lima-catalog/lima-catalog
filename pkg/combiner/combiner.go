@@ -33,6 +33,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -181,6 +182,9 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 	fmt.Printf("Combined output: %d templates\n", len(combined))
 	fmt.Printf("Output file: %s\n\n", outputPath)
 
+	// Print notability score statistics
+	printScoreStatistics(combined)
+
 	return nil
 }
 
@@ -237,4 +241,116 @@ func (c *Combiner) formatDate(t time.Time) string {
 		return ""
 	}
 	return t.Format("2006-01-02")
+}
+
+// ScoreStatistics holds statistical information for a score field
+type ScoreStatistics struct {
+	Name           string
+	Min            float64
+	Max            float64
+	Median         float64
+	Average        float64
+	StdDeviation   float64
+	ZeroCount      int
+}
+
+// calculateScoreStatistics computes statistics for a slice of score values
+func calculateScoreStatistics(name string, values []float64) ScoreStatistics {
+	if len(values) == 0 {
+		return ScoreStatistics{Name: name}
+	}
+
+	// Sort for median calculation
+	sorted := make([]float64, len(values))
+	copy(sorted, values)
+	slices.Sort(sorted)
+
+	// Calculate min, max, median
+	min := sorted[0]
+	max := sorted[len(sorted)-1]
+	var median float64
+	if len(sorted)%2 == 0 {
+		median = (sorted[len(sorted)/2-1] + sorted[len(sorted)/2]) / 2
+	} else {
+		median = sorted[len(sorted)/2]
+	}
+
+	// Calculate average
+	sum := 0.0
+	zeroCount := 0
+	for _, v := range values {
+		sum += v
+		if v == 0 {
+			zeroCount++
+		}
+	}
+	avg := sum / float64(len(values))
+
+	// Calculate standard deviation
+	varianceSum := 0.0
+	for _, v := range values {
+		diff := v - avg
+		varianceSum += diff * diff
+	}
+	stdDev := math.Sqrt(varianceSum / float64(len(values)))
+
+	return ScoreStatistics{
+		Name:         name,
+		Min:          min,
+		Max:          max,
+		Median:       median,
+		Average:      avg,
+		StdDeviation: stdDev,
+		ZeroCount:    zeroCount,
+	}
+}
+
+// printScoreStatistics prints statistics for all notability score fields
+func printScoreStatistics(combined []CombinedTemplate) {
+	if len(combined) == 0 {
+		return
+	}
+
+	// Collect values for each score field
+	var message, provision, parameters, envVars, probes, unusualImages, comments, stars, total []float64
+
+	for _, t := range combined {
+		if t.NotabilityScoreBreakdown != nil {
+			message = append(message, t.NotabilityScoreBreakdown.Message)
+			provision = append(provision, t.NotabilityScoreBreakdown.Provision)
+			parameters = append(parameters, t.NotabilityScoreBreakdown.Parameters)
+			envVars = append(envVars, t.NotabilityScoreBreakdown.EnvVars)
+			probes = append(probes, t.NotabilityScoreBreakdown.Probes)
+			unusualImages = append(unusualImages, t.NotabilityScoreBreakdown.UnusualImages)
+			comments = append(comments, t.NotabilityScoreBreakdown.Comments)
+			stars = append(stars, t.NotabilityScoreBreakdown.Stars)
+			total = append(total, t.NotabilityScoreBreakdown.Total)
+		}
+	}
+
+	// Calculate statistics for each field
+	stats := []ScoreStatistics{
+		calculateScoreStatistics("Message", message),
+		calculateScoreStatistics("Provision", provision),
+		calculateScoreStatistics("Parameters", parameters),
+		calculateScoreStatistics("EnvVars", envVars),
+		calculateScoreStatistics("Probes", probes),
+		calculateScoreStatistics("UnusualImages", unusualImages),
+		calculateScoreStatistics("Comments", comments),
+		calculateScoreStatistics("Stars", stars),
+		calculateScoreStatistics("Total", total),
+	}
+
+	// Print statistics table
+	fmt.Printf("\n=== Notability Score Statistics ===\n")
+	fmt.Printf("%-15s %8s %8s %8s %8s %8s %10s\n",
+		"Name", "Min", "Max", "Median", "Avg", "StdDev", "Zero Count")
+	fmt.Printf("%-15s %8s %8s %8s %8s %8s %10s\n",
+		"---------------", "--------", "--------", "--------", "--------", "--------", "----------")
+
+	for _, s := range stats {
+		fmt.Printf("%-15s %8.2f %8.2f %8.2f %8.2f %8.2f %10d\n",
+			s.Name, s.Min, s.Max, s.Median, s.Average, s.StdDeviation, s.ZeroCount)
+	}
+	fmt.Printf("\n")
 }
