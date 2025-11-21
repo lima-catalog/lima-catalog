@@ -5,7 +5,7 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
-import { getTemplates, getFilteredTemplates } from './state.js';
+import { getTemplates, getFilteredTemplates, getSelectedKeywords } from './state.js';
 
 // Modal state
 let currentTemplate = null;
@@ -531,8 +531,42 @@ function populateSimilarTemplates(template) {
         isShowingDiff = true;
     };
 
+    // Get current filter state
+    const showDuplicates = document.getElementById('show-duplicates')?.checked ?? false;
+    const selectedKeywords = getSelectedKeywords();
+
+    // Filter similar templates based on current filters
+    const filteredSimilarTemplates = template.similar_templates.filter(similar => {
+        const similarTemplate = templateMap.get(similar.id);
+        if (!similarTemplate) return false;
+
+        // Filter out exact duplicates (100%) if duplicates checkbox is unchecked
+        const similarityPercent = Math.round(similar.similarity * 100);
+        if (!showDuplicates && similarityPercent === 100) {
+            return false;
+        }
+
+        // Filter by selected keywords - similar template must have all selected keywords
+        if (selectedKeywords.size > 0) {
+            const templateKeywords = new Set(similarTemplate.keywords || []);
+            for (const keyword of selectedKeywords) {
+                if (!templateKeywords.has(keyword)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    });
+
+    // If no similar templates match filters, hide section
+    if (filteredSimilarTemplates.length === 0) {
+        similarSection.classList.add('hidden');
+        return;
+    }
+
     // Sort by similarity (descending), then originals first, then by id (ascending)
-    const sortedSimilarTemplates = [...template.similar_templates].sort((a, b) => {
+    const sortedSimilarTemplates = [...filteredSimilarTemplates].sort((a, b) => {
         if (b.similarity !== a.similarity) {
             return b.similarity - a.similarity;
         }
