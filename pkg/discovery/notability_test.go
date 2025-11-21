@@ -118,6 +118,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 			metrics: &types.NotabilityMetrics{
 				MessageLength:    100,
 				MessageLineCount: 5, // 5 lines adds 5 points
+				AllImages:        []string{"https://example.com/image.img"}, // Has remote image
 			},
 			repoStars: 0,
 			minScore:  55.0, // 50 (base) + 5 (lines)
@@ -129,6 +130,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				ProvisionCount:       2,
 				ProvisionSubstantial: 2, // Both scripts are substantial
 				ProvisionTotalLines:  50,
+				AllImages:            []string{"https://example.com/image.img"}, // Has remote image
 			},
 			repoStars: 0,
 			minScore:  25.0, // 2*10 + 50/10 = 25
@@ -139,6 +141,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 			metrics: &types.NotabilityMetrics{
 				ParamCount: 3,
 				EnvCount:   5,
+				AllImages:  []string{"https://example.com/image.img"}, // Has remote image
 			},
 			repoStars: 0,
 			minScore:  110.0, // 3*20 + 5*10 = 110
@@ -150,6 +153,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				ProbeCount:       2,
 				ProbeSubstantial: 2, // Both probes are substantial
 				ProbeTotalLines:  20,
+				AllImages:        []string{"https://example.com/image.img"}, // Has remote image
 			},
 			repoStars: 0,
 			minScore:  12.0, // 2*5 + 20/10 = 12
@@ -159,6 +163,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 			name: "Template with unusual images",
 			metrics: &types.NotabilityMetrics{
 				UnusualImages: []string{"nixos.org", "gentoo.org"},
+				AllImages:     []string{"https://nixos.org/channels/nixos.iso", "https://gentoo.org/image.img"}, // Has remote images
 			},
 			repoStars: 0,
 			minScore:  30.0, // 30 points once (not per domain)
@@ -169,6 +174,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 			metrics: &types.NotabilityMetrics{
 				MessageLength:    50,
 				MessageLineCount: 3, // 3 lines adds 3 points
+				AllImages:        []string{"https://example.com/image.img"}, // Has remote image
 			},
 			repoStars: 1000, // Should cap at 50 points
 			minScore:  103.0, // 50 (message base) + 3 (lines) + 50 (capped stars)
@@ -178,10 +184,22 @@ func TestCalculateNotabilityScore(t *testing.T) {
 			name: "Template with comments",
 			metrics: &types.NotabilityMetrics{
 				CommentLineCount: 25,
+				AllImages:        []string{"https://example.com/image.img"}, // Has remote image
 			},
 			repoStars: 0,
 			minScore:  50.0, // 25 comments * 2 points each
 			maxScore:  50.0,
+		},
+		{
+			name: "Template without remote images (penalty)",
+			metrics: &types.NotabilityMetrics{
+				MessageLength:    100,
+				MessageLineCount: 5,
+				AllImages:        []string{"template://ubuntu", "/local/path/image.img"}, // No remote images
+			},
+			repoStars: 0,
+			minScore:  -45.0, // 50 (message base) + 5 (lines) - 100 (no remote images)
+			maxScore:  -45.0,
 		},
 		{
 			name: "Complex template (everything)",
@@ -198,6 +216,7 @@ func TestCalculateNotabilityScore(t *testing.T) {
 				EnvCount:             6,
 				CommentLineCount:     15,
 				UnusualImages:        []string{"nixos.org"},
+				AllImages:            []string{"https://nixos.org/channels/nixos.iso"}, // Has remote image
 			},
 			repoStars: 500,
 			minScore:  50 + 5 + 30 + 10 + 10 + 2 + 80 + 60 + 30 + 30 + 50, // Total = 357
@@ -429,6 +448,13 @@ func TestCalculateCustomImagesScore(t *testing.T) {
 			org:      "",
 			repo:     "",
 			expected: 0,
+		},
+		{
+			name:     "Filters out local images (only considers http/https)",
+			images:   []string{"template://ubuntu", "/local/path/myorg/myrepo.img", "https://example.com/myorg/myrepo/image.img"},
+			org:      "myorg",
+			repo:     "myrepo",
+			expected: 70, // Both match with both boundaries from the https:// URL only
 		},
 	}
 
