@@ -5,7 +5,8 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
-import { getTemplates, getFilteredTemplates, getSelectedKeywords } from './state.js';
+import { getTemplates, getFilteredTemplates, getSelectedKeywords, getSelectedCategory } from './state.js';
+import { applyFilters } from './filters.js';
 
 // Modal state
 let currentTemplate = null;
@@ -531,31 +532,39 @@ function populateSimilarTemplates(template) {
         isShowingDiff = true;
     };
 
-    // Get current filter state
+    // Get current filter state from UI
     const showDuplicates = document.getElementById('show-duplicates')?.checked ?? false;
-    const selectedKeywords = getSelectedKeywords();
+    const searchTerm = document.getElementById('search')?.value ?? '';
+    const showOfficial = document.getElementById('show-official')?.checked ?? true;
+    const showCommunity = document.getElementById('show-community')?.checked ?? true;
+    const typeFilter = showOfficial && showCommunity ? '' : (showOfficial ? 'official' : 'community');
 
-    // Filter similar templates based on current filters
+    // Get full template objects for similar templates
+    const similarTemplateObjects = template.similar_templates
+        .map(similar => templateMap.get(similar.id))
+        .filter(t => t != null);
+
+    // Apply the same filters used for the main template list
+    const filteredTemplateObjects = applyFilters(similarTemplateObjects, {
+        searchTerm,
+        typeFilter,
+        selectedCategory: getSelectedCategory(),
+        selectedKeywords: getSelectedKeywords(),
+        showDuplicates
+    });
+
+    // Create a set of filtered IDs for quick lookup
+    const filteredIds = new Set(filteredTemplateObjects.map(t => t.id));
+
+    // Filter similar_templates to only include those that passed the filter
+    // Also filter out 100% matches when showDuplicates is false
     const filteredSimilarTemplates = template.similar_templates.filter(similar => {
-        const similarTemplate = templateMap.get(similar.id);
-        if (!similarTemplate) return false;
-
-        // Filter out exact duplicates (100%) if duplicates checkbox is unchecked
-        const similarityPercent = Math.round(similar.similarity * 100);
-        if (!showDuplicates && similarityPercent === 100) {
+        if (!filteredIds.has(similar.id)) return false;
+        // Additional check: hide 100% matches when duplicates unchecked
+        // (applyFilters checks original_id, but we also want to hide by similarity)
+        if (!showDuplicates && Math.round(similar.similarity * 100) === 100) {
             return false;
         }
-
-        // Filter by selected keywords - similar template must have all selected keywords
-        if (selectedKeywords.size > 0) {
-            const templateKeywords = new Set(similarTemplate.keywords || []);
-            for (const keyword of selectedKeywords) {
-                if (!templateKeywords.has(keyword)) {
-                    return false;
-                }
-            }
-        }
-
         return true;
     });
 
