@@ -449,15 +449,18 @@ function populateSimilarTemplates(template) {
     const modalCodeContent = document.getElementById('modal-code-content');
     const copyYamlButton = document.getElementById('copy-yaml');
 
+    // Always clear previous state
+    onYamlLoadedCallback = null;
+    similarList.innerHTML = '';
+
     // Check if template has similar templates
     if (!template.similar_templates || template.similar_templates.length === 0) {
         similarSection.classList.add('hidden');
         return;
     }
 
-    // Show section and populate list
+    // Show section
     similarSection.classList.remove('hidden');
-    similarList.innerHTML = '';
 
     // Get all templates for looking up data
     const allTemplates = getTemplates();
