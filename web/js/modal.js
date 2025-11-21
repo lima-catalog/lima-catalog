@@ -500,7 +500,15 @@ function populateSimilarTemplates(template) {
         isShowingDiff = true;
     };
 
-    template.similar_templates.forEach((similar, index) => {
+    // Sort by similarity (descending), then by id (ascending)
+    const sortedSimilarTemplates = [...template.similar_templates].sort((a, b) => {
+        if (b.similarity !== a.similarity) {
+            return b.similarity - a.similarity;
+        }
+        return a.id.localeCompare(b.id);
+    });
+
+    sortedSimilarTemplates.forEach((similar, index) => {
         const similarTemplate = templateMap.get(similar.id);
         const similarityPercent = Math.round(similar.similarity * 100);
 

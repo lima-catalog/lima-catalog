@@ -1061,10 +1061,6 @@ footer a:hover {
 /* Similar Templates Section */
 .similar-templates-section {
     margin-bottom: 1rem;
-    padding: 0.5rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: 0.375rem;
 }
 
 .similar-templates-title {
@@ -1080,7 +1076,7 @@ footer a:hover {
 .similar-templates-list {
     display: flex;
     flex-direction: column;
-    max-height: 100px;
+    max-height: calc(4 * 1.75rem); /* 4 lines, each ~1.75rem tall */
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 0.25rem;
@@ -1101,6 +1097,8 @@ footer a:hover {
     cursor: pointer;
     font-size: 0.8125rem;
     line-height: 1.4;
+    min-height: 1.75rem;
+    box-sizing: border-box;
 }
 
 .similar-template-item:last-child {
@@ -1118,10 +1116,6 @@ footer a:hover {
 
 .similar-template-item.selected .similar-template-path {
     color: white;
-}
-
-.similar-template-item.selected .duplicate-badge {
-    background: rgba(255,255,255,0.3);
 }
 
 .similar-template-item.selected .similarity-percentage {
