@@ -574,6 +574,17 @@ function populateSimilarTemplates(template) {
                 closePreviewModal();
                 setTimeout(() => openPreviewModal(selected.template), 100);
             }
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+            // Tab forward: restore YAML and focus copy button
+            e.preventDefault();
+            e.stopPropagation();
+            if (selectedIndex >= 0) {
+                items[selectedIndex].element.classList.remove('selected');
+                items[selectedIndex].element.setAttribute('aria-selected', 'false');
+            }
+            selectedIndex = -1;
+            restoreOriginalYaml();
+            copyYamlButton.focus();
         }
     });
 
