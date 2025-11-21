@@ -203,6 +203,103 @@ function getTemplateFromURL() {
 }
 
 /**
+ * Get filter state from URL parameters
+ * @returns {Object} Filter state object
+ */
+export function getFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+
+    const filters = {
+        search: params.get('search') || '',
+        keywords: [],
+        category: params.get('category') || null,
+        official: true,
+        community: true,
+        duplicates: false,
+        sort: params.get('sort') || 'name'
+    };
+
+    // Parse keywords (comma-separated)
+    const keywordsParam = params.get('keywords');
+    if (keywordsParam) {
+        filters.keywords = keywordsParam.split(',').map(k => decodeURIComponent(k)).filter(k => k);
+    }
+
+    // Parse boolean filters - only set if explicitly present in URL
+    if (params.has('official')) {
+        filters.official = params.get('official') !== 'false';
+    }
+    if (params.has('community')) {
+        filters.community = params.get('community') !== 'false';
+    }
+    if (params.has('duplicates')) {
+        filters.duplicates = params.get('duplicates') === 'true';
+    }
+
+    return filters;
+}
+
+/**
+ * Update URL with current filter state
+ * @param {Object} filterState - Current filter state
+ * @param {boolean} replace - Use replaceState instead of pushState (default: false)
+ */
+export function updateURLWithFilters(filterState, replace = false) {
+    const url = new URL(window.location);
+
+    // Search term
+    if (filterState.search) {
+        url.searchParams.set('search', filterState.search);
+    } else {
+        url.searchParams.delete('search');
+    }
+
+    // Keywords (comma-separated)
+    if (filterState.keywords && filterState.keywords.length > 0) {
+        url.searchParams.set('keywords', filterState.keywords.map(k => encodeURIComponent(k)).join(','));
+    } else {
+        url.searchParams.delete('keywords');
+    }
+
+    // Category
+    if (filterState.category) {
+        url.searchParams.set('category', filterState.category);
+    } else {
+        url.searchParams.delete('category');
+    }
+
+    // Type filters - only include if not default (both true)
+    if (!filterState.official || !filterState.community) {
+        url.searchParams.set('official', String(filterState.official));
+        url.searchParams.set('community', String(filterState.community));
+    } else {
+        url.searchParams.delete('official');
+        url.searchParams.delete('community');
+    }
+
+    // Duplicates - only include if true (non-default)
+    if (filterState.duplicates) {
+        url.searchParams.set('duplicates', 'true');
+    } else {
+        url.searchParams.delete('duplicates');
+    }
+
+    // Sort - only include if not default
+    if (filterState.sort && filterState.sort !== 'name') {
+        url.searchParams.set('sort', filterState.sort);
+    } else {
+        url.searchParams.delete('sort');
+    }
+
+    // Use replaceState for filter changes to avoid polluting history
+    if (replace) {
+        window.history.replaceState({ filters: filterState }, '', url);
+    } else {
+        window.history.pushState({ filters: filterState }, '', url);
+    }
+}
+
+/**
  * Check if modal should be open based on URL parameters
  * @returns {boolean} True if modal parameter is set to 'open'
  */
@@ -789,8 +886,16 @@ export function openTemplateFromURL() {
 /**
  * Handle browser back/forward navigation
  */
-function handlePopState() {
+async function handlePopState() {
     isHandlingPopState = true;
+
+    // Import appActions dynamically to avoid circular dependency
+    const { applyFiltersFromURL, filterAndRender, setHandlingPopState } = await import('./appActions.js');
+    setHandlingPopState(true);
+
+    // Restore filter state from URL
+    applyFiltersFromURL();
+    filterAndRender();
 
     const templateId = getTemplateFromURL();
     const shouldOpenModal = isModalOpenInURL();
@@ -818,9 +923,10 @@ function handlePopState() {
         }
     }
 
-    // Reset flag after a short delay
+    // Reset flags after a short delay
     setTimeout(() => {
         isHandlingPopState = false;
+        setHandlingPopState(false);
     }, 100);
 }
 

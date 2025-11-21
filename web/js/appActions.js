@@ -7,6 +7,17 @@ import * as State from './state.js';
 import { applyFilters, sortTemplates } from './filters.js';
 import { updateSidebar } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
+import { updateURLWithFilters, getFiltersFromURL } from './modal.js';
+
+// Track if we're handling a popstate event to avoid URL update loops
+let isHandlingPopState = false;
+
+/**
+ * Set popstate handling flag (called from modal.js)
+ */
+export function setHandlingPopState(value) {
+    isHandlingPopState = value;
+}
 
 /**
  * Update sidebar only (used when focused template changes)
@@ -23,6 +34,40 @@ export function updateSidebarOnly() {
         selectedKeywords,
         selectedCategory
     }, handleKeywordToggle, handleCategoryToggle, {});
+}
+
+/**
+ * Apply filters from URL parameters to UI and state
+ * Called on page load and popstate events
+ */
+export function applyFiltersFromURL() {
+    const urlFilters = getFiltersFromURL();
+
+    // Apply to UI elements
+    document.getElementById('search').value = urlFilters.search;
+    document.getElementById('show-official').checked = urlFilters.official;
+    document.getElementById('show-community').checked = urlFilters.community;
+    document.getElementById('show-duplicates').checked = urlFilters.duplicates;
+
+    // Apply sort if valid option exists
+    const sortDropdown = document.getElementById('sort');
+    const validSortValues = Array.from(sortDropdown.options).map(o => o.value);
+    if (validSortValues.includes(urlFilters.sort)) {
+        sortDropdown.value = urlFilters.sort;
+    }
+
+    // Apply keywords to state
+    State.clearKeywordSelection();
+    urlFilters.keywords.forEach(keyword => {
+        State.toggleKeywordSelection(keyword);
+    });
+
+    // Apply category to state
+    if (urlFilters.category) {
+        State.setCategorySelection(urlFilters.category);
+    } else {
+        State.clearCategorySelection();
+    }
 }
 
 /**
@@ -63,6 +108,21 @@ export function filterAndRender(options = {}) {
 
     // Update state
     State.setFilteredTemplates(filtered);
+
+    // Update URL with current filter state (unless handling popstate)
+    if (!isHandlingPopState) {
+        const filterState = {
+            search: searchTerm,
+            keywords: Array.from(selectedKeywords),
+            category: selectedCategory,
+            official: showOfficial,
+            community: showCommunity,
+            duplicates: showDuplicates,
+            sort: sortBy
+        };
+        // Use replaceState to avoid polluting browser history on every filter change
+        updateURLWithFilters(filterState, true);
+    }
 
     // Update UI
     updateStats();
