@@ -15,12 +15,55 @@ let previouslyFocusedElement = null;
 let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
 
 /**
+ * Update diff stats display
+ * @param {number} additions - Number of added lines
+ * @param {number} deletions - Number of deleted lines
+ */
+function updateDiffStats(additions, deletions) {
+    const diffStats = document.getElementById('diff-stats');
+    if (!diffStats) return;
+
+    if (additions === 0 && deletions === 0) {
+        diffStats.innerHTML = '';
+    } else {
+        diffStats.innerHTML = `<span class="diff-additions">+${additions}</span> <span class="diff-deletions">-${deletions}</span>`;
+    }
+}
+
+/**
+ * Clear diff stats display
+ */
+function clearDiffStats() {
+    const diffStats = document.getElementById('diff-stats');
+    if (diffStats) diffStats.innerHTML = '';
+}
+
+/**
+ * Get similarity badge HTML based on similarity percentage
+ * Thresholds: 100% = exact/original, 90-99% = near, <90% = similar
+ * @param {number} similarityPercent - Similarity percentage (0-100)
+ * @param {boolean} isOriginal - Whether this is the original template
+ * @returns {string} Badge HTML
+ */
+function getSimilarityBadge(similarityPercent, isOriginal) {
+    if (similarityPercent === 100) {
+        if (isOriginal) {
+            return '<span class="duplicate-badge original">original</span>';
+        }
+        return '<span class="duplicate-badge exact">exact</span>';
+    } else if (similarityPercent >= 90) {
+        return '<span class="duplicate-badge near">near</span>';
+    }
+    return '<span class="duplicate-badge similar">similar</span>';
+}
+
+/**
  * Generate a unified diff between two texts
  * @param {string} originalText - Original text
  * @param {string} newText - New text to compare
  * @param {string} originalName - Name for original file
  * @param {string} newName - Name for new file
- * @returns {string} Unified diff output
+ * @returns {{text: string, additions: number, deletions: number}} Diff with stats
  */
 function generateUnifiedDiff(originalText, newText, originalName = 'original', newName = 'similar') {
     const originalLines = originalText.split('\n');
@@ -28,9 +71,7 @@ function generateUnifiedDiff(originalText, newText, originalName = 'original', n
 
     // Simple LCS-based diff algorithm
     const lcs = computeLCS(originalLines, newLines);
-    const diff = buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName);
-
-    return diff;
+    return buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName);
 }
 
 /**
@@ -146,12 +187,14 @@ function buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName) {
         hunks.push(currentHunk);
     }
 
-    // Build output
+    // Build output and count stats
     if (hunks.length === 0) {
-        return '# No differences found';
+        return { text: '# No differences found', additions: 0, deletions: 0 };
     }
 
     let output = `--- ${originalName}\n+++ ${newName}\n`;
+    let additions = 0;
+    let deletions = 0;
 
     for (const hunk of hunks) {
         const aCount = hunk.lines.filter(l => l.type !== '+').length;
@@ -160,10 +203,12 @@ function buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName) {
 
         for (const line of hunk.lines) {
             output += `${line.type}${line.text}\n`;
+            if (line.type === '+') additions++;
+            else if (line.type === '-') deletions++;
         }
     }
 
-    return output;
+    return { text: output, additions, deletions };
 }
 
 /**
@@ -455,6 +500,7 @@ function populateSimilarTemplates(template) {
             hljs.highlightElement(modalCodeContent);
             copyYamlButton.style.display = 'block';
             isShowingDiff = false;
+            clearDiffStats();
         }
     };
 
@@ -493,11 +539,14 @@ function populateSimilarTemplates(template) {
             similarTemplate.id
         );
 
-        modalCodeContent.textContent = diff;
+        modalCodeContent.textContent = diff.text;
         modalCodeContent.className = 'language-diff';
         modalCodeContent.removeAttribute('data-highlighted');
         hljs.highlightElement(modalCodeContent);
         isShowingDiff = true;
+
+        // Update diff stats display
+        updateDiffStats(diff.additions, diff.deletions);
     };
 
     // Sort by similarity (descending), then originals first, then by id (ascending)
@@ -523,23 +572,8 @@ function populateSimilarTemplates(template) {
         item.dataset.index = index;
 
         // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
-        // Badge based on similarity: 100% = ORIGINAL/EXACT, <100% = NEAR, others = SIMILAR
-        let badgeHtml = '';
-        if (similar.duplicate_type) {
-            if (similarityPercent === 100) {
-                if (similar.is_original) {
-                    badgeHtml = `<span class="duplicate-badge original">original</span>`;
-                } else {
-                    badgeHtml = `<span class="duplicate-badge exact">exact</span>`;
-                }
-            } else if (similar.duplicate_type === 'exact') {
-                // Less than 100% but marked as exact duplicate - show as "near"
-                badgeHtml = `<span class="duplicate-badge near">near</span>`;
-            } else {
-                // Near duplicates - show as "similar"
-                badgeHtml = `<span class="duplicate-badge similar">similar</span>`;
-            }
-        }
+        // Badge derived purely from similarity score
+        const badgeHtml = getSimilarityBadge(similarityPercent, similar.is_original);
         item.innerHTML = `
             <span class="similar-template-path">${escapeHtml(similar.id)}</span>
             ${badgeHtml}
