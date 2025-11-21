@@ -149,6 +149,7 @@ function createDebugScorePopup(template) {
         custom_images: calculateRank(breakdown.custom_images, 'custom_images', allTemplates),
         comments: calculateRank(breakdown.comments, 'comments', allTemplates),
         stars: calculateRank(breakdown.stars, 'stars', allTemplates),
+        no_remote_images: calculateRank(breakdown.no_remote_images, 'no_remote_images', allTemplates),
         total: calculateRank(breakdown.total, 'total', allTemplates)
     };
 
@@ -205,7 +206,7 @@ function createDebugScorePopup(template) {
             <div class="debug-popup-item">
                 <span class="debug-popup-label">No images:</span>
                 <span class="debug-popup-value">${breakdown.no_remote_images.toFixed(1)}</span>
-                <span class="debug-popup-rank"></span>
+                <span class="debug-popup-rank">#${ranks.no_remote_images}</span>
             </div>
             <div class="debug-popup-divider"></div>
             <div class="debug-popup-item debug-popup-total">
@@ -330,17 +331,52 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         const popup = createDebugScorePopup(template);
         if (popup) {
             const badge = card.querySelector('.template-badge');
-            badge.style.position = 'relative';
             badge.style.cursor = 'help';
-            badge.appendChild(popup);
 
-            // Show/hide popup on hover
-            badge.addEventListener('mouseenter', () => {
+            // Append popup to body to avoid stacking context issues
+            document.body.appendChild(popup);
+
+            let hideTimeout = null;
+
+            // Position popup relative to badge on hover
+            const showPopup = () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+                const badgeRect = badge.getBoundingClientRect();
+                popup.style.position = 'fixed';
+                popup.style.top = `${badgeRect.bottom + 8}px`;
+                popup.style.right = `${window.innerWidth - badgeRect.right}px`;
                 popup.style.display = 'block';
+            };
+
+            const hidePopup = () => {
+                hideTimeout = setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 100);
+            };
+
+            badge.addEventListener('mouseenter', showPopup);
+            badge.addEventListener('mouseleave', hidePopup);
+
+            // Keep popup visible when hovering over it
+            popup.addEventListener('mouseenter', () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
             });
-            badge.addEventListener('mouseleave', () => {
-                popup.style.display = 'none';
+            popup.addEventListener('mouseleave', hidePopup);
+
+            // Clean up popup when card is removed from DOM
+            const observer = new MutationObserver((mutations) => {
+                if (!document.body.contains(card)) {
+                    popup.remove();
+                    observer.disconnect();
+                }
             });
+            observer.observe(card.parentElement, { childList: true });
         }
     }
 

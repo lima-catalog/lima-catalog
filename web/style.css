@@ -1655,9 +1655,7 @@ footer a:hover {
 
 .debug-score-popup {
     display: none;
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
+    position: fixed;
     background: var(--surface-elevated);
     border: 1px solid var(--border-elevated);
     border-radius: 0.5rem;
