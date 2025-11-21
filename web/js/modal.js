@@ -5,7 +5,7 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
-import { getTemplates } from './state.js';
+import { getTemplates, getFilteredTemplates } from './state.js';
 
 // Modal state
 let currentTemplate = null;
@@ -756,6 +756,41 @@ export function setupModalEventListeners() {
         // Close on Escape key
         if (e.key === 'Escape') {
             closePreviewModal();
+            return;
+        }
+
+        // Ctrl+Arrow: Navigate to adjacent template in the list
+        if (e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault();
+            const filteredTemplates = getFilteredTemplates();
+            const currentIndex = filteredTemplates.findIndex(t => t.id === currentTemplate.id);
+            if (currentIndex === -1) return;
+
+            let nextIndex = currentIndex;
+
+            if (e.key === 'ArrowRight') {
+                nextIndex = currentIndex + 1;
+            } else if (e.key === 'ArrowLeft') {
+                nextIndex = currentIndex - 1;
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                // Calculate grid column count from the template grid
+                const grid = document.getElementById('template-grid');
+                if (grid) {
+                    const gridStyle = window.getComputedStyle(grid);
+                    const columnCount = gridStyle.gridTemplateColumns.split(' ').length;
+                    if (e.key === 'ArrowDown') {
+                        nextIndex = currentIndex + columnCount;
+                    } else {
+                        nextIndex = currentIndex - columnCount;
+                    }
+                }
+            }
+
+            // Navigate to adjacent template if within bounds
+            if (nextIndex >= 0 && nextIndex < filteredTemplates.length) {
+                const nextTemplate = filteredTemplates[nextIndex];
+                openPreviewModal(nextTemplate);
+            }
             return;
         }
 
