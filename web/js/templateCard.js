@@ -62,6 +62,7 @@ function getDebugBadgeText(template, sortBy) {
         'breakdown-env_vars': { value: template.notability_score_breakdown.env_vars, label: 'Env Vars' },
         'breakdown-probes': { value: template.notability_score_breakdown.probes, label: 'Probes' },
         'breakdown-unusual_images': { value: template.notability_score_breakdown.unusual_images, label: 'Unusual Images' },
+        'breakdown-custom_images': { value: template.notability_score_breakdown.custom_images, label: 'Custom Images' },
         'breakdown-comments': { value: template.notability_score_breakdown.comments, label: 'Comments' },
         'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' }
     };
@@ -123,6 +124,10 @@ function createDebugScorePopup(template) {
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Unusual Images:</span>
                 <span class="debug-popup-value">${breakdown.unusual_images.toFixed(1)}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Custom Images:</span>
+                <span class="debug-popup-value">${breakdown.custom_images.toFixed(1)}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Comments:</span>
