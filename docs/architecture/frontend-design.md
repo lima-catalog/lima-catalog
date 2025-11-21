@@ -274,6 +274,29 @@ All keyboard features include:
 - Focus indicators (visible outlines)
 - Screen reader announcements (`aria-live` regions)
 
+#### Focus Trap (`utils.js:trapFocus`)
+
+Modal dialogs use `trapFocus()` to keep Tab navigation within the modal. Implementation details:
+
+**Selector for tabbable elements**:
+```javascript
+'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), ...'
+```
+
+**Key considerations**:
+1. **Exclude `tabindex="-1"`**: Elements with `tabindex="-1"` are focusable via JavaScript but NOT in the Tab order. The selector must exclude them from all element types (not just `[tabindex]`).
+
+2. **Filter hidden elements**: Use `el.offsetParent !== null` to exclude elements hidden via `display: none`. Hidden elements are still returned by `querySelectorAll` but aren't tabbable.
+
+3. **Dynamic content**: Recompute focusable elements on each Tab press, not just at initialization. This handles:
+   - Tab panels that show/hide content
+   - Elements whose `tabindex` changes dynamically
+   - Any DOM modifications after the trap is set up
+
+4. **Scrollable containers**: Add `tabindex="-1"` to scrollable containers (`overflow: auto/scroll`) to prevent them from being tab stops. Browsers may make scrollable regions implicitly focusable.
+
+**Code**: `utils.js:trapFocus()`
+
 → For complete accessibility guidelines, see [UI/UX Guidelines](../guides/ui-ux-guidelines.md)
 
 ---
