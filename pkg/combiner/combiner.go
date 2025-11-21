@@ -251,7 +251,7 @@ type ScoreStatistics struct {
 	Median         float64
 	Average        float64
 	StdDeviation   float64
-	ZeroCount      int
+	ZeroPercent    float64
 }
 
 // calculateScoreStatistics computes statistics for a slice of score values
@@ -294,6 +294,9 @@ func calculateScoreStatistics(name string, values []float64) ScoreStatistics {
 	}
 	stdDev := math.Sqrt(varianceSum / float64(len(values)))
 
+	// Calculate zero percentage
+	zeroPercent := (float64(zeroCount) / float64(len(values))) * 100.0
+
 	return ScoreStatistics{
 		Name:         name,
 		Min:          min,
@@ -301,7 +304,7 @@ func calculateScoreStatistics(name string, values []float64) ScoreStatistics {
 		Median:       median,
 		Average:      avg,
 		StdDeviation: stdDev,
-		ZeroCount:    zeroCount,
+		ZeroPercent:  zeroPercent,
 	}
 }
 
@@ -343,14 +346,14 @@ func printScoreStatistics(combined []CombinedTemplate) {
 
 	// Print statistics table
 	fmt.Printf("\n=== Notability Score Statistics ===\n")
-	fmt.Printf("%-15s %8s %8s %8s %8s %8s %10s\n",
-		"Name", "Min", "Max", "Median", "Avg", "StdDev", "Zero Count")
-	fmt.Printf("%-15s %8s %8s %8s %8s %8s %10s\n",
-		"---------------", "--------", "--------", "--------", "--------", "--------", "----------")
+	fmt.Printf("%-15s %8s %8s %8s %8s %8s %8s\n",
+		"Name", "Min", "Max", "Median", "Avg", "StdDev", "Zero %")
+	fmt.Printf("%-15s %8s %8s %8s %8s %8s %8s\n",
+		"---------------", "--------", "--------", "--------", "--------", "--------", "--------")
 
 	for _, s := range stats {
-		fmt.Printf("%-15s %8.2f %8.2f %8.2f %8.2f %8.2f %10d\n",
-			s.Name, s.Min, s.Max, s.Median, s.Average, s.StdDeviation, s.ZeroCount)
+		fmt.Printf("%-15s %8.2f %8.2f %8.2f %8.2f %8.2f %7.1f%%\n",
+			s.Name, s.Min, s.Max, s.Median, s.Average, s.StdDeviation, s.ZeroPercent)
 	}
 	fmt.Printf("\n")
 }
