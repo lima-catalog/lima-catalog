@@ -65,7 +65,7 @@ function getDebugBadgeText(template, sortBy) {
         'breakdown-custom_images': { value: template.notability_score_breakdown.custom_images, label: 'Custom Images' },
         'breakdown-comments': { value: template.notability_score_breakdown.comments, label: 'Comments' },
         'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' },
-        'breakdown-no_remote_images': { value: template.notability_score_breakdown.no_remote_images, label: 'No Remote Images' }
+        'breakdown-no_remote_images': { value: template.notability_score_breakdown.no_remote_images, label: 'No images' }
     };
 
     // If sorting by a specific breakdown component, show that score
@@ -203,8 +203,9 @@ function createDebugScorePopup(template) {
                 <span class="debug-popup-rank">#${ranks.stars}</span>
             </div>
             <div class="debug-popup-item">
-                <span class="debug-popup-label">No Remote Images:</span>
+                <span class="debug-popup-label">No images:</span>
                 <span class="debug-popup-value">${breakdown.no_remote_images.toFixed(1)}</span>
+                <span class="debug-popup-rank"></span>
             </div>
             <div class="debug-popup-divider"></div>
             <div class="debug-popup-item debug-popup-total">
