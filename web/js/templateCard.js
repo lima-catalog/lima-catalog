@@ -85,6 +85,43 @@ function getDebugBadgeText(template, sortBy) {
 }
 
 /**
+ * Calculate rank for a specific score value among all templates
+ * Handles ties by giving the same rank to templates with the same score
+ * @param {number} score - The score to rank
+ * @param {string} metricName - Name of the metric (e.g., 'message', 'total')
+ * @param {Array} templates - All templates to rank against
+ * @returns {number} Rank (1-based, with ties)
+ */
+function calculateRank(score, metricName, templates) {
+    // Get all scores for this metric
+    const scores = templates
+        .map(t => {
+            if (!t.notability_score_breakdown) return null;
+            if (metricName === 'total') {
+                return t.notability_score_breakdown.total;
+            }
+            return t.notability_score_breakdown[metricName];
+        })
+        .filter(s => s !== null);
+
+    // Sort scores in descending order
+    const sortedScores = [...scores].sort((a, b) => b - a);
+
+    // Find rank (1-based, with ties)
+    let rank = 1;
+    for (let i = 0; i < sortedScores.length; i++) {
+        if (sortedScores[i] === score) {
+            return rank;
+        }
+        if (i > 0 && sortedScores[i] !== sortedScores[i - 1]) {
+            rank = i + 1;
+        }
+    }
+
+    return rank;
+}
+
+/**
  * Create debug score popup element
  * @param {Object} template - Template object
  * @returns {HTMLElement|null} Popup element or null
@@ -96,6 +133,23 @@ function createDebugScorePopup(template) {
 
     const breakdown = template.notability_score_breakdown;
 
+    // Get all filtered templates for ranking
+    const allTemplates = State.getFilteredTemplates();
+
+    // Calculate ranks for each metric
+    const ranks = {
+        message: calculateRank(breakdown.message, 'message', allTemplates),
+        provision: calculateRank(breakdown.provision, 'provision', allTemplates),
+        parameters: calculateRank(breakdown.parameters, 'parameters', allTemplates),
+        env_vars: calculateRank(breakdown.env_vars, 'env_vars', allTemplates),
+        probes: calculateRank(breakdown.probes, 'probes', allTemplates),
+        unusual_images: calculateRank(breakdown.unusual_images, 'unusual_images', allTemplates),
+        custom_images: calculateRank(breakdown.custom_images, 'custom_images', allTemplates),
+        comments: calculateRank(breakdown.comments, 'comments', allTemplates),
+        stars: calculateRank(breakdown.stars, 'stars', allTemplates),
+        total: calculateRank(breakdown.total, 'total', allTemplates)
+    };
+
     const popup = document.createElement('div');
     popup.className = 'debug-score-popup';
     popup.innerHTML = `
@@ -104,43 +158,53 @@ function createDebugScorePopup(template) {
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Message:</span>
                 <span class="debug-popup-value">${breakdown.message.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.message}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Provision:</span>
                 <span class="debug-popup-value">${breakdown.provision.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.provision}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Parameters:</span>
                 <span class="debug-popup-value">${breakdown.parameters.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.parameters}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Env Vars:</span>
                 <span class="debug-popup-value">${breakdown.env_vars.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.env_vars}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Probes:</span>
                 <span class="debug-popup-value">${breakdown.probes.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.probes}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Unusual Images:</span>
                 <span class="debug-popup-value">${breakdown.unusual_images.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.unusual_images}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Custom Images:</span>
                 <span class="debug-popup-value">${breakdown.custom_images.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.custom_images}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Comments:</span>
                 <span class="debug-popup-value">${breakdown.comments.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.comments}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Stars:</span>
                 <span class="debug-popup-value">${breakdown.stars.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.stars}</span>
             </div>
             <div class="debug-popup-divider"></div>
             <div class="debug-popup-item debug-popup-total">
                 <span class="debug-popup-label">Total:</span>
                 <span class="debug-popup-value">${breakdown.total.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.total}</span>
             </div>
         </div>
     `;
