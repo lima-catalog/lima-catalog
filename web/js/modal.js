@@ -15,30 +15,6 @@ let previouslyFocusedElement = null;
 let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
 
 /**
- * Update diff stats display
- * @param {number} additions - Number of added lines
- * @param {number} deletions - Number of deleted lines
- */
-function updateDiffStats(additions, deletions) {
-    const diffStats = document.getElementById('diff-stats');
-    if (!diffStats) return;
-
-    if (additions === 0 && deletions === 0) {
-        diffStats.innerHTML = '';
-    } else {
-        diffStats.innerHTML = `<span class="diff-additions">+${additions}</span> <span class="diff-deletions">-${deletions}</span>`;
-    }
-}
-
-/**
- * Clear diff stats display
- */
-function clearDiffStats() {
-    const diffStats = document.getElementById('diff-stats');
-    if (diffStats) diffStats.innerHTML = '';
-}
-
-/**
  * Get similarity badge HTML based on similarity percentage
  * Thresholds: 100% = exact/original, 90-99% = near, <90% = similar
  * @param {number} similarityPercent - Similarity percentage (0-100)
@@ -500,7 +476,6 @@ function populateSimilarTemplates(template) {
             hljs.highlightElement(modalCodeContent);
             copyYamlButton.style.display = 'block';
             isShowingDiff = false;
-            clearDiffStats();
         }
     };
 
@@ -544,9 +519,6 @@ function populateSimilarTemplates(template) {
         modalCodeContent.removeAttribute('data-highlighted');
         hljs.highlightElement(modalCodeContent);
         isShowingDiff = true;
-
-        // Update diff stats display
-        updateDiffStats(diff.additions, diff.deletions);
     };
 
     // Sort by similarity (descending), then originals first, then by id (ascending)
@@ -571,11 +543,12 @@ function populateSimilarTemplates(template) {
         item.setAttribute('aria-selected', 'false');
         item.dataset.index = index;
 
-        // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
+        // Single line format: ORG/REPO/TEMPLATEPATH [stats] [badge] percent
         // Badge derived purely from similarity score
         const badgeHtml = getSimilarityBadge(similarityPercent, similar.is_original);
         item.innerHTML = `
             <span class="similar-template-path">${escapeHtml(similar.id)}</span>
+            <span class="item-diff-stats"></span>
             ${badgeHtml}
             <span class="similarity-percentage">${similarityPercent}%</span>
         `;
@@ -591,6 +564,35 @@ function populateSimilarTemplates(template) {
         items.push({ element: item, template: similarTemplate, id: similar.id });
         similarList.appendChild(item);
     });
+
+    // Fetch diff stats for all similar templates in parallel
+    const fetchDiffStats = async (item, similarTemplate) => {
+        if (!similarTemplate || !currentYamlContent) return;
+
+        let similarYaml = yamlCache.get(similarTemplate.id);
+        if (!similarYaml) {
+            try {
+                const response = await fetch(similarTemplate.raw_url);
+                if (response.ok) {
+                    similarYaml = await response.text();
+                    yamlCache.set(similarTemplate.id, similarYaml);
+                } else {
+                    return;
+                }
+            } catch {
+                return;
+            }
+        }
+
+        const diff = generateUnifiedDiff(currentYamlContent, similarYaml, '', '');
+        const statsEl = item.element.querySelector('.item-diff-stats');
+        if (statsEl && (diff.additions > 0 || diff.deletions > 0)) {
+            statsEl.innerHTML = `<span class="diff-additions">+${diff.additions}</span><span class="diff-deletions">-${diff.deletions}</span>`;
+        }
+    };
+
+    // Start fetching stats for all items (don't await - let them complete in background)
+    items.forEach(item => fetchDiffStats(item, item.template));
 
     // Update selection styling and show diff
     const updateSelection = async (newIndex) => {

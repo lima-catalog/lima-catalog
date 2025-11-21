@@ -1073,18 +1073,17 @@ footer a:hover {
     letter-spacing: 0.05em;
 }
 
-.diff-stats {
-    position: absolute;
-    top: 0.5rem;
-    left: 1rem;
-    font-size: 0.75rem;
+.item-diff-stats {
+    font-size: 0.7rem;
     font-family: var(--font-mono);
-    z-index: 1;
+    margin-left: auto;
+    padding-right: 0.5rem;
 }
 
 .diff-additions {
     color: #22c55e;
     font-weight: 600;
+    margin-right: 0.25rem;
 }
 
 .diff-deletions {
