@@ -12,6 +12,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// filterRemoteImages returns only image URLs that start with http:// or https://
+// Local references and template expressions are filtered out
+func filterRemoteImages(images []string) []string {
+	var remote []string
+	for _, img := range images {
+		if strings.HasPrefix(img, "http://") || strings.HasPrefix(img, "https://") {
+			remote = append(remote, img)
+		}
+	}
+	return remote
+}
+
 // extractDomain extracts the top-level domain from a URL or location string
 // e.g., "downloads.ubuntu.com" -> "ubuntu.com", "nixos.org" -> "nixos.org"
 func extractDomain(location string) string {
@@ -55,11 +67,15 @@ func extractDomain(location string) string {
 }
 
 // IdentifyUnusualImages returns a list of image domains not in the official template set
+// Only considers URLs starting with http:// or https://, filtering out local references
 func IdentifyUnusualImages(images []string, officialDomains map[string]bool) []string {
+	// Filter to only remote images (http:// or https://)
+	remoteImages := filterRemoteImages(images)
+
 	seenDomains := make(map[string]bool)
 	var unusual []string
 
-	for _, img := range images {
+	for _, img := range remoteImages {
 		domain := extractDomain(img)
 		if domain == "" {
 			continue // Skip if we couldn't extract a domain
@@ -81,12 +97,16 @@ func IdentifyUnusualImages(images []string, officialDomains map[string]bool) []s
 }
 
 // CalculateCustomImagesScore checks if images match the org or repo name
+// Only considers URLs starting with http:// or https://, filtering out local references
 // Scores:
 // - 25 points for one word boundary match (\bNAME or NAME\b)
 // - 35 points for both word boundaries (\bNAME\b)
 // Returns the sum of highest org match + highest repo match (0-70 points)
 func CalculateCustomImagesScore(images []string, orgName string, repoName string) float64 {
-	if len(images) == 0 {
+	// Filter to only remote images (http:// or https://)
+	remoteImages := filterRemoteImages(images)
+
+	if len(remoteImages) == 0 {
 		return 0
 	}
 
@@ -140,7 +160,7 @@ func CalculateCustomImagesScore(images []string, orgName string, repoName string
 	highestOrgMatch := 0
 	highestRepoMatch := 0
 
-	for _, img := range images {
+	for _, img := range remoteImages {
 		orgMatch := checkMatch(img, orgName)
 		if orgMatch > highestOrgMatch {
 			highestOrgMatch = orgMatch
@@ -162,16 +182,17 @@ func isAlphanumericOrUnderscore(b byte) bool {
 
 // NotabilityScoreBreakdown contains the individual components of the notability score
 type NotabilityScoreBreakdown struct {
-	Message       float64 `json:"message"`        // 100 if has message
-	Provision     float64 `json:"provision"`      // 10 per script + 1 per 10 lines
-	Parameters    float64 `json:"parameters"`     // 20 per param
-	EnvVars       float64 `json:"env_vars"`       // 10 per var
-	Probes        float64 `json:"probes"`         // 5 per probe + 1 per 10 lines
-	UnusualImages float64 `json:"unusual_images"` // 30 if any unusual domains
-	CustomImages  float64 `json:"custom_images"`  // 25-70 if images match org/repo names
-	Comments      float64 `json:"comments"`       // 2 per comment line
-	Stars         float64 `json:"stars"`          // 1 per 10 stars (capped at 50)
-	Total         float64 `json:"total"`          // Sum of all components
+	Message        float64 `json:"message"`         // 100 if has message
+	Provision      float64 `json:"provision"`       // 10 per script + 1 per 10 lines
+	Parameters     float64 `json:"parameters"`      // 20 per param
+	EnvVars        float64 `json:"env_vars"`        // 10 per var
+	Probes         float64 `json:"probes"`          // 5 per probe + 1 per 10 lines
+	UnusualImages  float64 `json:"unusual_images"`  // 30 if any unusual domains
+	CustomImages   float64 `json:"custom_images"`   // 25-70 if images match org/repo names
+	Comments       float64 `json:"comments"`        // 2 per comment line
+	Stars          float64 `json:"stars"`           // 1 per 10 stars (capped at 50)
+	NoRemoteImages float64 `json:"no_remote_images"` // -100 if no http/https image URLs
+	Total          float64 `json:"total"`           // Sum of all components
 }
 
 // CalculateNotabilityScore computes a weighted score from notability metrics
@@ -184,9 +205,10 @@ type NotabilityScoreBreakdown struct {
 // - Environment vars: 10 points per var
 // - Probes: 5 points per probe + 1 point per 10 lines
 // - Unusual images: 30 points if any unusual image domains (Lima uses first available)
-// - Custom images: 25-70 points if images contain org/repo names
+// - Custom images: 25-70 points if images contain org/repo names (http/https only)
 // - Comment lines: 2 points per comment line (indicates documentation quality)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
+// - No remote images: -100 points if no http/https image URLs (won't work on other computers)
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) float64 {
 	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, orgName, repoName, repoStars)
 	return breakdown.Total
@@ -250,10 +272,17 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 	}
 	breakdown.Stars = starsScore
 
+	// No remote images penalty (templates without http/https URLs won't work on other computers)
+	// Check if there are any remote images (http:// or https://)
+	remoteImages := filterRemoteImages(metrics.AllImages)
+	if len(remoteImages) == 0 {
+		breakdown.NoRemoteImages = -100
+	}
+
 	// Calculate total
 	breakdown.Total = breakdown.Message + breakdown.Provision + breakdown.Parameters +
 		breakdown.EnvVars + breakdown.Probes + breakdown.UnusualImages + breakdown.CustomImages +
-		breakdown.Comments + breakdown.Stars
+		breakdown.Comments + breakdown.Stars + breakdown.NoRemoteImages
 
 	return breakdown
 }

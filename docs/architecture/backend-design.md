@@ -70,10 +70,11 @@ Domain-based, dynamically fetched:
 What gets stored:
 
 - Template image URLs are parsed to extract their domains
+- **Only `http://` or `https://` URLs are considered** (local references and template expressions are filtered out)
 - Domains not found in official images list are stored in `unusual_images`
 - Example: Template using `https://nixos.org/channels/...` would store `nixos.org`
 - Deduplicates domains (multiple images from same domain counted once)
-- Skips `template://` references (internal template references)
+- Local references like `template://ubuntu` or `/local/path/image.img` are skipped
 
 ### Score Calculation
 
@@ -84,13 +85,14 @@ Weighted sum of metrics:
 3. **Parameters**: 20 points per param (indicates configurability)
 4. **Environment vars**: 10 points per var (shows configuration effort)
 5. **Probes**: 5 points per probe + 1 point per 10 lines
-6. **Unusual images**: 30 points if any unusual domains present
-7. **Custom images**: 0-70 points if images match org/repo names
+6. **Unusual images**: 30 points if any unusual domains present (only `http://` or `https://` URLs)
+7. **Custom images**: 0-70 points if images match org/repo names (only `http://` or `https://` URLs)
    - 25 points for one word boundary match (`\bNAME` or `NAME\b`)
    - 35 points for both word boundaries (`\bNAME\b`)
    - Org and repo scored separately and summed (max 70)
 8. **Comment lines**: 2 points per comment line (documentation quality)
 9. **Repository stars**: 1 point per 10 stars (capped at 50 points)
+10. **No remote images**: -100 points if template has no `http://` or `https://` image URLs (won't work on other computers without changes)
 
 ### Usage
 

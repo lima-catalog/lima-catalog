@@ -177,7 +177,8 @@ export function updateSortDropdown() {
         { value: 'breakdown-unusual_images', label: '[Debug] Unusual Images' },
         { value: 'breakdown-custom_images', label: '[Debug] Custom Images' },
         { value: 'breakdown-comments', label: '[Debug] YAML Comments' },
-        { value: 'breakdown-stars', label: '[Debug] Repository Stars' }
+        { value: 'breakdown-stars', label: '[Debug] Repository Stars' },
+        { value: 'breakdown-no_remote_images', label: '[Debug] No Remote Images' }
     ];
 
     // Combine options based on debug mode

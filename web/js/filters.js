@@ -233,6 +233,8 @@ export function sortTemplates(templates, sortBy) {
                 return (b.notability_score_breakdown?.comments || 0) - (a.notability_score_breakdown?.comments || 0);
             case 'breakdown-stars':
                 return (b.notability_score_breakdown?.stars || 0) - (a.notability_score_breakdown?.stars || 0);
+            case 'breakdown-no_remote_images':
+                return (b.notability_score_breakdown?.no_remote_images || 0) - (a.notability_score_breakdown?.no_remote_images || 0);
 
             default:
                 return 0;
