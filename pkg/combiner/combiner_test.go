@@ -287,16 +287,14 @@ func TestCombineData(t *testing.T) {
 					URL:              "https://github.com/owner1/repo1/blob/main/ubuntu.yaml",
 					SimilarTemplates: []types.SimilarTemplate{
 						{
-							ID:            "owner2/repo2/ubuntu-dev.yaml",
-							Similarity:    0.85,
-							DuplicateType: "near",
-							SharedBands:   28,
+							ID:          "owner2/repo2/ubuntu-dev.yaml",
+							Similarity:  0.85,
+							SharedBands: 28,
 						},
 						{
-							ID:            "owner3/repo3/ubuntu-docker.yaml",
-							Similarity:    0.65,
-							DuplicateType: "similar",
-							SharedBands:   18,
+							ID:          "owner3/repo3/ubuntu-docker.yaml",
+							Similarity:  0.65,
+							SharedBands: 18,
 						},
 					},
 				},
@@ -339,9 +337,6 @@ func TestCombineData(t *testing.T) {
 					}
 					if sim.Similarity != 0.85 {
 						t.Errorf("Expected similarity 0.85, got %f", sim.Similarity)
-					}
-					if sim.DuplicateType != "near" {
-						t.Errorf("Expected duplicate type 'near', got '%s'", sim.DuplicateType)
 					}
 					if sim.SharedBands != 28 {
 						t.Errorf("Expected 28 shared bands, got %d", sim.SharedBands)

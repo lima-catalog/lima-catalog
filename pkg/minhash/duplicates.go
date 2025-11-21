@@ -145,14 +145,10 @@ func (dd *DuplicateDetector) FindSimilar(template *types.Template) ([]types.Simi
 			continue
 		}
 
-		// Classify duplicate type
-		duplicateType := classifyDuplicate(similarity)
-
 		similar = append(similar, types.SimilarTemplate{
-			ID:            candidateID,
-			Similarity:    similarity,
-			DuplicateType: duplicateType,
-			SharedBands:   sharedBands,
+			ID:          candidateID,
+			Similarity:  similarity,
+			SharedBands: sharedBands,
 		})
 	}
 
@@ -162,23 +158,6 @@ func (dd *DuplicateDetector) FindSimilar(template *types.Template) ([]types.Simi
 	})
 
 	return similar, nil
-}
-
-// classifyDuplicate classifies the type of duplicate based on similarity score.
-//
-// Classification:
-//   - >0.9: "exact" - Exact or near-exact duplicate (likely fork)
-//   - 0.7-0.9: "near" - Near duplicate (minor changes)
-//   - 0.5-0.7: "similar" - Similar template (moderate changes)
-//   - <0.5: (filtered out by threshold)
-func classifyDuplicate(similarity float64) string {
-	if similarity > 0.9 {
-		return "exact"
-	} else if similarity >= 0.7 {
-		return "near"
-	} else {
-		return "similar"
-	}
 }
 
 // DetectDuplicates processes all templates and populates SimilarTemplates field.

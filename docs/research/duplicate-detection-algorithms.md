@@ -596,8 +596,7 @@ mh := minhash.New()  // Uses defaults
   "similar_templates": [
     {
       "id": "other/repo/template.yaml",
-      "similarity": 0.85,
-      "duplicate_type": "near_duplicate"
+      "similarity": 0.85
     }
   ],
   "is_duplicate": false,

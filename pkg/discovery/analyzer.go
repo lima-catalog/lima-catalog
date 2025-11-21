@@ -528,7 +528,7 @@ func identifyOriginals(templates []types.Template, repoMap map[string]*types.Rep
 
 			// Update IsOriginal flag in SimilarTemplates
 			for i := range t.SimilarTemplates {
-				if t.SimilarTemplates[i].DuplicateType == "exact" {
+				if t.SimilarTemplates[i].IsExactDuplicate() {
 					t.SimilarTemplates[i].IsOriginal = (t.SimilarTemplates[i].ID == originalID)
 				}
 			}
@@ -571,7 +571,7 @@ func buildExactDuplicateGroups(templates []types.Template) [][]string {
 	for i := range templates {
 		t := &templates[i]
 		for _, similar := range t.SimilarTemplates {
-			if similar.DuplicateType == "exact" {
+			if similar.IsExactDuplicate() {
 				union(t.ID, similar.ID)
 			}
 		}

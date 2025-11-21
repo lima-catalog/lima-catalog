@@ -131,69 +131,6 @@ func TestChooseLSHConfig(t *testing.T) {
 	}
 }
 
-func TestClassifyDuplicate(t *testing.T) {
-	tests := []struct {
-		name       string
-		similarity float64
-		want       string
-	}{
-		{
-			name:       "exact duplicate (1.0)",
-			similarity: 1.0,
-			want:       "exact",
-		},
-		{
-			name:       "exact duplicate (0.95)",
-			similarity: 0.95,
-			want:       "exact",
-		},
-		{
-			name:       "exact duplicate (0.91)",
-			similarity: 0.91,
-			want:       "exact",
-		},
-		{
-			name:       "near duplicate (0.9)",
-			similarity: 0.9,
-			want:       "near",
-		},
-		{
-			name:       "near duplicate (0.8)",
-			similarity: 0.8,
-			want:       "near",
-		},
-		{
-			name:       "near duplicate (0.7)",
-			similarity: 0.7,
-			want:       "near",
-		},
-		{
-			name:       "similar (0.69)",
-			similarity: 0.69,
-			want:       "similar",
-		},
-		{
-			name:       "similar (0.6)",
-			similarity: 0.6,
-			want:       "similar",
-		},
-		{
-			name:       "similar (0.5)",
-			similarity: 0.5,
-			want:       "similar",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := classifyDuplicate(tt.similarity)
-			if got != tt.want {
-				t.Errorf("classifyDuplicate(%f) = %q, want %q", tt.similarity, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestDuplicateDetector_AddAndFindSimilar(t *testing.T) {
 	mh := New()
 	dd, err := NewDuplicateDetector(mh, 0.5)
@@ -245,8 +182,8 @@ func TestDuplicateDetector_AddAndFindSimilar(t *testing.T) {
 			if s.Similarity != 1.0 {
 				t.Errorf("template2 similarity = %f, want 1.0 (identical)", s.Similarity)
 			}
-			if s.DuplicateType != "exact" {
-				t.Errorf("template2 duplicate_type = %q, want \"exact\"", s.DuplicateType)
+			if !s.IsExactDuplicate() {
+				t.Errorf("template2 should be exact duplicate (similarity > 0.9)")
 			}
 		}
 	}
@@ -326,8 +263,8 @@ provision:
 	for _, similar := range template1Result.SimilarTemplates {
 		if similar.ID == "owner2/repo2/ubuntu-dev.yaml" {
 			foundTemplate2 = true
-			t.Logf("Template1 -> Template2 similarity: %f (%s)",
-				similar.Similarity, similar.DuplicateType)
+			t.Logf("Template1 -> Template2 similarity: %f (exact=%v)",
+				similar.Similarity, similar.IsExactDuplicate())
 
 			if similar.Similarity < 0.7 {
 				t.Errorf("Template1-Template2 similarity = %f, want >= 0.7",

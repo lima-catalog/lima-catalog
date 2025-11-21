@@ -852,6 +852,19 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                             <dd>Show/hide this help</dd>
                         </dl>
                     </div>
+                    <div class="keyboard-help-section">
+                        <h3>Preview Modal</h3>
+                        <dl class="keyboard-shortcuts">
+                            <dt><kbd>Ctrl+←</kbd> <kbd>Ctrl+→</kbd></dt>
+                            <dd>Previous / next template</dd>
+                            <dt><kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd></dt>
+                            <dd>Previous / next row</dd>
+                            <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
+                            <dd>Scroll YAML content</dd>
+                            <dt><kbd>Esc</kbd></dt>
+                            <dd>Close modal</dd>
+                        </dl>
+                    </div>
                 </div>
             </div>
         </div>

@@ -110,7 +110,6 @@
     {
       "id": "other/repo/similar.yaml",
       "similarity": 0.85,
-      "duplicate_type": "near",
       "shared_bands": 28
     }
   ]

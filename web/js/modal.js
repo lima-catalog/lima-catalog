@@ -5,7 +5,8 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
-import { getTemplates } from './state.js';
+import { getTemplates, getFilteredTemplates, getSelectedKeywords, getSelectedCategory } from './state.js';
+import { applyFilters } from './filters.js';
 
 // Modal state
 let currentTemplate = null;
@@ -13,6 +14,26 @@ let currentYamlContent = null; // Store original YAML for diff comparison
 let releaseFocusTrap = null;
 let previouslyFocusedElement = null;
 let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
+let onYamlLoadedCallback = null; // Callback for when YAML content is loaded
+
+/**
+ * Get similarity badge HTML based on similarity percentage
+ * Thresholds: 100% = exact/original, 90-99% = near, <90% = similar
+ * @param {number} similarityPercent - Similarity percentage (0-100)
+ * @param {boolean} isOriginal - Whether this is the original template
+ * @returns {string} Badge HTML
+ */
+function getSimilarityBadge(similarityPercent, isOriginal) {
+    if (similarityPercent === 100) {
+        if (isOriginal) {
+            return '<span class="duplicate-badge original">original</span>';
+        }
+        return '<span class="duplicate-badge exact">exact</span>';
+    } else if (similarityPercent >= 90) {
+        return '<span class="duplicate-badge near">near</span>';
+    }
+    return '<span class="duplicate-badge similar">similar</span>';
+}
 
 /**
  * Generate a unified diff between two texts
@@ -20,7 +41,7 @@ let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
  * @param {string} newText - New text to compare
  * @param {string} originalName - Name for original file
  * @param {string} newName - Name for new file
- * @returns {string} Unified diff output
+ * @returns {{text: string, additions: number, deletions: number}} Diff with stats
  */
 function generateUnifiedDiff(originalText, newText, originalName = 'original', newName = 'similar') {
     const originalLines = originalText.split('\n');
@@ -28,9 +49,7 @@ function generateUnifiedDiff(originalText, newText, originalName = 'original', n
 
     // Simple LCS-based diff algorithm
     const lcs = computeLCS(originalLines, newLines);
-    const diff = buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName);
-
-    return diff;
+    return buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName);
 }
 
 /**
@@ -146,12 +165,14 @@ function buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName) {
         hunks.push(currentHunk);
     }
 
-    // Build output
+    // Build output and count stats
     if (hunks.length === 0) {
-        return '# No differences found';
+        return { text: '# No differences found', additions: 0, deletions: 0 };
     }
 
     let output = `--- ${originalName}\n+++ ${newName}\n`;
+    let additions = 0;
+    let deletions = 0;
 
     for (const hunk of hunks) {
         const aCount = hunk.lines.filter(l => l.type !== '+').length;
@@ -160,10 +181,12 @@ function buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName) {
 
         for (const line of hunk.lines) {
             output += `${line.type}${line.text}\n`;
+            if (line.type === '+') additions++;
+            else if (line.type === '-') deletions++;
         }
     }
 
-    return output;
+    return { text: output, additions, deletions };
 }
 
 /**
@@ -372,6 +395,12 @@ async function fetchTemplateContent(template) {
         const modal = document.getElementById('preview-modal');
         const modalContent = modal.querySelector('.modal-content');
         modalContent.classList.add('ready');
+
+        // Trigger diff stats fetching now that YAML is available
+        if (onYamlLoadedCallback) {
+            onYamlLoadedCallback();
+            onYamlLoadedCallback = null;
+        }
     } catch (error) {
         console.error('Error fetching template:', error);
         modalLoading.textContent = `Error loading template: ${error.message}`;
@@ -421,15 +450,18 @@ function populateSimilarTemplates(template) {
     const modalCodeContent = document.getElementById('modal-code-content');
     const copyYamlButton = document.getElementById('copy-yaml');
 
+    // Always clear previous state
+    onYamlLoadedCallback = null;
+    similarList.innerHTML = '';
+
     // Check if template has similar templates
     if (!template.similar_templates || template.similar_templates.length === 0) {
         similarSection.classList.add('hidden');
         return;
     }
 
-    // Show section and populate list
+    // Show section
     similarSection.classList.remove('hidden');
-    similarList.innerHTML = '';
 
     // Get all templates for looking up data
     const allTemplates = getTemplates();
@@ -493,17 +525,63 @@ function populateSimilarTemplates(template) {
             similarTemplate.id
         );
 
-        modalCodeContent.textContent = diff;
+        modalCodeContent.textContent = diff.text;
         modalCodeContent.className = 'language-diff';
         modalCodeContent.removeAttribute('data-highlighted');
         hljs.highlightElement(modalCodeContent);
         isShowingDiff = true;
     };
 
-    // Sort by similarity (descending), then by id (ascending)
-    const sortedSimilarTemplates = [...template.similar_templates].sort((a, b) => {
+    // Get current filter state from UI
+    const showDuplicates = document.getElementById('show-duplicates')?.checked ?? false;
+    const searchTerm = document.getElementById('search')?.value ?? '';
+    const showOfficial = document.getElementById('show-official')?.checked ?? true;
+    const showCommunity = document.getElementById('show-community')?.checked ?? true;
+    const typeFilter = showOfficial && showCommunity ? '' : (showOfficial ? 'official' : 'community');
+
+    // Get full template objects for similar templates
+    const similarTemplateObjects = template.similar_templates
+        .map(similar => templateMap.get(similar.id))
+        .filter(t => t != null);
+
+    // Apply the same filters used for the main template list
+    const filteredTemplateObjects = applyFilters(similarTemplateObjects, {
+        searchTerm,
+        typeFilter,
+        selectedCategory: getSelectedCategory(),
+        selectedKeywords: getSelectedKeywords(),
+        showDuplicates
+    });
+
+    // Create a set of filtered IDs for quick lookup
+    const filteredIds = new Set(filteredTemplateObjects.map(t => t.id));
+
+    // Filter similar_templates to only include those that passed the filter
+    // Also filter out 100% matches when showDuplicates is false
+    const filteredSimilarTemplates = template.similar_templates.filter(similar => {
+        if (!filteredIds.has(similar.id)) return false;
+        // Additional check: hide 100% matches when duplicates unchecked
+        // (applyFilters checks original_id, but we also want to hide by similarity)
+        if (!showDuplicates && Math.round(similar.similarity * 100) === 100) {
+            return false;
+        }
+        return true;
+    });
+
+    // If no similar templates match filters, hide section
+    if (filteredSimilarTemplates.length === 0) {
+        similarSection.classList.add('hidden');
+        return;
+    }
+
+    // Sort by similarity (descending), then originals first, then by id (ascending)
+    const sortedSimilarTemplates = [...filteredSimilarTemplates].sort((a, b) => {
         if (b.similarity !== a.similarity) {
             return b.similarity - a.similarity;
+        }
+        // Within same similarity, originals come first
+        if (a.is_original !== b.is_original) {
+            return a.is_original ? -1 : 1;
         }
         return a.id.localeCompare(b.id);
     });
@@ -518,18 +596,12 @@ function populateSimilarTemplates(template) {
         item.setAttribute('aria-selected', 'false');
         item.dataset.index = index;
 
-        // Single line format: ORG/REPO/TEMPLATEPATH [badge] percent
-        // For exact duplicates, show "ORIGINAL" (blue) if is_original is true, otherwise "EXACT" (red)
-        let badgeHtml = '';
-        if (similar.duplicate_type) {
-            if (similar.duplicate_type === 'exact' && similar.is_original) {
-                badgeHtml = `<span class="duplicate-badge original">original</span>`;
-            } else {
-                badgeHtml = `<span class="duplicate-badge ${escapeHtml(similar.duplicate_type)}">${escapeHtml(similar.duplicate_type)}</span>`;
-            }
-        }
+        // Single line format: ORG/REPO/TEMPLATEPATH [stats] [badge] percent
+        // Badge derived purely from similarity score
+        const badgeHtml = getSimilarityBadge(similarityPercent, similar.is_original);
         item.innerHTML = `
             <span class="similar-template-path">${escapeHtml(similar.id)}</span>
+            <span class="item-diff-stats"></span>
             ${badgeHtml}
             <span class="similarity-percentage">${similarityPercent}%</span>
         `;
@@ -545,6 +617,37 @@ function populateSimilarTemplates(template) {
         items.push({ element: item, template: similarTemplate, id: similar.id });
         similarList.appendChild(item);
     });
+
+    // Fetch diff stats for all similar templates in parallel
+    const fetchDiffStats = async (item, similarTemplate) => {
+        if (!similarTemplate || !currentYamlContent) return;
+
+        let similarYaml = yamlCache.get(similarTemplate.id);
+        if (!similarYaml) {
+            try {
+                const response = await fetch(similarTemplate.raw_url);
+                if (response.ok) {
+                    similarYaml = await response.text();
+                    yamlCache.set(similarTemplate.id, similarYaml);
+                } else {
+                    return;
+                }
+            } catch {
+                return;
+            }
+        }
+
+        const diff = generateUnifiedDiff(currentYamlContent, similarYaml, '', '');
+        const statsEl = item.element.querySelector('.item-diff-stats');
+        if (statsEl && (diff.additions > 0 || diff.deletions > 0)) {
+            statsEl.innerHTML = `<span class="diff-additions">+${diff.additions}</span><span class="diff-deletions">-${diff.deletions}</span>`;
+        }
+    };
+
+    // Set callback to fetch diff stats once YAML is loaded
+    onYamlLoadedCallback = () => {
+        items.forEach(item => fetchDiffStats(item, item.template));
+    };
 
     // Update selection styling and show diff
     const updateSelection = async (newIndex) => {
@@ -756,6 +859,41 @@ export function setupModalEventListeners() {
         // Close on Escape key
         if (e.key === 'Escape') {
             closePreviewModal();
+            return;
+        }
+
+        // Ctrl+Arrow: Navigate to adjacent template in the list
+        if (e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault();
+            const filteredTemplates = getFilteredTemplates();
+            const currentIndex = filteredTemplates.findIndex(t => t.id === currentTemplate.id);
+            if (currentIndex === -1) return;
+
+            let nextIndex = currentIndex;
+
+            if (e.key === 'ArrowRight') {
+                nextIndex = currentIndex + 1;
+            } else if (e.key === 'ArrowLeft') {
+                nextIndex = currentIndex - 1;
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                // Calculate grid column count from the template grid
+                const grid = document.getElementById('template-grid');
+                if (grid) {
+                    const gridStyle = window.getComputedStyle(grid);
+                    const columnCount = gridStyle.gridTemplateColumns.split(' ').length;
+                    if (e.key === 'ArrowDown') {
+                        nextIndex = currentIndex + columnCount;
+                    } else {
+                        nextIndex = currentIndex - columnCount;
+                    }
+                }
+            }
+
+            // Navigate to adjacent template if within bounds
+            if (nextIndex >= 0 && nextIndex < filteredTemplates.length) {
+                const nextTemplate = filteredTemplates[nextIndex];
+                openPreviewModal(nextTemplate);
+            }
             return;
         }
 

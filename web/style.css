@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+.hidden {
+    display: none !important;
+}
+
 :root {
     --primary: #5a7a8c;
     --primary-dark: #4a6b7c;
@@ -1073,6 +1077,24 @@ footer a:hover {
     letter-spacing: 0.05em;
 }
 
+.item-diff-stats {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    margin-left: auto;
+    padding-right: 0.5rem;
+}
+
+.diff-additions {
+    color: #22c55e;
+    font-weight: 600;
+    margin-right: 0.25rem;
+}
+
+.diff-deletions {
+    color: #ef4444;
+    font-weight: 600;
+}
+
 .similar-templates-list {
     display: flex;
     flex-direction: column;
@@ -1141,6 +1163,9 @@ footer a:hover {
     letter-spacing: 0.025em;
     white-space: nowrap;
     flex-shrink: 0;
+    min-width: 3.5rem;
+    text-align: center;
+    display: inline-block;
 }
 
 .duplicate-badge.exact {

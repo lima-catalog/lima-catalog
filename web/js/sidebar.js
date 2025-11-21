@@ -353,8 +353,10 @@ function getSidebarFocusableElements() {
     // 2. Type checkboxes
     const officialCheckbox = document.getElementById('show-official');
     const communityCheckbox = document.getElementById('show-community');
+    const duplicatesCheckbox = document.getElementById('show-duplicates');
     if (officialCheckbox) elements.push(officialCheckbox);
     if (communityCheckbox) elements.push(communityCheckbox);
+    if (duplicatesCheckbox) elements.push(duplicatesCheckbox);
 
     // 3. Sort dropdown
     const sortDropdown = document.getElementById('sort');

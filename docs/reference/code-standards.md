@@ -74,6 +74,16 @@ The codebase uses these patterns consistently:
 
 ## Common Anti-Patterns to Avoid
 
+### ❌ DON'T: Duplicate Code (DRY Principle)
+
+**Don't Repeat Yourself**. If you find yourself writing similar logic in multiple places:
+
+1. Extract the common logic into a reusable function
+2. Import and call the existing function instead of reimplementing
+3. If filtering/processing logic exists, use it rather than writing a new version
+
+**Example**: Use `applyFilters()` from `filters.js` instead of reimplementing filter logic elsewhere.
+
 ### ❌ DON'T: Create God Objects
 
 Keep structs focused on one responsibility. Extract helpers when functions get too long (>50 lines).

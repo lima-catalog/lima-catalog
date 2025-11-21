@@ -108,6 +108,7 @@ web/js/
 - Lima 2.0 `github:` URL with copy button
 - Similar templates section (if duplicates detected)
 - Full keyboard navigation (Escape to close, Tab for focus)
+- Ctrl+Arrow navigation to adjacent templates without closing modal
 
 **Accessibility**:
 - `role="dialog"`, `aria-modal="true"`
@@ -121,11 +122,14 @@ web/js/
 
 **Display**:
 - Compact single-line format: `ORG/REPO/TEMPLATEPATH` with monospace font
-- Color-coded badges: Exact (red), Near (orange), Similar (blue)
+- Diff stats (+N -N) shown inline with green/red coloring
+- Color-coded badges (fixed width for alignment): Original (green), Exact (red), Near (orange), Similar (blue)
+- Badge labels derived from similarity percentage: 100% = Exact/Original, 90-99% = Near, <90% = Similar
 - Similarity percentage shown
-- Sorted by similarity (highest first), then alphabetically
+- Sorted by similarity (highest first), originals first within same similarity, then alphabetically
 - Scrollable listbox showing up to 4 items
-- Hidden when no similar templates exist
+- Filtered by current filters (duplicates checkbox, keywords, search, type, category)
+- Hidden when no similar templates match current filters
 
 **Keyboard Navigation**:
 - Tab into listbox to focus and select first item
@@ -238,6 +242,15 @@ github://owner/repo/path/template.yaml?ref=sha
 | `T` | Toggle theme |
 | `S` | Focus search |
 | `?` | Show help |
+
+### Modal Shortcuts (when preview modal is open)
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+←` / `Ctrl+→` | Previous / next template |
+| `Ctrl+↑` / `Ctrl+↓` | Previous / next row |
+| `↑` / `↓` / `←` / `→` | Scroll YAML content |
+| `Escape` | Close modal |
 
 ### Focus Management
 

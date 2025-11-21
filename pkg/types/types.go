@@ -58,11 +58,15 @@ type Template struct {
 
 // SimilarTemplate represents a template that is similar to another template
 type SimilarTemplate struct {
-	ID             string  `json:"id"`                       // Template ID (owner/repo/path)
-	Similarity     float64 `json:"similarity"`               // Jaccard similarity (0.0-1.0)
-	DuplicateType  string  `json:"duplicate_type,omitempty"` // "exact" (>0.9), "near" (0.7-0.9), "similar" (0.5-0.7)
-	SharedBands    int     `json:"shared_bands,omitempty"`   // Number of LSH bands shared (for debugging)
-	IsOriginal     bool    `json:"is_original,omitempty"`    // True if this is the original among exact duplicates
+	ID          string  `json:"id"`                     // Template ID (owner/repo/path)
+	Similarity  float64 `json:"similarity"`             // Jaccard similarity (0.0-1.0)
+	SharedBands int     `json:"shared_bands,omitempty"` // Number of LSH bands shared (for debugging)
+	IsOriginal  bool    `json:"is_original,omitempty"`  // True if this is the original among exact duplicates
+}
+
+// IsExactDuplicate returns true if similarity indicates an exact duplicate (>90%)
+func (s SimilarTemplate) IsExactDuplicate() bool {
+	return s.Similarity > 0.9
 }
 
 // NotabilityMetrics contains raw observations used to calculate template notability score

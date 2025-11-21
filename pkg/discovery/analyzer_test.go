@@ -577,8 +577,8 @@ func TestAnalyzeTemplates_DuplicateDetection(t *testing.T) {
 					if sim.Similarity != 1.0 {
 						t.Errorf("expected similarity 1.0 for identical templates, got %f", sim.Similarity)
 					}
-					if sim.DuplicateType != "exact" {
-						t.Errorf("expected duplicate type 'exact', got %q", sim.DuplicateType)
+					if !sim.IsExactDuplicate() {
+						t.Errorf("expected exact duplicate (similarity > 0.9), got %f", sim.Similarity)
 					}
 				}
 			}
