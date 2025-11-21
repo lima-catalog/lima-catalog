@@ -1277,9 +1277,13 @@ footer a:hover {
     border: none;
 }
 
-.modal-button.primary:hover,
+.modal-button.primary:hover {
+    background: var(--primary-dark);
+}
+
 .modal-button.primary:focus {
-    outline: none;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
     background: var(--primary-dark);
 }
 
@@ -1289,9 +1293,15 @@ footer a:hover {
     border: 1px solid var(--border-elevated);
 }
 
-.modal-button.secondary:hover,
+.modal-button.secondary:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 .modal-button.secondary:focus {
-    outline: none;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
     background: var(--surface);
     border-color: var(--primary);
     color: var(--primary);
