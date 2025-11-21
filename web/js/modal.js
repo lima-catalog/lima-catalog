@@ -163,15 +163,22 @@ export function closePreviewModal() {
         releaseFocusTrap = null;
     }
 
-    // Restore focus to the element that opened the modal (should be the template card)
-    if (previouslyFocusedElement && previouslyFocusedElement.focus) {
-        previouslyFocusedElement.focus();
-        previouslyFocusedElement = null;
-    }
-
     // Keep template selected in URL, just remove modal=open (only if not handling popstate)
     if (!isHandlingPopState) {
         closeModalKeepTemplate();
+    }
+
+    // Focus the template card if there's a template in the URL
+    const templateId = getTemplateFromURL();
+    if (templateId) {
+        // Use requestAnimationFrame to ensure modal is fully closed before focusing
+        requestAnimationFrame(() => {
+            focusTemplateCard(templateId);
+        });
+    } else if (previouslyFocusedElement && previouslyFocusedElement.focus) {
+        // Otherwise restore focus to the element that opened the modal
+        previouslyFocusedElement.focus();
+        previouslyFocusedElement = null;
     }
 }
 
