@@ -26,17 +26,23 @@ export function debounce(func, wait = 300) {
  * @returns {Function} Cleanup function
  */
 export function trapFocus(element) {
-    const focusableElements = element.querySelectorAll(
-        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    );
+    const selector = 'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
 
-    if (focusableElements.length === 0) return () => {};
-
-    const firstFocusable = focusableElements[0];
-    const lastFocusable = focusableElements[focusableElements.length - 1];
+    // Get visible focusable elements (recomputed on each call to handle dynamic content)
+    const getVisibleFocusable = () => {
+        const all = element.querySelectorAll(selector);
+        return Array.from(all).filter(el => el.offsetParent !== null);
+    };
 
     const handleTabKey = (e) => {
         if (e.key !== 'Tab') return;
+
+        // Recompute on each Tab press to handle tab switching, dynamic content
+        const focusableElements = getVisibleFocusable();
+        if (focusableElements.length === 0) return;
+
+        const firstFocusable = focusableElements[0];
+        const lastFocusable = focusableElements[focusableElements.length - 1];
 
         if (e.shiftKey && document.activeElement === firstFocusable) {
             e.preventDefault();
@@ -48,7 +54,12 @@ export function trapFocus(element) {
     };
 
     element.addEventListener('keydown', handleTabKey);
-    firstFocusable.focus();
+
+    // Initial focus
+    const initialFocusable = getVisibleFocusable();
+    if (initialFocusable.length > 0) {
+        initialFocusable[0].focus();
+    }
 
     return () => {
         element.removeEventListener('keydown', handleTabKey);
