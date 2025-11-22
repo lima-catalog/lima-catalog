@@ -36,7 +36,7 @@ Four queries to maximize template discovery:
 
 ### Official Templates
 
-Separately enumerates `lima-vm/lima/templates/` directory to get 51 official templates.
+Separately enumerates `lima-vm/lima/templates/` directory to get official templates.
 
 ### Implementation
 
@@ -48,7 +48,7 @@ Separately enumerates `lima-vm/lima/templates/` directory to get 51 official tem
 - `DiscoverOfficialTemplates()` - Enumerate lima-vm/lima/templates/
 
 **Performance**:
-- Full scan: ~20 minutes (716 templates)
+- Full scan: ~20 minutes
 - Incremental: ~2-5 minutes (only new/changed)
 
 ---
@@ -71,12 +71,26 @@ GitHub Code Search returns files that match keywords but aren't Lima templates:
 Downloads each file and checks for `images:` as a top-level YAML key:
 
 ```go
+// Simplified pseudocode - actual implementation includes error handling
 func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
-    content := d.client.GetRepositoryContent(owner, repo, path)
-    var yamlData map[string]interface{}
-    yaml.Unmarshal(content, &yamlData)
-    _, hasImages := yamlData["images"]
-    return hasImages
+    content, err := d.client.GetRepositoryContent(owner, repo, path)
+    if err != nil {
+        return false
+    }
+
+    // Decode base64 content and check for "images:" line
+    contentStr, err := content.GetContent()
+    if err != nil {
+        return false
+    }
+
+    lines := strings.Split(contentStr, "\n")
+    for _, line := range lines {
+        if strings.HasPrefix(line, "images:") {
+            return true
+        }
+    }
+    return false
 }
 ```
 
@@ -156,11 +170,11 @@ Extracts structured information:
 ### Notability Scoring
 
 Calculate template "interestingness" score:
-- Message: 100 points
-- Provision scripts: 10 points/script + 1 point/10 lines
+- Message: 50 base + 1 per line (capped at 100 total)
+- Provision scripts: 10 points per substantial script (>10 lines, capped at 3, min 1) + 1 point/10 total lines
 - Parameters: 20 points/param
 - Environment vars: 10 points/var
-- Probes: 5 points/probe + 1 point/10 lines
+- Probes: 5 points per substantial probe (>10 lines, capped at 3, min 1) + 1 point/10 total lines
 - Unusual images: 30 points if present
 - Custom images: 0-70 points (org/repo name matches)
 - Comment lines: 2 points/line (filtered)
@@ -262,11 +276,13 @@ Templates matching blocklist patterns excluded from `catalog.jsonl` but kept in 
 ```json
 {
   "last_discovery": "2025-01-20T12:00:00Z",
-  "templates_discovered": 716,
-  "repositories_fetched": 350,
-  "organizations_fetched": 280
+  "templates_discovered": N,
+  "repositories_fetched": M,
+  "organizations_fetched": K
 }
 ```
+
+*Example values shown - actual counts vary*
 
 **Usage**:
 - Last discovery time for incremental queries
@@ -327,10 +343,10 @@ Templates matching blocklist patterns excluded from `catalog.jsonl` but kept in 
 
 ```
 data/
-├── templates.jsonl      # Template analysis results (716 lines)
-├── repos.jsonl          # Repository metadata (350 lines)
-├── orgs.jsonl           # Organization metadata (280 lines)
-├── catalog.jsonl        # Frontend-optimized (716 lines)
+├── templates.jsonl      # Template analysis results
+├── repos.jsonl          # Repository metadata
+├── orgs.jsonl           # Organization metadata
+├── catalog.jsonl        # Frontend-optimized
 └── progress.json        # Progress tracking
 ```
 
@@ -348,7 +364,7 @@ data/
 
 ### Pipeline Runtime
 
-**Full scan**: ~20 minutes (all 716 templates)
+**Full scan**: ~20 minutes
 
 **Incremental (typical)**: ~2-5 minutes
 - Discovery: ~30 seconds (timestamp-filtered)
