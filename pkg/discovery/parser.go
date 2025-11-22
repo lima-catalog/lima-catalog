@@ -110,16 +110,19 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 		var templateURL string
 
 		if repo != "" && path != "" {
+			// Remove .yaml extension and /.lima suffix as per Lima conventions
+			// Lima will add .yaml extension automatically if the filename has no extension
+			cleanPath := strings.TrimSuffix(path, ".yaml")
+			cleanPath = strings.TrimSuffix(cleanPath, "/.lima")
+
 			if defaultBranch != "" {
-				// When we know the default branch, use raw HTTPS URL to avoid translation overhead
-				// Format: https://raw.githubusercontent.com/owner/repo/branch/path
-				templateURL = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", repo, defaultBranch, path)
+				// Use github: scheme with @branch at the end to avoid Lima making API calls to get default branch
+				// Format: github:owner/repo/path@branch
+				// Lima will convert this to raw.githubusercontent.com URL internally
+				templateURL = fmt.Sprintf("github:%s/%s@%s", repo, cleanPath, defaultBranch)
 			} else {
 				// When we don't know the branch, use github: scheme (Lima will determine default branch via API call)
-				// Remove .yaml extension and /.lima suffix as per Lima conventions
-				cleanPath := strings.TrimSuffix(path, ".yaml")
-				cleanPath = strings.TrimSuffix(cleanPath, "/.lima")
-				// Format: github:owner/repo/path (or github:owner/repo@branch/path if branch specified)
+				// Format: github:owner/repo/path
 				templateURL = fmt.Sprintf("github:%s/%s", repo, cleanPath)
 			}
 		} else {
