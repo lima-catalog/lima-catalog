@@ -59,6 +59,22 @@ export INCREMENTAL=true       # Incremental updates (faster)
 
 ---
 
+## CI/CD
+
+### Continuous Integration
+
+The repository uses GitHub Actions to run automated tests on all pull requests:
+
+- **Test**: Runs `go test` with race detection and coverage
+- **Build**: Compiles `lima-catalog` to verify successful builds
+- **Lint**: Runs `go vet` and `golangci-lint` for code quality
+
+See `.github/workflows/ci.yml` for the full workflow configuration.
+
+**Branch Protection**: The `main` branch should be protected to require all CI checks to pass before merging. This prevents compilation errors and test failures from being merged.
+
+---
+
 ## Running Tests
 
 ### All Tests (Recommended)
