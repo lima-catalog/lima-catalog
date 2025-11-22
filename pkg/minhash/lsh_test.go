@@ -146,9 +146,15 @@ func TestLSH_Query(t *testing.T) {
 		sig3[i] = uint32(i * 3) // Different
 	}
 
-	lsh.Add("template1", sig1)
-	lsh.Add("template2", sig2)
-	lsh.Add("template3", sig3)
+	if err := lsh.Add("template1", sig1); err != nil {
+		t.Fatalf("Add(template1) error: %v", err)
+	}
+	if err := lsh.Add("template2", sig2); err != nil {
+		t.Fatalf("Add(template2) error: %v", err)
+	}
+	if err := lsh.Add("template3", sig3); err != nil {
+		t.Fatalf("Add(template3) error: %v", err)
+	}
 
 	// Query with sig1 should find template1 and template2 (identical)
 	candidates, err := lsh.Query(sig1)
@@ -433,6 +439,6 @@ func BenchmarkLSH_Query(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lsh.Query(querySig)
+		_, _ = lsh.Query(querySig) // Ignore error in benchmark
 	}
 }

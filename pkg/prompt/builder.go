@@ -392,7 +392,7 @@ func identifyMatchLines(refs []TemplateReference, output string) []TemplateRefer
 		}
 
 		// Parse line number
-		fmt.Sscanf(lineNumbers[0], "%d", &ref.LineNumber)
+		_, _ = fmt.Sscanf(lineNumbers[0], "%d", &ref.LineNumber)
 
 		result = append(result, ref)
 	}

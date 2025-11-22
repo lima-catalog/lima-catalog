@@ -155,9 +155,15 @@ func TestDuplicateDetector_AddAndFindSimilar(t *testing.T) {
 	}
 
 	// Add templates
-	dd.Add(template1)
-	dd.Add(template2)
-	dd.Add(template3)
+	if err := dd.Add(template1); err != nil {
+		t.Fatalf("Add(template1) error: %v", err)
+	}
+	if err := dd.Add(template2); err != nil {
+		t.Fatalf("Add(template2) error: %v", err)
+	}
+	if err := dd.Add(template3); err != nil {
+		t.Fatalf("Add(template3) error: %v", err)
+	}
 
 	if dd.Size() != 3 {
 		t.Errorf("Size() = %d, want 3", dd.Size())
@@ -359,6 +365,6 @@ func BenchmarkDuplicateDetector_DetectDuplicates(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dd.DetectDuplicates(templates)
+		_, _ = dd.DetectDuplicates(templates) // Ignore results in benchmark
 	}
 }

@@ -11,16 +11,6 @@ import (
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
-// Mock HTTP Client for testing
-type mockHTTPClient struct {
-	response *http.Response
-	err      error
-}
-
-func (m *mockHTTPClient) Get(url string) (*http.Response, error) {
-	return m.response, m.err
-}
-
 // validTemplateContent returns minimal valid Lima template YAML with required images field
 const validTemplateContent = `
 images:

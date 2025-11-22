@@ -55,7 +55,7 @@ func TestGetRepository_Caching(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a minimal repository JSON
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"id": 123,
 			"name": "test-repo",
 			"full_name": "test-owner/test-repo",
@@ -117,7 +117,7 @@ func TestGetUser_Caching(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a minimal user JSON
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"id": 456,
 			"login": "test-user",
 			"name": "Test User",
@@ -174,7 +174,7 @@ func TestGetRepository_Error(t *testing.T) {
 	// Create a test server that returns an error
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"message": "Not Found"}`))
+		_, _ = w.Write([]byte(`{"message": "Not Found"}`))
 	}))
 	defer ts.Close()
 
