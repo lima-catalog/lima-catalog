@@ -219,7 +219,7 @@ const templatesWithBreakdown = [
             parameters: 40,
             env_vars: 30,
             probes: 20,
-            unusual_images: 30,
+            image_name: 30,
             comments: 10,
             stars: 5
         }
@@ -232,7 +232,7 @@ const templatesWithBreakdown = [
             parameters: 60,
             env_vars: 50,
             probes: 30,
-            unusual_images: 0,
+            image_name: 0,
             comments: 20,
             stars: 10
         }
@@ -245,7 +245,7 @@ const templatesWithBreakdown = [
             parameters: 80,
             env_vars: 10,
             probes: 15,
-            unusual_images: 30,
+            image_name: 30,
             comments: 50,
             stars: 15
         }
@@ -285,13 +285,13 @@ runner.test('sortTemplates: sorts by breakdown-comments', () => {
     assert.equal(result[2].name, 'template1'); // 10
 });
 
-runner.test('sortTemplates: sorts by breakdown-unusual_images', () => {
+runner.test('sortTemplates: sorts by breakdown-image_name', () => {
     const templates = [...templatesWithBreakdown];
-    const result = sortTemplates(templates, 'breakdown-unusual_images');
+    const result = sortTemplates(templates, 'breakdown-image_name');
     // First two have 30, last one has 0
-    assert.equal(result[0].notability_score_breakdown.unusual_images, 30);
-    assert.equal(result[1].notability_score_breakdown.unusual_images, 30);
-    assert.equal(result[2].notability_score_breakdown.unusual_images, 0);
+    assert.equal(result[0].notability_score_breakdown.image_name, 30);
+    assert.equal(result[1].notability_score_breakdown.image_name, 30);
+    assert.equal(result[2].notability_score_breakdown.image_name, 0);
 });
 
 runner.test('sortTemplates: handles missing breakdown data', () => {
