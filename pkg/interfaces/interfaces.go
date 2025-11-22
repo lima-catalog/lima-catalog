@@ -1,10 +1,13 @@
 package interfaces
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"os"
 	"time"
+
+	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
 )
 
 // HTTPClient provides an interface for making HTTP requests
@@ -97,4 +100,23 @@ func NewDefaultClock() *DefaultClock {
 // Now returns the current time
 func (c *DefaultClock) Now() time.Time {
 	return time.Now()
+}
+
+// URLTransformer provides an interface for transforming github: URLs to https: URLs
+// This allows mocking Lima's URL transformation in tests
+type URLTransformer interface {
+	TransformURL(ctx context.Context, url string) (string, error)
+}
+
+// DefaultURLTransformer wraps Lima's TransformCustomURL
+type DefaultURLTransformer struct{}
+
+// NewDefaultURLTransformer creates a new DefaultURLTransformer
+func NewDefaultURLTransformer() *DefaultURLTransformer {
+	return &DefaultURLTransformer{}
+}
+
+// TransformURL transforms a github: URL to an https: URL using Lima's library
+func (t *DefaultURLTransformer) TransformURL(ctx context.Context, url string) (string, error) {
+	return limatmpl.TransformCustomURL(ctx, url)
 }

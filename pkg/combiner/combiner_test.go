@@ -1,14 +1,58 @@
 package combiner
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
+
+// mockURLTransformer is a test double that returns predictable raw URLs without network calls
+type mockURLTransformer struct{}
+
+// TransformURL converts github: URLs to raw.githubusercontent.com URLs
+// Format: github:owner/repo/path -> https://raw.githubusercontent.com/owner/repo/main/path.yaml
+func (m *mockURLTransformer) TransformURL(ctx context.Context, url string) (string, error) {
+	// Parse github: URL
+	if !strings.HasPrefix(url, "github:") {
+		return "", fmt.Errorf("unsupported URL scheme: %s", url)
+	}
+
+	// Remove github: prefix
+	path := strings.TrimPrefix(url, "github:")
+
+	// Split into parts
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid github: URL: %s", url)
+	}
+
+	owner := parts[0]
+	repo := parts[1]
+
+	// Handle double slash for org repos (e.g., github:lima-vm//templates/ubuntu)
+	if repo == "" && len(parts) >= 3 {
+		repo = owner
+		parts = append([]string{owner, repo}, parts[2:]...)
+	}
+
+	// Construct file path
+	var filePath string
+	if len(parts) > 2 {
+		filePath = strings.Join(parts[2:], "/") + ".yaml"
+	} else {
+		filePath = ".lima.yaml"
+	}
+
+	// Return raw URL (always use "main" branch in tests)
+	return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/main/%s", owner, repo, filePath), nil
+}
 
 func TestCombineData(t *testing.T) {
 	now := time.Now()
@@ -432,8 +476,8 @@ func TestCombineData(t *testing.T) {
 				}
 			}
 
-			// Create combiner
-			combiner := NewCombiner(tt.blocklist)
+			// Create combiner with mock URL transformer (no network calls)
+			combiner := NewCombinerWithFS(tt.blocklist, interfaces.NewDefaultFileSystem(), &mockURLTransformer{})
 
 			// Create temp output file
 			tmpFile, err := os.CreateTemp("", "test-combined-*.jsonl")
@@ -484,7 +528,7 @@ func TestCombineData(t *testing.T) {
 }
 
 func TestGetDisplayName(t *testing.T) {
-	combiner := NewCombiner(nil)
+	combiner := NewCombinerWithFS(nil, interfaces.NewDefaultFileSystem(), &mockURLTransformer{})
 
 	tests := []struct {
 		name     string
@@ -528,7 +572,7 @@ func TestGetDisplayName(t *testing.T) {
 }
 
 func TestGetDescription(t *testing.T) {
-	combiner := NewCombiner(nil)
+	combiner := NewCombinerWithFS(nil, interfaces.NewDefaultFileSystem(), &mockURLTransformer{})
 
 	tests := []struct {
 		name     string
@@ -580,7 +624,7 @@ func TestGetDescription(t *testing.T) {
 // The functionality is tested through TestCombineData integration tests.
 
 func TestFormatDate(t *testing.T) {
-	combiner := NewCombiner(nil)
+	combiner := NewCombinerWithFS(nil, interfaces.NewDefaultFileSystem(), &mockURLTransformer{})
 
 	tests := []struct {
 		name     string

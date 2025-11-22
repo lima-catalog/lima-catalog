@@ -39,8 +39,6 @@ import (
 	"strings"
 	"time"
 
-	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
-
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
@@ -70,21 +68,23 @@ type CombinedTemplate struct {
 
 // Combiner combines templates with repo/org metadata for frontend consumption
 type Combiner struct {
-	blocklist *types.Blocklist
-	fs        interfaces.FileSystem
+	blocklist      *types.Blocklist
+	fs             interfaces.FileSystem
+	urlTransformer interfaces.URLTransformer
 }
 
-// NewCombiner creates a new combiner with blocklist and default FileSystem
+// NewCombiner creates a new combiner with blocklist and default FileSystem and URLTransformer
 func NewCombiner(blocklist *types.Blocklist) *Combiner {
-	return NewCombinerWithFS(blocklist, interfaces.NewDefaultFileSystem())
+	return NewCombinerWithFS(blocklist, interfaces.NewDefaultFileSystem(), interfaces.NewDefaultURLTransformer())
 }
 
-// NewCombinerWithFS creates a new combiner with blocklist and custom FileSystem
-// This allows mocking file I/O for testing
-func NewCombinerWithFS(blocklist *types.Blocklist, fs interfaces.FileSystem) *Combiner {
+// NewCombinerWithFS creates a new combiner with blocklist and custom FileSystem and URLTransformer
+// This allows mocking file I/O and URL transformation for testing
+func NewCombinerWithFS(blocklist *types.Blocklist, fs interfaces.FileSystem, urlTransformer interfaces.URLTransformer) *Combiner {
 	return &Combiner{
-		blocklist: blocklist,
-		fs:        fs,
+		blocklist:      blocklist,
+		fs:             fs,
+		urlTransformer: urlTransformer,
 	}
 }
 
@@ -268,9 +268,9 @@ func (c *Combiner) getRawURL(ctx context.Context, template types.Template) (stri
 	// Construct github: scheme URL
 	githubURL := getGitHubSchemeURL(template)
 
-	// Use Lima's TransformCustomURL to convert github: URL to https: URL
+	// Use URLTransformer to convert github: URL to https: URL
 	// This automatically handles symlinks and redirects
-	httpsURL, err := limatmpl.TransformCustomURL(ctx, githubURL)
+	httpsURL, err := c.urlTransformer.TransformURL(ctx, githubURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to transform github: URL %q: %w", githubURL, err)
 	}
