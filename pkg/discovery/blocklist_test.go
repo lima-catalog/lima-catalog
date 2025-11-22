@@ -469,7 +469,9 @@ repos:
 		if err := os.WriteFile(blocklistPath, []byte("paths:\n  - test"), 0000); err != nil {
 			t.Fatalf("failed to write test file: %v", err)
 		}
-		defer os.Chmod(blocklistPath, 0644) // Restore permissions for cleanup
+		defer func() {
+			_ = os.Chmod(blocklistPath, 0644) // Restore permissions for cleanup
+		}()
 
 		blocklist, err := LoadBlocklist(blocklistPath)
 
