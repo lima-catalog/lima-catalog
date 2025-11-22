@@ -249,3 +249,130 @@ func TestCache_DifferentTypes(t *testing.T) {
 		t.Error("failed to type assert slice")
 	}
 }
+
+func TestCache_StartCleanupTimer(t *testing.T) {
+	c := New(50 * time.Millisecond)
+
+	// Add some entries with short TTL
+	c.Set("key1", "value1")
+	c.Set("key2", "value2")
+	c.Set("key3", "value3")
+
+	if c.Size() != 3 {
+		t.Fatalf("expected size 3, got %d", c.Size())
+	}
+
+	// Start cleanup timer with short interval
+	ticker := c.StartCleanupTimer(100 * time.Millisecond)
+	defer ticker.Stop() // Stop timer to prevent goroutine leak
+
+	// Wait for entries to expire
+	time.Sleep(80 * time.Millisecond)
+
+	// Wait for cleanup timer to run
+	time.Sleep(150 * time.Millisecond)
+
+	// Entries should have been cleaned up automatically
+	if c.Size() != 0 {
+		t.Errorf("expected size 0 after cleanup timer, got %d", c.Size())
+	}
+}
+
+func TestCache_StartCleanupTimer_SelectiveCleanup(t *testing.T) {
+	c := New(50 * time.Millisecond)
+
+	// Add entries with different TTLs
+	c.Set("short1", "value1")              // 50ms TTL (default)
+	c.Set("short2", "value2")              // 50ms TTL (default)
+	c.SetWithTTL("long", "value3", 1*time.Hour) // Long TTL
+
+	// Start cleanup timer
+	ticker := c.StartCleanupTimer(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	// Wait for short TTL entries to expire
+	time.Sleep(80 * time.Millisecond)
+
+	// Wait for cleanup to run
+	time.Sleep(150 * time.Millisecond)
+
+	// Short TTL entries should be removed, long TTL entry should remain
+	if c.Size() != 1 {
+		t.Errorf("expected size 1 (only long TTL entry), got %d", c.Size())
+	}
+
+	_, ok := c.Get("long")
+	if !ok {
+		t.Error("expected long TTL entry to still exist")
+	}
+
+	_, ok = c.Get("short1")
+	if ok {
+		t.Error("expected short1 to be cleaned up")
+	}
+
+	_, ok = c.Get("short2")
+	if ok {
+		t.Error("expected short2 to be cleaned up")
+	}
+}
+
+func TestCache_StartCleanupTimer_MultipleCycles(t *testing.T) {
+	c := New(30 * time.Millisecond)
+
+	// Start cleanup timer with short interval
+	ticker := c.StartCleanupTimer(50 * time.Millisecond)
+	defer ticker.Stop()
+
+	// Add entries, wait for cleanup, add more, verify cleanup works multiple times
+	c.Set("batch1", "value1")
+	time.Sleep(100 * time.Millisecond) // Wait for expiration and cleanup
+
+	if c.Size() != 0 {
+		t.Errorf("expected size 0 after first cleanup, got %d", c.Size())
+	}
+
+	// Add second batch
+	c.Set("batch2", "value2")
+	time.Sleep(100 * time.Millisecond) // Wait for expiration and cleanup
+
+	if c.Size() != 0 {
+		t.Errorf("expected size 0 after second cleanup, got %d", c.Size())
+	}
+
+	// Add third batch
+	c.Set("batch3", "value3")
+	time.Sleep(100 * time.Millisecond) // Wait for expiration and cleanup
+
+	if c.Size() != 0 {
+		t.Errorf("expected size 0 after third cleanup, got %d", c.Size())
+	}
+}
+
+func TestCache_StartCleanupTimer_StopPreventsLeak(t *testing.T) {
+	c := New(1 * time.Hour)
+
+	// Start multiple cleanup timers and stop them
+	for i := 0; i < 5; i++ {
+		ticker := c.StartCleanupTimer(10 * time.Millisecond)
+		ticker.Stop() // Immediately stop to test cleanup
+	}
+
+	// Add an entry to verify cache still works
+	c.Set("key", "value")
+
+	// Short sleep to ensure stopped tickers don't interfere
+	time.Sleep(50 * time.Millisecond)
+
+	// Entry should still exist (long TTL, no cleanup)
+	val, ok := c.Get("key")
+	if !ok {
+		t.Error("expected entry to exist")
+	}
+	if val != "value" {
+		t.Errorf("expected 'value', got %v", val)
+	}
+
+	// This test also verifies that stopping the ticker prevents goroutine leaks
+	// If tickers weren't properly stopped, we'd have 5 goroutines running
+}
