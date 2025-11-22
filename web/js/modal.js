@@ -1100,37 +1100,33 @@ export function setupModalEventListeners() {
 
         // Toggle ORG keyword filter with 'o' key
         if (e.key === 'o') {
-            // Import keyboard helper dynamically to avoid circular dependency
-            import('./keyboard.js').then(({ getOrgAndRepoKeywordsForModal }) => {
-                const { org } = getOrgAndRepoKeywordsForModal();
-                if (org) {
-                    const { toggleKeywordSelection } = State;
-                    toggleKeywordSelection(org);
-                    // Re-render to apply filter
-                    import('./appActions.js').then(({ filterAndRender }) => {
-                        filterAndRender();
-                    });
-                }
-            });
             e.preventDefault();
+            // Use the focused template's org directly for toggling
+            const focusedTemplate = State.getFocusedTemplate();
+            if (focusedTemplate && focusedTemplate.org) {
+                const orgKeyword = focusedTemplate.org;
+                State.toggleKeywordSelection(orgKeyword);
+                // Re-render to apply filter
+                import('./appActions.js').then(({ filterAndRender }) => {
+                    filterAndRender();
+                });
+            }
             return;
         }
 
         // Toggle ORG/REPO keyword filter with 'r' key
         if (e.key === 'r') {
-            // Import keyboard helper dynamically to avoid circular dependency
-            import('./keyboard.js').then(({ getOrgAndRepoKeywordsForModal }) => {
-                const { repo } = getOrgAndRepoKeywordsForModal();
-                if (repo) {
-                    const { toggleKeywordSelection } = State;
-                    toggleKeywordSelection(repo);
-                    // Re-render to apply filter
-                    import('./appActions.js').then(({ filterAndRender }) => {
-                        filterAndRender();
-                    });
-                }
-            });
             e.preventDefault();
+            // Use the focused template's repo directly for toggling
+            const focusedTemplate = State.getFocusedTemplate();
+            if (focusedTemplate && focusedTemplate.repo) {
+                const repoKeyword = focusedTemplate.repo;
+                State.toggleKeywordSelection(repoKeyword);
+                // Re-render to apply filter
+                import('./appActions.js').then(({ filterAndRender }) => {
+                    filterAndRender();
+                });
+            }
             return;
         }
 
