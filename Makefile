@@ -25,29 +25,30 @@ test-js: ## Run JavaScript tests (requires Node.js)
 	fi
 	@node test.js
 
-test-e2e-setup: ## Install Playwright and browsers (run once)
-	@echo "🎭 Installing Playwright..."
+test-e2e-setup: ## Install Playwright and browsers (idempotent)
 	@if ! command -v npm >/dev/null 2>&1; then \
 		echo "❌ Error: npm is not installed. Please install Node.js."; \
 		exit 1; \
 	fi
-	@npm install
-	@npx playwright install chromium
-	@echo "✅ Playwright installed and browsers downloaded"
-
-test-e2e: ## Run end-to-end tests with Playwright
-	@echo "🎭 Running E2E tests..."
 	@if [ ! -d "node_modules/@playwright/test" ]; then \
-		echo "⚠️  Playwright not installed. Run: make test-e2e-setup"; \
-		exit 1; \
+		echo "🎭 Installing Playwright..."; \
+		npm install; \
+	else \
+		echo "✅ Playwright already installed"; \
 	fi
 	@if [ ! -d "$$HOME/.cache/ms-playwright/chromium-"* ] 2>/dev/null; then \
-		echo "⚠️  Playwright browsers not installed. Run: make test-e2e-setup"; \
-		exit 1; \
+		echo "🎭 Installing Chromium browser..."; \
+		npx playwright install chromium; \
+		echo "✅ Browser installed"; \
+	else \
+		echo "✅ Chromium browser already installed"; \
 	fi
+
+test-e2e: test-e2e-setup ## Run end-to-end tests with Playwright
+	@echo "🎭 Running E2E tests..."
 	@npx playwright test
 
-test-e2e-headed: ## Run E2E tests with visible browser (for debugging)
+test-e2e-headed: test-e2e-setup ## Run E2E tests with visible browser (for debugging)
 	@echo "🎭 Running E2E tests (headed mode)..."
 	@npx playwright test --headed
 
