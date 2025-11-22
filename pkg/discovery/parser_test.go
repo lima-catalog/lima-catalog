@@ -47,6 +47,12 @@ env:
   DOCKER_HOST: "unix:///var/run/docker.sock"
 images:
   - location: https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      echo "User: {{ .Param.user }}"
+      echo "Home: {{ .Param.home }}"
 `,
 			want: &TemplateInfo{
 				Images:        []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
@@ -86,6 +92,7 @@ images:
 probes:
   - mode: readiness
     script: |
+      #!/bin/bash
       systemctl is-active docker
 `,
 			want: &TemplateInfo{
@@ -170,12 +177,8 @@ arch:
   - "x86_64"
   - "aarch64"
 `,
-			want: &TemplateInfo{
-				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords: []string{"ubuntu"},
-				Arch:     []string{"x86_64", "aarch64"},
-			},
-			wantErr: false,
+			want:    nil,
+			wantErr: true, // Lima validation doesn't accept arch as array
 		},
 		{
 			name:    "Invalid YAML",

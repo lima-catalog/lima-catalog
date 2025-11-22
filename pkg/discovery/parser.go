@@ -9,6 +9,7 @@ import (
 
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
+	"github.com/lima-vm/lima/v2/pkg/limayaml"
 	"gopkg.in/yaml.v3"
 )
 
@@ -210,14 +211,19 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 
 // ParseTemplateContent parses Lima template YAML content
 func ParseTemplateContent(content string) (*TemplateInfo, error) {
+	// Use Lima's validation to ensure the template is valid
+	ctx := context.Background()
+	y, err := limayaml.Load(ctx, []byte(content), "template.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load YAML: %w", err)
+	}
+	if err := limayaml.Validate(y, false); err != nil {
+		return nil, fmt.Errorf("failed to validate YAML: %w", err)
+	}
+
 	var template LimaTemplate
 	if err := yaml.Unmarshal([]byte(content), &template); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
-	}
-
-	// Validate required fields: images must be a non-empty list
-	if len(template.Images) == 0 {
-		return nil, fmt.Errorf("invalid Lima template: missing required 'images' field")
 	}
 
 	info := &TemplateInfo{
