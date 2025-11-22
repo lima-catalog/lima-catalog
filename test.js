@@ -9,6 +9,7 @@ import { runner } from './web/js/test-framework.js';
 // Mock minimal DOM for Node.js environment
 // Mimics browser behavior: textContent escapes <, >, & but not quotes
 global.document = {
+    activeElement: null,
     createElement: (tag) => {
         return {
             textContent: '',
@@ -22,13 +23,15 @@ global.document = {
             }
         };
     },
-    getElementById: () => null,
+    getElementById: (id) => null,
     documentElement: {
         setAttribute: () => {},
         removeAttribute: () => {}
     },
-    querySelector: () => null,
-    querySelectorAll: () => []
+    querySelector: (selector) => null,
+    querySelectorAll: (selector) => [],
+    addEventListener: (event, handler) => {},
+    removeEventListener: (event, handler) => {}
 };
 
 // Import all test files
@@ -37,6 +40,8 @@ await import('./web/js/data.test.js');
 await import('./web/js/filters.test.js');
 await import('./web/js/templateCard.test.js');
 await import('./web/js/theme.test.js');
+await import('./web/js/state.test.js');
+await import('./web/js/utils.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');
