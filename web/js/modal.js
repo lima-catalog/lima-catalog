@@ -775,13 +775,64 @@ function populateSimilarTemplates(template) {
             <span class="similarity-percentage">${similarityPercent}%</span>
         `;
 
-        // Click handler to open the similar template
+        // Single click: select and show diff
         item.addEventListener('click', () => {
+            updateSelection(index);
+        });
+
+        // Double click: switch to this template
+        item.addEventListener('dblclick', () => {
             if (similarTemplate) {
                 closePreviewModal();
                 setTimeout(() => openPreviewModal(similarTemplate), 100);
             }
         });
+
+        // Hover tooltip to explain interaction
+        let hoverTimeout = null;
+        let tooltip = null;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        const updateTooltipPosition = () => {
+            if (tooltip) {
+                tooltip.style.left = `${lastMouseX + 15}px`;
+                tooltip.style.top = `${lastMouseY + 15}px`;
+            }
+        };
+
+        const showTooltip = () => {
+            hoverTimeout = setTimeout(() => {
+                tooltip = document.createElement('div');
+                tooltip.className = 'similar-template-tooltip';
+                tooltip.textContent = 'Click to compare • Double-click to open';
+                document.body.appendChild(tooltip);
+
+                tooltip.style.position = 'fixed';
+                updateTooltipPosition();
+            }, 800); // 800ms delay
+        };
+
+        const hideTooltip = () => {
+            if (hoverTimeout) {
+                clearTimeout(hoverTimeout);
+                hoverTimeout = null;
+            }
+            if (tooltip) {
+                tooltip.remove();
+                tooltip = null;
+            }
+        };
+
+        const trackMouse = (e) => {
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            updateTooltipPosition();
+        };
+
+        item.addEventListener('mouseenter', showTooltip);
+        item.addEventListener('mouseleave', hideTooltip);
+        item.addEventListener('mousemove', trackMouse);
 
         items.push({ element: item, template: similarTemplate, id: similar.id });
         similarList.appendChild(item);

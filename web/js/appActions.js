@@ -78,6 +78,10 @@ export function filterAndRender(options = {}) {
     const selectedKeywords = State.getSelectedKeywords();
     const selectedCategory = State.getSelectedCategory();
 
+    // Preserve focused template before re-rendering
+    const focusedTemplate = State.getFocusedTemplate();
+    const focusedTemplateId = focusedTemplate ? focusedTemplate.id : null;
+
     // Get filter values from UI
     const searchTerm = document.getElementById('search').value;
     const showOfficial = document.getElementById('show-official').checked;
@@ -136,6 +140,17 @@ export function filterAndRender(options = {}) {
     // Render templates
     const gridElement = document.getElementById('templates-grid');
     renderTemplateGrid(filtered, gridElement, handleTemplateClick, sortBy);
+
+    // Restore focus to previously focused template if it still exists
+    if (focusedTemplateId) {
+        // Use requestAnimationFrame to ensure DOM has updated
+        requestAnimationFrame(() => {
+            const cardToFocus = document.querySelector(`[data-template-id="${CSS.escape(focusedTemplateId)}"]`);
+            if (cardToFocus) {
+                cardToFocus.focus();
+            }
+        });
+    }
 }
 
 /**
