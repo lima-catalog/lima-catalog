@@ -15,7 +15,7 @@ The backend is a Go CLI tool (`cmd/lima-catalog`) that discovers, validates, and
 - MinHash + LSH for duplicate detection
 
 **Architecture Principles:**
-- **Dependency Injection**: HTTPClient, FileSystem, Clock interfaces
+- **Dependency Injection**: HTTPClient, FileSystem, Clock, URLTransformer interfaces
 - **Context Support**: Cancellation for long-running operations
 - **Functional Options**: Flexible configuration
 - **Idiomatic Error Handling**: Sentinel errors, wrapped errors
@@ -309,6 +309,72 @@ For now, the simplicity and historical accuracy of origin-based selection is pre
 
 ---
 
+## Lima Integration & URL Handling
+
+**Goal**: Use Lima's official library to handle github: URL transformation, ensuring correct handling of symlinks, redirects, and edge cases.
+
+### Architecture
+
+The backend uses Lima v2.0.1's `TransformCustomURL` function to convert github: scheme URLs to https: raw.githubusercontent.com URLs. This is wrapped in a mockable `URLTransformer` interface for testability.
+
+```go
+// Interface for dependency injection
+type URLTransformer interface {
+    TransformURL(ctx context.Context, url string) (string, error)
+}
+
+// Production implementation uses Lima
+type DefaultURLTransformer struct{}
+func (t *DefaultURLTransformer) TransformURL(ctx context.Context, url string) (string, error) {
+    return limatmpl.TransformCustomURL(ctx, url)
+}
+```
+
+### URL Generation Flow
+
+1. **Construct github: URL**: `getGitHubSchemeURL()` creates Lima-compatible URLs
+   - Removes `.yaml` extension (Lima adds automatically)
+   - Removes `/.lima` suffix (default filename)
+   - Handles org shorthand: `github:lima-vm` for `lima-vm/lima-vm`
+   - Uses double-slash for org repos with paths: `github:org//path`
+
+2. **Transform to https: URL**: Lima's `TransformCustomURL()`
+   - Fetches repository default branch from GitHub API
+   - Resolves symlinks (e.g., `.lima.yaml` → `ubuntu.yaml`)
+   - Follows redirects automatically
+   - Returns final raw.githubusercontent.com URL
+
+3. **Store both URLs** in catalog.jsonl:
+   - `github_url`: Original github: scheme URL for Lima CLI
+   - `raw_url`: Lima-resolved https: URL for frontend fetching
+
+### Benefits
+
+- **Symlink Handling**: Lima automatically resolves symlinks to actual files
+- **Redirect Handling**: Lima follows GitHub redirects transparently
+- **Single Source of Truth**: Backend is authoritative for all URL generation
+- **No Duplication**: Frontend uses pre-generated URLs, no client-side logic
+- **Consistency**: Same URL transformation logic Lima CLI uses
+
+### Testing
+
+Tests use a `mockURLTransformer` that returns predictable URLs without network calls:
+
+```go
+type mockURLTransformer struct{}
+func (m *mockURLTransformer) TransformURL(ctx context.Context, url string) (string, error) {
+    // Parse github: URL and return mock https: URL
+    // No network access, no GITHUB_TOKEN required
+    return "https://raw.githubusercontent.com/owner/repo/main/path.yaml", nil
+}
+```
+
+**Test Performance**: All tests pass in ~0.025s without network access.
+
+**Implementation**: See `pkg/interfaces/interfaces.go`, `pkg/combiner/combiner.go`
+
+---
+
 ## Backend Code Quality
 
 **Current State:**
@@ -319,7 +385,7 @@ For now, the simplicity and historical accuracy of origin-based selection is pre
 - ✅ Comprehensive documentation
 
 **Key Patterns:**
-- **Interfaces**: HTTPClient, FileSystem, Clock for all external dependencies
+- **Interfaces**: HTTPClient, FileSystem, Clock, URLTransformer for all external dependencies
 - **Functional Options**: `NewX(opts ...Option)` for complex constructors
 - **Context**: First parameter in long-running functions for cancellation
 - **Sentinel Errors**: Named error variables for expected error conditions
@@ -363,7 +429,7 @@ pkg/
 ├── config/           # Configuration
 │   └── constants.go  # API delays, rate limits, weights
 ├── interfaces/       # Interfaces for testing
-│   └── interfaces.go # HTTPClient, FileSystem, Clock
+│   └── interfaces.go # HTTPClient, FileSystem, Clock, URLTransformer
 └── types/            # Core data structures
     └── types.go      # Template, Repository, Organization, Progress, Blocklist, NotabilityMetrics, SimilarTemplate
 ```
