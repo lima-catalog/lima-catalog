@@ -45,6 +45,11 @@
 - **[Code Standards](reference/code-standards.md)** - Backend quality requirements
 - **[LLM Prompts](reference/llm-prompts.md)** - Prompt generation system documentation
 
+### Testing
+- **[E2E & Integration Testing Options](testing/e2e-integration-testing-options.md)** - Comprehensive analysis of testing tools (Playwright, Puppeteer, Cypress, chromedp, rod)
+- **[Backend Test Coverage Plan](testing/test-coverage-plan.md)** - Go test coverage improvement roadmap
+- **[Frontend Test Coverage Plan](testing/test-coverage-plan-frontend.md)** - JavaScript test coverage plan
+
 ---
 
 ## Historical Documentation
