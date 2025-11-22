@@ -2,11 +2,16 @@
 
 Follow these steps exactly when creating a PR:
 
-## 1. Gather Information (run in parallel)
+## 1. Gather Information
+First, fetch the base branch:
+```bash
+git fetch origin main
+```
+
+Then gather info (can run in parallel):
 - `git status` - check for uncommitted changes
-- `git diff` - see staged and unstaged changes
-- `git log --oneline <base>..HEAD` - see all commits to include
-- `git diff <base>...HEAD --stat` - summary of all changes
+- `git log --oneline origin/main..HEAD` - see all commits to include
+- `git diff origin/main...HEAD --stat` - summary of all changes
 
 ## 2. Run Tests, Linting, and Rebase
 Run the automated PR preparation workflow:
