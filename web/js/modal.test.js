@@ -13,7 +13,8 @@ import {
     setupModalEventListeners,
     getSimilarityBadge,
     generateUnifiedDiff,
-    computeLCS
+    computeLCS,
+    escapeHtml
 } from './modal.js';
 import * as State from './state.js';
 
@@ -617,4 +618,26 @@ runner.test('modal.js: generateUnifiedDiff counts stats correctly with multiple 
     // Should have 2 additions (line2-mod, newline) and 2 deletions (line2, line4)
     assert.equal(diff.additions, 2);
     assert.equal(diff.deletions, 2);
+});
+
+// =============================================================================
+// HTML ESCAPING TESTS (XSS Prevention)
+// =============================================================================
+
+// Note: escapeHtml is already thoroughly tested in templateCard.test.js
+// These tests verify modal.js uses the same implementation correctly
+
+runner.test('modal.js: escapeHtml prevents XSS with script tags', () => {
+    const malicious = '<script>alert("XSS")</script>';
+    const escaped = escapeHtml(malicious);
+
+    // Should not contain raw tags
+    assert.ok(!escaped.includes('<script>'), 'Should not contain unescaped <script> tag');
+    assert.ok(!escaped.includes('</script>'), 'Should not contain unescaped </script> tag');
+});
+
+runner.test('modal.js: escapeHtml handles empty/null values', () => {
+    assert.equal(escapeHtml(''), '');
+    assert.equal(escapeHtml(null), '');
+    assert.equal(escapeHtml(undefined), '');
 });

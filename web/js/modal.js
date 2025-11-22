@@ -958,7 +958,7 @@ function populateSimilarTemplates(template) {
  * @param {string} str - String to escape
  * @returns {string} Escaped string
  */
-function escapeHtml(str) {
+export function escapeHtml(str) {
     if (!str) return '';
     const div = document.createElement('div');
     div.textContent = str;

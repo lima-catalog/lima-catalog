@@ -11,12 +11,23 @@ import { runner } from './web/js/test-framework.js';
 global.document = {
     activeElement: null,
     createElement: (tag) => {
+        let _innerHTML = '';
+        let _textContent = '';
+
         return {
-            textContent: '',
-            innerHTML: '',
+            get innerHTML() {
+                return _innerHTML;
+            },
+            set innerHTML(value) {
+                _innerHTML = value;
+            },
+            get textContent() {
+                return _textContent;
+            },
             set textContent(value) {
+                _textContent = value;
                 // Simple HTML escaping matching browser textContent behavior
-                this.innerHTML = String(value)
+                _innerHTML = String(value)
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;');
