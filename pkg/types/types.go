@@ -35,7 +35,6 @@ type Template struct {
 	SHA              string    `json:"sha"`                        // Git blob SHA
 	Size             int       `json:"size"`                       // File size in bytes
 	LastModified     time.Time `json:"last_modified"`              // Last commit date
-	URL              string    `json:"url"`                        // Raw content URL
 	DiscoveredAt     time.Time `json:"discovered_at"`              // When we found it
 	LastChecked      time.Time `json:"last_checked"`               // Last time we verified it exists
 	LastUpdated      time.Time `json:"last_updated"`               // Last time content changed (SHA changed)

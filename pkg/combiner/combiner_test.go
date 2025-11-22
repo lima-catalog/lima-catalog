@@ -80,7 +80,6 @@ func TestCombineData(t *testing.T) {
 					Category:         "development",
 					Keywords:         []string{"test", "dev", "docker"},
 					IsOfficial:       false,
-					URL:              "https://github.com/owner1/repo1/blob/main/template.yaml",
 				},
 			},
 			repos: []types.Repository{
@@ -143,7 +142,6 @@ func TestCombineData(t *testing.T) {
 					Category:         "development",
 					Keywords:         []string{"test"},
 					IsOfficial:       false,
-					URL:              "https://github.com/owner1/repo1/blob/main/template.yaml",
 				},
 				{
 					ID:               "owner1/repo1/.github/workflows/ci.yaml",
@@ -155,7 +153,6 @@ func TestCombineData(t *testing.T) {
 					Category:         "development",
 					Keywords:         []string{"test"},
 					IsOfficial:       false,
-					URL:              "https://github.com/owner1/repo1/blob/main/.github/workflows/ci.yaml",
 				},
 			},
 			repos: []types.Repository{
@@ -202,7 +199,6 @@ func TestCombineData(t *testing.T) {
 					Category:         "development",
 					Keywords:         []string{"test"},
 					IsOfficial:       false,
-					URL:              "https://github.com/owner1/repo1/blob/main/template.yaml",
 				},
 			},
 			repos:            []types.Repository{}, // No repo data
@@ -229,7 +225,6 @@ func TestCombineData(t *testing.T) {
 					Category:         "general",
 					Keywords:         []string{"ubuntu", "official"},
 					IsOfficial:       true,
-					URL:              "https://github.com/lima-vm/lima/blob/master/templates/ubuntu.yaml",
 				},
 			},
 			repos: []types.Repository{
@@ -275,7 +270,6 @@ func TestCombineData(t *testing.T) {
 					Category:    "development",
 					Keywords:    []string{"docker", "kubernetes", "ubuntu"},
 					IsOfficial:  false,
-					URL:         "https://github.com/owner1/repo1/blob/main/path/to/lima.yaml",
 				},
 			},
 			repos: []types.Repository{
@@ -328,7 +322,6 @@ func TestCombineData(t *testing.T) {
 					Category:         "development",
 					Keywords:         []string{"ubuntu", "docker"},
 					IsOfficial:       false,
-					URL:              "https://github.com/owner1/repo1/blob/main/ubuntu.yaml",
 					SimilarTemplates: []types.SimilarTemplate{
 						{
 							ID:          "owner2/repo2/ubuntu-dev.yaml",
@@ -411,7 +404,6 @@ func TestCombineData(t *testing.T) {
 					ShortDescription: "B template",
 					Category:         "development",
 					Keywords:         []string{"test"},
-					URL:              "https://github.com/org2/repo1/blob/main/b.yaml",
 				},
 				{
 					ID:               "org1/repo2/a.yaml",
@@ -422,7 +414,6 @@ func TestCombineData(t *testing.T) {
 					ShortDescription: "A template",
 					Category:         "development",
 					Keywords:         []string{"test"},
-					URL:              "https://github.com/org1/repo2/blob/main/a.yaml",
 				},
 				{
 					ID:               "org1/repo1/z.yaml",
@@ -433,7 +424,6 @@ func TestCombineData(t *testing.T) {
 					ShortDescription: "Z template",
 					Category:         "development",
 					Keywords:         []string{"test"},
-					URL:              "https://github.com/org1/repo1/blob/main/z.yaml",
 				},
 			},
 			repos: []types.Repository{
