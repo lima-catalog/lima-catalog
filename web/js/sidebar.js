@@ -350,13 +350,15 @@ function getSidebarFocusableElements() {
     const searchInput = document.getElementById('search');
     if (searchInput) elements.push(searchInput);
 
-    // 2. Type checkboxes
+    // 2. Type checkboxes (in grid order: column 1, then column 2)
     const officialCheckbox = document.getElementById('show-official');
     const communityCheckbox = document.getElementById('show-community');
     const duplicatesCheckbox = document.getElementById('show-duplicates');
+    const similarsCheckbox = document.getElementById('show-similars');
     if (officialCheckbox) elements.push(officialCheckbox);
     if (communityCheckbox) elements.push(communityCheckbox);
     if (duplicatesCheckbox) elements.push(duplicatesCheckbox);
+    if (similarsCheckbox) elements.push(similarsCheckbox);
 
     // 3. Sort dropdown
     const sortDropdown = document.getElementById('sort');
@@ -387,11 +389,11 @@ export function setupSidebarNavigation() {
     if (!sidebar) return;
 
     // Use event delegation on the sidebar with capture phase
-    // This runs before individual element handlers, allowing us to intercept Arrow Up/Down
+    // This runs before individual element handlers, allowing us to intercept Arrow Up/Down/Left/Right
     sidebar.addEventListener('keydown', (e) => {
-        // Only handle Arrow Up/Down without modifier keys
+        // Only handle Arrow keys without modifier keys
         // Let Ctrl+Up/Down be handled by global navigation
-        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') {
+        if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             return;
         }
         if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) {
@@ -402,6 +404,57 @@ export function setupSidebarNavigation() {
 
         // If current element is not in the sidebar, ignore
         if (!sidebar.contains(currentElement)) return;
+
+        // Special handling for checkbox grid (2x2 layout)
+        const checkboxIds = ['show-official', 'show-community', 'show-duplicates', 'show-similars'];
+        if (checkboxIds.includes(currentElement.id)) {
+            const official = document.getElementById('show-official');
+            const community = document.getElementById('show-community');
+            const duplicates = document.getElementById('show-duplicates');
+            const similars = document.getElementById('show-similars');
+            const search = document.getElementById('search');
+            const sort = document.getElementById('sort');
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Grid layout:
+            // Official    Duplicates
+            // Community   Similars
+
+            if (e.key === 'ArrowDown') {
+                if (currentElement === official && community) {
+                    community.focus();
+                } else if (currentElement === duplicates && similars) {
+                    similars.focus();
+                } else if ((currentElement === community || currentElement === similars) && sort) {
+                    // From bottom row, go to sort dropdown
+                    sort.focus();
+                }
+            } else if (e.key === 'ArrowUp') {
+                if (currentElement === community && official) {
+                    official.focus();
+                } else if (currentElement === similars && duplicates) {
+                    duplicates.focus();
+                } else if ((currentElement === official || currentElement === duplicates) && search) {
+                    // From top row, go to search
+                    search.focus();
+                }
+            } else if (e.key === 'ArrowRight') {
+                if (currentElement === official && duplicates) {
+                    duplicates.focus();
+                } else if (currentElement === community && similars) {
+                    similars.focus();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentElement === duplicates && official) {
+                    official.focus();
+                } else if (currentElement === similars && community) {
+                    community.focus();
+                }
+            }
+            return;
+        }
 
         // Special handling for keywords - preserve row-based navigation
         if (currentElement.classList.contains('keyword-tag')) {
