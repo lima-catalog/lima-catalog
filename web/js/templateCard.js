@@ -61,11 +61,9 @@ function getDebugBadgeText(template, sortBy) {
         'breakdown-parameters': { value: template.notability_score_breakdown.parameters, label: 'Parameters' },
         'breakdown-env_vars': { value: template.notability_score_breakdown.env_vars, label: 'Env Vars' },
         'breakdown-probes': { value: template.notability_score_breakdown.probes, label: 'Probes' },
-        'breakdown-unusual_images': { value: template.notability_score_breakdown.unusual_images, label: 'Unusual Images' },
-        'breakdown-custom_images': { value: template.notability_score_breakdown.custom_images, label: 'Custom Images' },
+        'breakdown-image_name': { value: template.notability_score_breakdown.image_name, label: 'Image Name' },
         'breakdown-comments': { value: template.notability_score_breakdown.comments, label: 'Comments' },
-        'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' },
-        'breakdown-no_remote_images': { value: template.notability_score_breakdown.no_remote_images, label: 'No Remote Images' }
+        'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' }
     };
 
     // If sorting by a specific breakdown component, show that score
@@ -145,8 +143,7 @@ function createDebugScorePopup(template) {
         parameters: calculateRank(breakdown.parameters, 'parameters', allTemplates),
         env_vars: calculateRank(breakdown.env_vars, 'env_vars', allTemplates),
         probes: calculateRank(breakdown.probes, 'probes', allTemplates),
-        unusual_images: calculateRank(breakdown.unusual_images, 'unusual_images', allTemplates),
-        custom_images: calculateRank(breakdown.custom_images, 'custom_images', allTemplates),
+        image_name: calculateRank(breakdown.image_name, 'image_name', allTemplates),
         comments: calculateRank(breakdown.comments, 'comments', allTemplates),
         stars: calculateRank(breakdown.stars, 'stars', allTemplates),
         total: calculateRank(breakdown.total, 'total', allTemplates)
@@ -183,14 +180,9 @@ function createDebugScorePopup(template) {
                 <span class="debug-popup-rank">#${ranks.probes}</span>
             </div>
             <div class="debug-popup-item">
-                <span class="debug-popup-label">Unusual Images:</span>
-                <span class="debug-popup-value">${breakdown.unusual_images.toFixed(1)}</span>
-                <span class="debug-popup-rank">#${ranks.unusual_images}</span>
-            </div>
-            <div class="debug-popup-item">
-                <span class="debug-popup-label">Custom Images:</span>
-                <span class="debug-popup-value">${breakdown.custom_images.toFixed(1)}</span>
-                <span class="debug-popup-rank">#${ranks.custom_images}</span>
+                <span class="debug-popup-label">Image Name:</span>
+                <span class="debug-popup-value">${breakdown.image_name.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.image_name}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Comments:</span>
@@ -201,10 +193,6 @@ function createDebugScorePopup(template) {
                 <span class="debug-popup-label">Stars:</span>
                 <span class="debug-popup-value">${breakdown.stars.toFixed(1)}</span>
                 <span class="debug-popup-rank">#${ranks.stars}</span>
-            </div>
-            <div class="debug-popup-item">
-                <span class="debug-popup-label">No Remote Images:</span>
-                <span class="debug-popup-value">${breakdown.no_remote_images.toFixed(1)}</span>
             </div>
             <div class="debug-popup-divider"></div>
             <div class="debug-popup-item debug-popup-total">
@@ -329,17 +317,43 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         const popup = createDebugScorePopup(template);
         if (popup) {
             const badge = card.querySelector('.template-badge');
-            badge.style.position = 'relative';
             badge.style.cursor = 'help';
-            badge.appendChild(popup);
 
-            // Show/hide popup on hover
-            badge.addEventListener('mouseenter', () => {
+            // Append popup to body to avoid stacking context issues
+            document.body.appendChild(popup);
+
+            let hideTimeout = null;
+
+            // Position popup relative to badge on hover
+            const showPopup = () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+                const badgeRect = badge.getBoundingClientRect();
+                popup.style.position = 'fixed';
+                popup.style.top = `${badgeRect.bottom + 8}px`;
+                popup.style.right = `${window.innerWidth - badgeRect.right}px`;
                 popup.style.display = 'block';
+            };
+
+            const hidePopup = () => {
+                hideTimeout = setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 100);
+            };
+
+            badge.addEventListener('mouseenter', showPopup);
+            badge.addEventListener('mouseleave', hidePopup);
+
+            // Keep popup visible when hovering over it
+            popup.addEventListener('mouseenter', () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
             });
-            badge.addEventListener('mouseleave', () => {
-                popup.style.display = 'none';
-            });
+            popup.addEventListener('mouseleave', hidePopup);
         }
     }
 
@@ -465,6 +479,9 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
  * @param {string} sortBy - Current sort field (optional)
  */
 export function renderTemplateGrid(templates, gridElement, onCardClick, sortBy = 'name') {
+    // Clean up any existing debug popups before rendering
+    document.querySelectorAll('.debug-score-popup').forEach(popup => popup.remove());
+
     gridElement.innerHTML = '';
 
     if (templates.length === 0) {

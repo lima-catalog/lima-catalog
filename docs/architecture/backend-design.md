@@ -80,19 +80,21 @@ What gets stored:
 
 Weighted sum of metrics:
 
-1. **Message**: 100 points (strong signal for reusability)
+1. **Message**: 50 points base + 1 per line (capped at 100 total)
 2. **Provision scripts**: 10 points per script + 1 point per 10 lines
-3. **Parameters**: 20 points per param (indicates configurability)
-4. **Environment vars**: 10 points per var (shows configuration effort)
+3. **Parameters**: 20 points per param (capped at 100)
+4. **Environment vars**: 10 points per var (capped at 100)
 5. **Probes**: 5 points per probe + 1 point per 10 lines
-6. **Unusual images**: 30 points if any unusual domains present (only `http://` or `https://` URLs)
-7. **Custom images**: 0-70 points if images match org/repo names (only `http://` or `https://` URLs)
-   - 25 points for one word boundary match (`\bNAME` or `NAME\b`)
-   - 35 points for both word boundaries (`\bNAME\b`)
-   - Org and repo scored separately and summed (max 70)
-8. **Comment lines**: 2 points per comment line (documentation quality)
-9. **Repository stars**: 1 point per 10 stars (capped at 50 points)
-10. **No remote images**: -100 points if template has no `http://` or `https://` image URLs (won't work on other computers without changes)
+6. **Image name**: Combined scoring for image-related metrics (only `http://` or `https://` URLs):
+   - -100 points if no remote images (won't work on other computers)
+   - 0 points if only official/usual images (neutral)
+   - 30 points base if unusual images + optional custom name bonus (0-70):
+     - 25 points for one word boundary match (`\bNAME` or `NAME\b`)
+     - 35 points for both word boundaries (`\bNAME\b`)
+     - Org and repo scored separately and summed (max 70)
+     - Custom bonus only available when template has unusual images
+7. **Comment lines**: 2 points per comment line (capped at 100)
+8. **Repository stars**: 1 point per 10 stars (capped at 50 points)
 
 ### Usage
 

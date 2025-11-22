@@ -225,16 +225,12 @@ export function sortTemplates(templates, sortBy) {
                 return (b.notability_score_breakdown?.env_vars || 0) - (a.notability_score_breakdown?.env_vars || 0);
             case 'breakdown-probes':
                 return (b.notability_score_breakdown?.probes || 0) - (a.notability_score_breakdown?.probes || 0);
-            case 'breakdown-unusual_images':
-                return (b.notability_score_breakdown?.unusual_images || 0) - (a.notability_score_breakdown?.unusual_images || 0);
-            case 'breakdown-custom_images':
-                return (b.notability_score_breakdown?.custom_images || 0) - (a.notability_score_breakdown?.custom_images || 0);
+            case 'breakdown-image_name':
+                return (b.notability_score_breakdown?.image_name || 0) - (a.notability_score_breakdown?.image_name || 0);
             case 'breakdown-comments':
                 return (b.notability_score_breakdown?.comments || 0) - (a.notability_score_breakdown?.comments || 0);
             case 'breakdown-stars':
                 return (b.notability_score_breakdown?.stars || 0) - (a.notability_score_breakdown?.stars || 0);
-            case 'breakdown-no_remote_images':
-                return (b.notability_score_breakdown?.no_remote_images || 0) - (a.notability_score_breakdown?.no_remote_images || 0);
 
             default:
                 return 0;

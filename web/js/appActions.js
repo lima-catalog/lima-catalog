@@ -174,11 +174,9 @@ export function updateSortDropdown() {
         { value: 'breakdown-parameters', label: '[Debug] Parameters' },
         { value: 'breakdown-env_vars', label: '[Debug] Environment Variables' },
         { value: 'breakdown-probes', label: '[Debug] Probes' },
-        { value: 'breakdown-unusual_images', label: '[Debug] Unusual Images' },
-        { value: 'breakdown-custom_images', label: '[Debug] Custom Images' },
+        { value: 'breakdown-image_name', label: '[Debug] Image Name' },
         { value: 'breakdown-comments', label: '[Debug] YAML Comments' },
-        { value: 'breakdown-stars', label: '[Debug] Repository Stars' },
-        { value: 'breakdown-no_remote_images', label: '[Debug] No Remote Images' }
+        { value: 'breakdown-stars', label: '[Debug] Repository Stars' }
     ];
 
     // Combine options based on debug mode
