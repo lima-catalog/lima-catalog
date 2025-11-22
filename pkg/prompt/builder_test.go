@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -336,7 +337,8 @@ func TestNewBuilder_InvalidToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			builder, err := NewBuilder(nil, tt.token, nil)
+			ctx := context.Background()
+			builder, err := NewBuilder(ctx, tt.token, nil)
 			if err == nil {
 				t.Error("expected error for invalid token but got nil")
 			}
@@ -375,7 +377,8 @@ func TestNewBuilder_InvalidConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			builder, err := NewBuilder(nil, validToken, tt.config)
+			ctx := context.Background()
+			builder, err := NewBuilder(ctx, validToken, tt.config)
 			if err == nil {
 				t.Error("expected error for invalid config but got nil")
 			}
@@ -391,7 +394,8 @@ func TestNewBuilder_NilConfig(t *testing.T) {
 	validToken := "ghp_0123456789abcdefghijklmnopqrstuvwxyzABC"
 
 	// Should use default config when nil is passed
-	builder, err := NewBuilder(nil, validToken, nil)
+	ctx := context.Background()
+	builder, err := NewBuilder(ctx, validToken, nil)
 	if err != nil {
 		t.Fatalf("unexpected error with nil config: %v", err)
 	}
