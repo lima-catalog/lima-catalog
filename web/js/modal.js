@@ -25,7 +25,7 @@ let isDebugMode = false; // Debug mode for showing template object as JSON
  * @param {boolean} isOriginal - Whether this is the original template
  * @returns {string} Badge HTML
  */
-function getSimilarityBadge(similarityPercent, isOriginal) {
+export function getSimilarityBadge(similarityPercent, isOriginal) {
     if (similarityPercent === 100) {
         if (isOriginal) {
             return '<span class="duplicate-badge original">original</span>';
@@ -45,7 +45,7 @@ function getSimilarityBadge(similarityPercent, isOriginal) {
  * @param {string} newName - Name for new file
  * @returns {{text: string, additions: number, deletions: number}} Diff with stats
  */
-function generateUnifiedDiff(originalText, newText, originalName = 'original', newName = 'similar') {
+export function generateUnifiedDiff(originalText, newText, originalName = 'original', newName = 'similar') {
     const originalLines = originalText.split('\n');
     const newLines = newText.split('\n');
 
@@ -56,8 +56,9 @@ function generateUnifiedDiff(originalText, newText, originalName = 'original', n
 
 /**
  * Compute Longest Common Subsequence for diff
+ * Exported for testing purposes
  */
-function computeLCS(a, b) {
+export function computeLCS(a, b) {
     const m = a.length;
     const n = b.length;
     const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));

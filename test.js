@@ -31,6 +31,35 @@ global.document = {
     querySelector: (selector) => null,
     querySelectorAll: (selector) => [],
     addEventListener: (event, handler) => {},
+    removeEventListener: (event, handler) => {},
+    body: {
+        style: {},
+        appendChild: () => {}
+    }
+};
+
+// Mock window object for URL and history testing
+global.window = {
+    location: {
+        href: 'http://localhost:3000',
+        search: '',
+        pathname: '/',
+        protocol: 'http:',
+        host: 'localhost:3000',
+        hostname: 'localhost',
+        port: '3000'
+    },
+    history: {
+        pushState: () => {},
+        replaceState: () => {}
+    },
+    matchMedia: (query) => ({
+        matches: false,
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {}
+    }),
+    addEventListener: (event, handler) => {},
     removeEventListener: (event, handler) => {}
 };
 
@@ -45,6 +74,7 @@ await import('./web/js/utils.test.js');
 await import('./web/js/appActions.test.js');
 await import('./web/js/app.test.js');
 await import('./web/js/sidebar.test.js');
+await import('./web/js/modal.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');
