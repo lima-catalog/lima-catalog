@@ -221,6 +221,73 @@ When "Duplicates" checkbox is unchecked (default), users see only A. When checke
 
 **Implementation**: See `buildExactDuplicateGroups()` and `identifyOriginals()` in `pkg/discovery/analyzer.go:539-596`
 
+### Origin vs. Centrality: Design Decision
+
+**The Question**: When picking a representative from a duplicate group, should we choose:
+- **Origin-based**: The oldest template (likely the actual original)
+- **Centrality-based**: The template most similar to all others (best representative)
+
+**Current Approach**: Origin-based (oldest repo creation date)
+
+**Example where centrality differs from origin**:
+
+```
+Group: [A, B, C]
+
+A: ubuntu.yaml (2020)          Origin ← Current choice
+   - 85% similar to B
+   - 70% similar to C
+   - Average: 77.5%
+
+B: ubuntu-enhanced.yaml (2021) Most central!
+   - 85% similar to A
+   - 95% similar to C
+   - Average: 90%
+
+C: ubuntu-fork.yaml (2022)
+   - 70% similar to A
+   - 95% similar to B
+   - Average: 82.5%
+```
+
+**Why Origin-Based?**
+
+**Advantages**:
+1. **Historical accuracy** - Users see the actual original source
+2. **Simplicity** - No additional similarity computations needed
+3. **Stability** - Oldest repo never changes, even as new duplicates added
+4. **Performance** - Just need repo metadata (already fetched)
+5. **Objectivity** - Repo creation date is factual, not derived from error-prone similarity scores (~8.8% error rate)
+
+**Disadvantages**:
+1. May not be the best representative of the group
+2. Oldest template could be outdated or poorly maintained
+3. Doesn't reflect which template users would find most useful
+
+**Why Not Centrality-Based?**
+
+**Advantages**:
+1. ✅ Better representative - shows "average" version
+2. ✅ Users see template most similar to all variants
+3. ✅ Potentially more useful than historical original
+
+**Disadvantages**:
+1. ❌ More complex - requires O(n²) pairwise similarity within each group
+2. ❌ Less stable - centrality can shift as new templates added
+3. ❌ Loses provenance - historical tracking value lost
+4. ❌ Error-prone - similarity scores have ~8.8% error rate
+5. ❌ Computationally expensive - adds cost to duplicate detection
+
+**Future Consideration**:
+
+If user feedback indicates that centrality-based selection would be more valuable, we could:
+- Compute average similarity within each group
+- Pick template with highest average similarity to group members
+- Store both "original" and "representative" metadata
+- Let users toggle between views
+
+For now, the simplicity and historical accuracy of origin-based selection is preferred.
+
 ### UI Features
 
 - Color-coded badges: Original (green), Exact (red), Near (orange), Similar (blue)
