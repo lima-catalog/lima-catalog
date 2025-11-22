@@ -48,6 +48,7 @@ export function applyFiltersFromURL() {
     document.getElementById('show-official').checked = urlFilters.official;
     document.getElementById('show-community').checked = urlFilters.community;
     document.getElementById('show-duplicates').checked = urlFilters.duplicates;
+    document.getElementById('show-similars').checked = urlFilters.similars;
 
     // Apply sort if valid option exists
     const sortDropdown = document.getElementById('sort');
@@ -78,15 +79,19 @@ export function filterAndRender(options = {}) {
     const selectedKeywords = State.getSelectedKeywords();
     const selectedCategory = State.getSelectedCategory();
 
-    // Preserve focused template before re-rendering
+    // Preserve focused element before re-rendering (template card or sidebar element)
     const focusedTemplate = State.getFocusedTemplate();
     const focusedTemplateId = focusedTemplate ? focusedTemplate.id : null;
+    const activeSidebarElement = document.activeElement;
+    const sidebar = document.querySelector('.sidebar');
+    const focusedSidebarElementId = (sidebar && sidebar.contains(activeSidebarElement)) ? activeSidebarElement.id : null;
 
     // Get filter values from UI
     const searchTerm = document.getElementById('search').value;
     const showOfficial = document.getElementById('show-official').checked;
     const showCommunity = document.getElementById('show-community').checked;
     const showDuplicates = document.getElementById('show-duplicates').checked;
+    const showSimilars = document.getElementById('show-similars').checked;
     const sortBy = document.getElementById('sort').value;
 
     // Determine type filter based on checkboxes
@@ -104,7 +109,8 @@ export function filterAndRender(options = {}) {
         typeFilter,
         selectedCategory,
         selectedKeywords,
-        showDuplicates
+        showDuplicates,
+        showSimilars
     });
 
     // Sort templates
@@ -122,6 +128,7 @@ export function filterAndRender(options = {}) {
             official: showOfficial,
             community: showCommunity,
             duplicates: showDuplicates,
+            similars: showSimilars,
             sort: sortBy
         };
         // Use replaceState to avoid polluting browser history on every filter change
@@ -141,8 +148,15 @@ export function filterAndRender(options = {}) {
     const gridElement = document.getElementById('templates-grid');
     renderTemplateGrid(filtered, gridElement, handleTemplateClick, sortBy);
 
-    // Restore focus to previously focused template if it still exists
-    if (focusedTemplateId) {
+    // Restore focus to previously focused element
+    if (focusedSidebarElementId) {
+        // Restore focus to sidebar element (checkbox, search, etc.)
+        const elementToFocus = document.getElementById(focusedSidebarElementId);
+        if (elementToFocus) {
+            elementToFocus.focus();
+        }
+    } else if (focusedTemplateId) {
+        // Restore focus to template card
         // Use requestAnimationFrame to ensure DOM has updated
         requestAnimationFrame(() => {
             const cardToFocus = document.querySelector(`[data-template-id="${CSS.escape(focusedTemplateId)}"]`);

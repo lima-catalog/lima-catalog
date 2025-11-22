@@ -134,6 +134,33 @@ export function getCategoryCounts(templateList) {
 }
 
 /**
+ * Determine if a template is an exact duplicate (100% similarity)
+ * @param {Object} template - Template to check
+ * @returns {boolean} True if template has 100% similarity to another
+ */
+function isExactDuplicate(template) {
+    if (!template.original_id) return false;
+    if (!template.similar_templates || template.similar_templates.length === 0) return false;
+
+    // Check if any similar template has 100% (1.0) similarity
+    return template.similar_templates.some(similar => similar.similarity === 1.0);
+}
+
+/**
+ * Determine if a template is a near duplicate (90-99% similarity)
+ * @param {Object} template - Template to check
+ * @returns {boolean} True if template has 90-99% similarity to another
+ */
+function isNearDuplicate(template) {
+    if (!template.original_id) return false;
+    if (!template.similar_templates || template.similar_templates.length === 0) return false;
+
+    // Check if max similarity is in 90-99% range (>0.9 but <1.0)
+    const maxSimilarity = Math.max(...template.similar_templates.map(s => s.similarity));
+    return maxSimilarity > 0.9 && maxSimilarity < 1.0;
+}
+
+/**
  * Apply filters to templates
  * @param {Array} templates - All templates
  * @param {Object} options - Filter options
@@ -141,10 +168,11 @@ export function getCategoryCounts(templateList) {
  * @param {string} options.typeFilter - Type filter ('official', 'community', or '')
  * @param {string} options.selectedCategory - Selected category
  * @param {Set} options.selectedKeywords - Selected keywords
- * @param {boolean} options.showDuplicates - Whether to show duplicate templates (default: false)
+ * @param {boolean} options.showDuplicates - Whether to show exact duplicate templates (100% similarity, default: false)
+ * @param {boolean} options.showSimilars - Whether to show near duplicate templates (90-99% similarity, default: false)
  * @returns {Array} Filtered templates
  */
-export function applyFilters(templates, { searchTerm = '', typeFilter = '', selectedCategory = null, selectedKeywords = new Set(), showDuplicates = false }) {
+export function applyFilters(templates, { searchTerm = '', typeFilter = '', selectedCategory = null, selectedKeywords = new Set(), showDuplicates = false, showSimilars = false }) {
     return templates.filter(template => {
         // Search filter
         if (searchTerm) {
@@ -189,8 +217,11 @@ export function applyFilters(templates, { searchTerm = '', typeFilter = '', sele
         if (typeFilter === 'official' && !template.official) return false;
         if (typeFilter === 'community' && template.official) return false;
 
-        // Duplicate filter - hide templates that are copies unless showDuplicates is enabled
-        if (!showDuplicates && template.original_id) return false;
+        // Duplicate filter - hide exact duplicates (100% similarity) unless showDuplicates is enabled
+        if (!showDuplicates && isExactDuplicate(template)) return false;
+
+        // Similar filter - hide near duplicates (90-99% similarity) unless showSimilars is enabled
+        if (!showSimilars && isNearDuplicate(template)) return false;
 
         return true;
     });

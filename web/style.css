@@ -223,8 +223,14 @@ header {
     border-color: var(--primary);
 }
 
-/* Type Checkboxes */
+/* Type Checkboxes - 2-column grid layout */
 .type-checkboxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.checkbox-column {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;

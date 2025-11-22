@@ -218,6 +218,7 @@ export function getFiltersFromURL() {
         official: true,
         community: true,
         duplicates: false,
+        similars: false,
         sort: params.get('sort') || 'name'
     };
 
@@ -236,6 +237,9 @@ export function getFiltersFromURL() {
     }
     if (params.has('duplicates')) {
         filters.duplicates = params.get('duplicates') === 'true';
+    }
+    if (params.has('similars')) {
+        filters.similars = params.get('similars') === 'true';
     }
 
     return filters;
@@ -284,6 +288,13 @@ export function updateURLWithFilters(filterState, replace = false) {
         url.searchParams.set('duplicates', 'true');
     } else {
         url.searchParams.delete('duplicates');
+    }
+
+    // Similars - only include if true (non-default)
+    if (filterState.similars) {
+        url.searchParams.set('similars', 'true');
+    } else {
+        url.searchParams.delete('similars');
     }
 
     // Sort - only include if not default
