@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document outlines code quality standards for the Lima Catalog project, with emphasis on the Go backend which has high code quality (60%+ test coverage, idiomatic APIs).
+This document outlines code quality standards for the Lima Catalog project, with emphasis on the Go backend which has high code quality (comprehensive test coverage, idiomatic APIs).
 
 ---
 
@@ -42,7 +42,7 @@ func NewAnalyzer(opts ...AnalyzerOption) *Analyzer {
 ### Return Errors, Not Bools
 
 ✅ **DO**: Return error to communicate what went wrong
-✅ **DO**: Use sentinel errors (var ErrNotFound = errors.New(...)) for expected errors
+✅ **DO**: Use sentinel errors where appropriate (var ErrNotFound = errors.New(...)) for expected errors
 ✅ **DO**: Wrap errors with context: fmt.Errorf("failed to X: %w", err)
 ❌ **DON'T**: Return bool when callers need to know why something failed
 
@@ -61,11 +61,11 @@ The codebase uses these patterns consistently:
 - **Interfaces**: HTTPClient, FileSystem, Clock for all external dependencies
 - **Functional Options**: NewX(opts ...Option) for complex constructors
 - **Context**: First parameter in long-running functions
-- **Sentinel Errors**: Named error variables for expected error conditions
+- **Sentinel Errors**: Named error variables used where appropriate for expected error conditions
 - **Table-Driven Tests**: One test function with []struct{} for multiple cases
 
 **When adding new features:**
-1. Look at similar existing code (e.g., Analyzer, Discoverer, Storage)
+1. Look at similar existing code (e.g., Analyzer type in discovery package, Storage package)
 2. Follow the same patterns
 3. Add tests using the same style
 4. Use the same interfaces for dependencies
@@ -159,8 +159,8 @@ make test
 ```
 
 **This runs:**
-- Go backend tests (83 tests)
-- JavaScript frontend tests (76 tests)
+- Go backend tests (all packages)
+- JavaScript frontend tests (ES6 modules)
 
 **⚠️ NEVER IGNORE FAILING TESTS**:
 - It is NEVER acceptable to ignore failing tests
@@ -181,12 +181,12 @@ make test
 
 **Current State (Backend)**:
 - ✅ 0 critical issues
-- ✅ 60%+ test coverage
+- ✅ comprehensive test coverage
 - ✅ Idiomatic Go APIs
 - ✅ Comprehensive documentation
 
 **Maintain these standards:**
-- Test coverage: >60%
+- Test coverage: Comprehensive across all packages
 - Function length: <50 lines (guideline)
 - All errors checked
 - No global state
@@ -196,9 +196,9 @@ make test
 
 ## When in Doubt
 
-1. Look at well-tested code examples (Analyzer, Discoverer, Storage packages)
+1. Look at well-tested code examples (Analyzer type in discovery package, Storage package packages)
 2. Run `make test` frequently during development
-3. If test coverage drops below 60%, add more tests
+3. If test coverage drops comprehensive, add more tests
 4. Check [Backend Design](../architecture/backend-design.md) for architecture patterns
 
 ---
