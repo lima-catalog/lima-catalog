@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
@@ -129,9 +130,12 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 			templateURL = strings.Replace(templateURL, "/blob/", "/", 1)
 		}
 
-		// Use Lima's Read function to fetch the template
+		// Use Lima's Read function to fetch the template with a timeout
 		// The empty string "" as the second parameter means no base directory
-		tmpl, err := limatmpl.Read(ctx, "", templateURL)
+		readCtx, readCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer readCancel()
+
+		tmpl, err := limatmpl.Read(readCtx, "", templateURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read template: %w", err)
 		}
@@ -140,10 +144,20 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 			return nil, fmt.Errorf("don't know how to interpret %q as a template locator", templateURL)
 		}
 
-		// Embed base templates and script files
+		// Embed base templates and script files with a timeout
 		// Parameters: (ctx, embedScripts=true, allowInline=false)
-		if err := tmpl.Embed(ctx, true, false); err != nil {
-			return nil, fmt.Errorf("failed to embed template: %w", err)
+		// If embedding fails (e.g., rate limits, missing templates), fall back to the raw content
+		embedCtx, embedCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer embedCancel()
+
+		if err := tmpl.Embed(embedCtx, true, false); err != nil {
+			// Log the error but don't fail - use the raw template content instead
+			// This handles cases where:
+			// - Template references don't exist in this fork
+			// - GitHub API rate limits are hit
+			// - Network issues occur
+			// The template might not have proper images field, but it won't block the pipeline
+			fmt.Printf("Warning: failed to embed template %s: %v (using raw content)\n", templateURL, err)
 		}
 
 		content = string(tmpl.Bytes)
