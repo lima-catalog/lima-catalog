@@ -256,6 +256,33 @@ Combines three data sources:
 - Full SHA hashes
 - Internal timestamps
 
+### URL Generation
+
+The combiner generates two types of URLs using Lima v2.0.1:
+
+**`github_url`** (github: scheme URL):
+- Constructed using `getGitHubSchemeURL()` helper
+- Format: `github:owner/repo/path` (Lima-compatible)
+- Removes `.yaml` extension and `/.lima` suffix
+- Handles org shorthand: `github:lima-vm` for `lima-vm/lima-vm`
+- Used by Lima CLI to fetch templates
+
+**`raw_url`** (https: URL):
+- Generated using Lima's `TransformCustomURL()`
+- Automatically resolves symlinks (e.g., `.lima.yaml` → `ubuntu.yaml`)
+- Follows GitHub redirects transparently
+- Uses repository default branch
+- Format: `https://raw.githubusercontent.com/owner/repo/branch/path.yaml`
+- Used by frontend to fetch template content
+
+**Benefits:**
+- Single source of truth for URL generation (backend)
+- Consistent with Lima CLI behavior
+- Handles edge cases (symlinks, redirects) automatically
+- No network calls required in tests (mockable `URLTransformer` interface)
+
+**Implementation:** See [Lima Integration](backend-design.md#lima-integration--url-handling)
+
 ### Blocklist Application
 
 Templates matching blocklist patterns excluded from `catalog.jsonl` but kept in `templates.jsonl`.
