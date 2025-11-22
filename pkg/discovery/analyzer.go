@@ -182,29 +182,7 @@ func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template
 	if repoInfo != nil {
 		defaultBranch = repoInfo.DefaultBranch
 	}
-
-	// Wrap ParseTemplateWithBranch in a hard timeout to prevent hanging
-	// Lima's http.DefaultClient doesn't respect context timeouts for slow/hanging connections
-	type parseResult struct {
-		info *TemplateInfo
-		err  error
-	}
-	resultChan := make(chan parseResult, 1)
-	go func() {
-		info, err := ParseTemplateWithBranch(ctx, template.Repo, template.Path, defaultBranch, a.HTTPClient)
-		resultChan <- parseResult{info, err}
-	}()
-
-	var templateInfo *TemplateInfo
-	var err error
-	select {
-	case result := <-resultChan:
-		templateInfo = result.info
-		err = result.err
-	case <-time.After(45 * time.Second):
-		return fmt.Errorf("template parsing timed out after 45s (likely hanging on HTTP request)")
-	}
-
+	templateInfo, err := ParseTemplateWithBranch(ctx, template.Repo, template.Path, defaultBranch, a.HTTPClient)
 	if err != nil {
 		// Return error for invalid templates (e.g., missing required 'images' field)
 		return fmt.Errorf("failed to parse template: %w", err)
