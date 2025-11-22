@@ -247,6 +247,153 @@ All utility buttons (copy, clear, close) follow the same interaction pattern for
 
 **Rationale**: Consistency with keyword tags - both are filters with the same interaction model.
 
+## Card & Component Interaction Patterns
+
+### Template Card Click Behavior
+
+**Purpose**: Provide intuitive interaction for browsing templates while preventing accidental modal opens
+
+**Click Zones**:
+
+1. **Template Name (h3.template-name)**:
+   - **Single click**: Opens preview modal
+   - **Hover state**: Blue color (`var(--primary)`) + underline + `cursor: pointer`
+   - **Transition**: `0.2s ease` for smooth color change
+
+2. **Card Body (elsewhere on card)**:
+   - **Single click**: Selects/focuses the card (same as arrow key navigation)
+   - **Double-click**: Opens preview modal (alternative to clicking name)
+   - **Hover state**: Card elevation effect (translateY + shadow)
+
+3. **Repository Link (template-repo)**:
+   - **Single click**: Opens GitHub repository in new tab
+   - **Hover state**: Blue color + underline (consistent with other links)
+   - **Behavior**: Click events don't propagate to card
+
+**Keyboard Navigation** (unchanged):
+- Arrow keys: Navigate between cards
+- Enter/Space: Open preview modal
+- Tab: Focus next interactive element
+
+**Rationale**:
+- Separates browsing (clicking to select) from opening (clicking name or double-clicking)
+- Prevents accidental modal opens when user just wants to explore the grid
+- Double-click provides quick access for power users
+- Consistent with file manager patterns (single-click to select, double-click to open)
+- Template name as primary action target is visually intuitive (largest, most prominent text)
+
+**Implementation Notes**:
+- Use `e.stopPropagation()` on template name click to prevent card click from also firing
+- Check `e.target.closest('.template-name')` in card click handler to avoid conflicts
+- Repository links use `e.target.tagName === 'A'` checks to preserve default link behavior
+
+### Similar Template (Modal) Interaction Pattern
+
+**Purpose**: Allow diff comparison without accidentally switching templates
+
+**Click Behavior** (similar-template-item):
+
+1. **Single click**:
+   - Selects the template (visual highlight)
+   - Shows diff comparison in modal code view
+   - Does not change the base template
+
+2. **Double-click**:
+   - Closes current modal
+   - Opens the clicked template as new base template
+   - Same behavior as previous single-click (for upgrading existing workflows)
+
+**Keyboard Navigation**:
+- Arrow Up/Down: Navigate similar template list
+- Enter/Space: Switch to selected template (same as double-click)
+- Tab: Exit list, restore original YAML
+
+**Hover Tooltip**:
+- Delay: 800ms before appearing
+- Position: Follows cursor (15px offset from cursor position)
+- Content: "Click to compare • Double-click to open"
+- Appearance: After user loiters over item (indicates exploration mode)
+
+**Rationale**:
+- Single-click for comparison is low-commitment, encourages exploration
+- Double-click for switching requires intentional action, prevents accidents
+- Tooltip delay (800ms) shows only for users who are uncertain, not for quick actions
+- Cursor-following tooltip stays near user's focus point
+- Keyboard users retain direct "switch" action (Enter/Space) for efficiency
+
+**Design Pattern**: "Progressive disclosure" - simple action (click) reveals information (diff), deliberate action (double-click) commits to change (switch template)
+
+### Link Hover Consistency
+
+**Purpose**: All clickable links should have consistent hover feedback
+
+**Standard Link Hover Pattern**:
+- Color: Changes to `var(--primary)` (blue)
+- Text-decoration: `underline`
+- Transition: `0.2s ease` for smooth color change
+- Cursor: `pointer`
+
+**Applies to**:
+- Template names (`.template-name`)
+- Repository links on cards (`.template-repo`)
+- GitHub links in modals (`.modal-footer-url a`)
+- All `<a>` elements with `href`
+
+**Exception**: Icon-only buttons and primary action buttons follow their own patterns (see Button Interaction Patterns section)
+
+**Rationale**: Consistent link behavior reduces cognitive load. Users learn once that "underline on hover = clickable link" and can apply that knowledge everywhere.
+
+### Contextual Tooltip Pattern
+
+**Purpose**: Explain multi-action interactions without cluttering the UI
+
+**When to Use**:
+- Element has multiple interaction modes (click vs. double-click)
+- Behavior might not be obvious from visual design
+- Only when user shows uncertainty (hover delay)
+
+**Behavior**:
+- **Trigger**: `mouseenter` on element
+- **Delay**: 800ms timeout before showing
+- **Position**: Follows cursor or anchors to element (context-dependent)
+- **Dismissal**: `mouseleave` on element
+- **Cleanup**: Clear timeout on mouseleave to prevent orphaned tooltips
+
+**Styling**:
+```css
+.tooltip {
+    position: fixed;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-elevated);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    white-space: nowrap;
+    z-index: 10001; /* Above modals */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none; /* Don't interfere with mouse */
+}
+```
+
+**Content Format**:
+- Concise: Maximum 5-8 words
+- Use bullet separator (•) for multiple actions
+- Action verbs: "Click to compare • Double-click to open"
+- Not: Explanatory text or full sentences
+
+**Rationale**:
+- 800ms delay prevents tooltip spam during quick mouse movements
+- Only users who pause get help, experienced users aren't interrupted
+- Cursor-following positioning keeps tooltip near focus point
+- `pointer-events: none` prevents tooltip from interfering with clicks
+
+**Anti-patterns**:
+- ❌ Don't use for single-action elements (redundant)
+- ❌ Don't show immediately (too distracting)
+- ❌ Don't use for critical information (might be missed)
+- ❌ Don't replace proper labels/aria-labels (tooltips aren't accessible)
+
 ## Color Surface Hierarchy
 
 Understanding the three-level surface system:
