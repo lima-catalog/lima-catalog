@@ -500,6 +500,9 @@ async function fetchTemplateContent(template) {
         modalCode.classList.remove('hidden');
         copyYamlButton.style.display = 'block';
 
+        // Reset scroll position to top when content is displayed
+        modalCode.scrollTo(0, 0);
+
         // Show modal-content now that content is loaded (fade in)
         const modal = document.getElementById('preview-modal');
         const modalContent = modal.querySelector('.modal-content');
