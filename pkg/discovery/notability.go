@@ -324,12 +324,12 @@ func IsCodeComment(line string) bool {
 			return true
 		}
 		// Check for $WORD pattern (not just $ followed by number)
-		for i := strings.Index(line, "$"); i >= 0; i = strings.Index(line[i+1:], "$") {
-			if i+1 < len(line) && (line[i+1] >= 'A' && line[i+1] <= 'Z' || line[i+1] >= 'a' && line[i+1] <= 'z' || line[i+1] == '_') {
-				return true
-			}
-			if i+1 >= len(line) {
-				break
+		for i := 0; i < len(line); i++ {
+			if line[i] == '$' && i+1 < len(line) {
+				nextChar := line[i+1]
+				if (nextChar >= 'A' && nextChar <= 'Z') || (nextChar >= 'a' && nextChar <= 'z') || nextChar == '_' {
+					return true
+				}
 			}
 		}
 	}
