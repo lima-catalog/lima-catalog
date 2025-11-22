@@ -404,9 +404,6 @@ export function openPreviewModal(template, preserveDebugMode = false) {
     copyYamlButton.style.display = 'none';
     document.body.style.overflow = 'hidden';
 
-    // Reset scroll position to top when opening modal or switching templates
-    modalCode.scrollTo(0, 0);
-
     // Remove ready class to hide modal-content during loading
     const modalContent = modal.querySelector('.modal-content');
     modalContent.classList.remove('ready');
@@ -502,6 +499,9 @@ async function fetchTemplateContent(template) {
         modalLoading.classList.add('hidden');
         modalCode.classList.remove('hidden');
         copyYamlButton.style.display = 'block';
+
+        // Reset scroll position to top when content is displayed
+        modalCode.scrollTo(0, 0);
 
         // Show modal-content now that content is loaded (fade in)
         const modal = document.getElementById('preview-modal');
