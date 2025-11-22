@@ -31,12 +31,15 @@ package combiner
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
 	"slices"
 	"strings"
 	"time"
+
+	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
 
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
@@ -86,7 +89,7 @@ func NewCombinerWithFS(blocklist *types.Blocklist, fs interfaces.FileSystem) *Co
 }
 
 // CombineData creates the frontend-optimized templates-combined.jsonl file
-func (c *Combiner) CombineData(templates []types.Template, repos []types.Repository, orgs []types.Organization, outputPath string) error {
+func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, repos []types.Repository, orgs []types.Organization, outputPath string) error {
 	// Create lookup maps for efficient joining
 	repoMap := make(map[string]types.Repository)
 	for _, repo := range repos {
@@ -131,6 +134,13 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 		// Calculate notability score with breakdown
 		breakdown := discovery.CalculateNotabilityScoreWithBreakdown(template.Notability, owner, repoName, repo.Stars)
 
+		// Get raw URL using Lima's URL transformation
+		rawURL, err := c.getRawURL(ctx, template)
+		if err != nil {
+			fmt.Printf("Warning: Failed to get raw URL for template %s: %v\n", template.ID, err)
+			continue
+		}
+
 		// Create combined record
 		combined = append(combined, CombinedTemplate{
 			ID:                      template.ID,
@@ -145,7 +155,7 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 			UpdatedAt:               c.formatDate(repo.UpdatedAt),
 			Official:                template.IsOfficial,
 			URL:                     template.URL,
-			RawURL:                  c.getRawURL(template, repo),
+			RawURL:                  rawURL,
 			NotabilityScore:         breakdown.Total,
 			NotabilityScoreBreakdown: &breakdown,
 			SimilarTemplates:        template.SimilarTemplates,
@@ -218,21 +228,54 @@ func (c *Combiner) getDescription(template types.Template) string {
 	return "Lima VM template"
 }
 
-// getRawURL constructs the raw GitHub URL for template content
-func (c *Combiner) getRawURL(template types.Template, repo types.Repository) string {
-	// Convert GitHub blob URL to raw URL
-	// From: https://github.com/owner/repo/blob/branch/path
-	// To: https://raw.githubusercontent.com/owner/repo/branch/path
+// getGitHubSchemeURL constructs a github: scheme URL from a template
+// This matches the frontend logic in web/js/urlHelpers.js
+func getGitHubSchemeURL(template types.Template) string {
+	// Parse owner/repo from template.Repo
+	parts := strings.SplitN(template.Repo, "/", 2)
+	if len(parts) != 2 {
+		// Fallback for invalid format
+		return fmt.Sprintf("github:%s/%s", template.Repo, template.Path)
+	}
+	owner := parts[0]
+	repoName := parts[1]
 
-	branch := repo.DefaultBranch
-	if branch == "" {
-		branch = "main" // Fallback
+	// Process path: remove .yaml extension and /.lima suffix
+	path := template.Path
+	path = strings.TrimSuffix(path, ".yaml")
+	path = strings.TrimSuffix(path, "/.lima")
+
+	// If path is just .lima or empty, can omit
+	if path == ".lima" || path == "" {
+		if owner == repoName {
+			// org/org shorthand
+			return fmt.Sprintf("github:%s", owner)
+		}
+		return fmt.Sprintf("github:%s/%s", owner, repoName)
 	}
 
-	return fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s",
-		template.Repo,
-		branch,
-		template.Path)
+	// For org repos (owner == repo), use double slash
+	if owner == repoName {
+		return fmt.Sprintf("github:%s//%s", owner, path)
+	}
+
+	return fmt.Sprintf("github:%s/%s/%s", owner, repoName, path)
+}
+
+// getRawURL constructs the raw GitHub URL for template content using Lima's URL transformation
+// This handles github: URLs and automatically resolves symlinks and redirects
+func (c *Combiner) getRawURL(ctx context.Context, template types.Template) (string, error) {
+	// Construct github: scheme URL
+	githubURL := getGitHubSchemeURL(template)
+
+	// Use Lima's TransformCustomURL to convert github: URL to https: URL
+	// This automatically handles symlinks and redirects
+	httpsURL, err := limatmpl.TransformCustomURL(ctx, githubURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to transform github: URL %q: %w", githubURL, err)
+	}
+
+	return httpsURL, nil
 }
 
 // formatDate formats a time.Time to a simple date string
