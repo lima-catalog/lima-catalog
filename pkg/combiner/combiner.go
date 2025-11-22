@@ -315,7 +315,7 @@ func printScoreStatistics(combined []CombinedTemplate) {
 	}
 
 	// Collect values for each score field
-	var message, provision, parameters, envVars, probes, unusualImages, customImages, comments, stars, total []float64
+	var message, provision, parameters, envVars, probes, imageName, comments, stars, total []float64
 
 	for _, t := range combined {
 		if t.NotabilityScoreBreakdown != nil {
@@ -324,8 +324,7 @@ func printScoreStatistics(combined []CombinedTemplate) {
 			parameters = append(parameters, t.NotabilityScoreBreakdown.Parameters)
 			envVars = append(envVars, t.NotabilityScoreBreakdown.EnvVars)
 			probes = append(probes, t.NotabilityScoreBreakdown.Probes)
-			unusualImages = append(unusualImages, t.NotabilityScoreBreakdown.UnusualImages)
-			customImages = append(customImages, t.NotabilityScoreBreakdown.CustomImages)
+			imageName = append(imageName, t.NotabilityScoreBreakdown.ImageName)
 			comments = append(comments, t.NotabilityScoreBreakdown.Comments)
 			stars = append(stars, t.NotabilityScoreBreakdown.Stars)
 			total = append(total, t.NotabilityScoreBreakdown.Total)
@@ -339,8 +338,7 @@ func printScoreStatistics(combined []CombinedTemplate) {
 		calculateScoreStatistics("Parameters", parameters),
 		calculateScoreStatistics("EnvVars", envVars),
 		calculateScoreStatistics("Probes", probes),
-		calculateScoreStatistics("UnusualImages", unusualImages),
-		calculateScoreStatistics("CustomImages", customImages),
+		calculateScoreStatistics("ImageName", imageName),
 		calculateScoreStatistics("Comments", comments),
 		calculateScoreStatistics("Stars", stars),
 		calculateScoreStatistics("Total", total),
