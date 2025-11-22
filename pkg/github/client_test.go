@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -380,5 +381,313 @@ func TestCacheKeyFormat(t *testing.T) {
 
 	if user1.GetID() == user2.GetID() {
 		t.Error("expected different users to have different IDs")
+	}
+}
+
+func TestRateLimit(t *testing.T) {
+	ctx := context.Background()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/rate_limit" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		resetTime := time.Now().Add(1 * time.Hour).Unix()
+		response := `{
+			"resources": {
+				"core": {
+					"limit": 5000,
+					"remaining": 4999,
+					"reset": ` + fmt.Sprintf("%d", resetTime) + `,
+					"used": 1
+				},
+				"search": {
+					"limit": 30,
+					"remaining": 29,
+					"reset": ` + fmt.Sprintf("%d", resetTime) + `,
+					"used": 1
+				}
+			}
+		}`
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	limits, err := ghClient.RateLimit()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if limits == nil {
+		t.Fatal("expected non-nil rate limits")
+	}
+
+	if limits.Core == nil {
+		t.Fatal("expected non-nil core rate limit")
+	}
+
+	if limits.Search == nil {
+		t.Fatal("expected non-nil search rate limit")
+	}
+}
+
+func TestSearchCode(t *testing.T) {
+	ctx := context.Background()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/search/code" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+
+		// Check query parameters
+		query := r.URL.Query().Get("q")
+		if query == "" {
+			t.Error("expected query parameter")
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		response := `{
+			"total_count": 1,
+			"incomplete_results": false,
+			"items": [
+				{
+					"name": "test.yaml",
+					"path": "templates/test.yaml",
+					"sha": "abc123",
+					"html_url": "https://github.com/owner/repo/blob/main/templates/test.yaml",
+					"repository": {
+						"id": 123,
+						"name": "repo",
+						"full_name": "owner/repo",
+						"owner": {"login": "owner"}
+					}
+				}
+			]
+		}`
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	result, resp, err := ghClient.SearchCode("test query", 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result == nil {
+		t.Fatal("expected non-nil search result")
+	}
+
+	if resp == nil {
+		t.Fatal("expected non-nil response")
+	}
+
+	if result.GetTotal() != 1 {
+		t.Errorf("expected total count of 1, got %d", result.GetTotal())
+	}
+
+	if len(result.CodeResults) != 1 {
+		t.Errorf("expected 1 code result, got %d", len(result.CodeResults))
+	}
+}
+
+func TestListRepositoryContents(t *testing.T) {
+	ctx := context.Background()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/repos/owner/repo/contents/templates" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		response := `[
+			{
+				"name": "ubuntu.yaml",
+				"path": "templates/ubuntu.yaml",
+				"type": "file",
+				"size": 1024,
+				"sha": "abc123",
+				"html_url": "https://github.com/owner/repo/blob/main/templates/ubuntu.yaml"
+			},
+			{
+				"name": "alpine.yaml",
+				"path": "templates/alpine.yaml",
+				"type": "file",
+				"size": 512,
+				"sha": "def456",
+				"html_url": "https://github.com/owner/repo/blob/main/templates/alpine.yaml"
+			}
+		]`
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	contents, err := ghClient.ListRepositoryContents("owner", "repo", "templates")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if contents == nil {
+		t.Fatal("expected non-nil contents")
+	}
+
+	if len(contents) != 2 {
+		t.Errorf("expected 2 contents, got %d", len(contents))
+	}
+
+	if contents[0].GetName() != "ubuntu.yaml" {
+		t.Errorf("expected first file to be ubuntu.yaml, got %s", contents[0].GetName())
+	}
+
+	if contents[1].GetName() != "alpine.yaml" {
+		t.Errorf("expected second file to be alpine.yaml, got %s", contents[1].GetName())
+	}
+}
+
+func TestListRepositoryContents_Error(t *testing.T) {
+	ctx := context.Background()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"message": "Not Found"}`))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	contents, err := ghClient.ListRepositoryContents("owner", "repo", "nonexistent")
+	if err == nil {
+		t.Error("expected error for nonexistent directory")
+	}
+
+	if contents != nil {
+		t.Error("expected nil contents on error")
+	}
+}
+
+func TestGetRepositoryContent(t *testing.T) {
+	ctx := context.Background()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/repos/owner/repo/contents/templates/test.yaml" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Base64 encoded "test content"
+		response := `{
+			"name": "test.yaml",
+			"path": "templates/test.yaml",
+			"type": "file",
+			"size": 12,
+			"sha": "abc123",
+			"content": "dGVzdCBjb250ZW50",
+			"encoding": "base64",
+			"html_url": "https://github.com/owner/repo/blob/main/templates/test.yaml"
+		}`
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	content, err := ghClient.GetRepositoryContent("owner", "repo", "templates/test.yaml")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if content == nil {
+		t.Fatal("expected non-nil content")
+	}
+
+	if content.GetName() != "test.yaml" {
+		t.Errorf("expected name test.yaml, got %s", content.GetName())
+	}
+
+	if content.GetPath() != "templates/test.yaml" {
+		t.Errorf("expected path templates/test.yaml, got %s", content.GetPath())
+	}
+
+	// Decode content
+	decoded, err := content.GetContent()
+	if err != nil {
+		t.Fatalf("failed to decode content: %v", err)
+	}
+
+	if decoded != "test content" {
+		t.Errorf("expected decoded content 'test content', got %q", decoded)
+	}
+}
+
+func TestGetRepositoryContent_Error(t *testing.T) {
+	ctx := context.Background()
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"message": "Not Found"}`))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	content, err := ghClient.GetRepositoryContent("owner", "repo", "nonexistent.yaml")
+	if err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+
+	if content != nil {
+		t.Error("expected nil content on error")
 	}
 }

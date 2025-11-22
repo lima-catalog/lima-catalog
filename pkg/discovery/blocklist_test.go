@@ -1,6 +1,8 @@
 package discovery
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/lima-catalog/lima-catalog/pkg/types"
@@ -242,4 +244,246 @@ func TestIsBlocklistedInvalidRegex(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when compiling invalid regex")
 	}
+}
+
+func TestLoadBlocklist(t *testing.T) {
+	t.Run("Load valid blocklist", func(t *testing.T) {
+		// Create a temporary blocklist file
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "blocklist.yaml")
+
+		content := `paths:
+  - ^\.github/workflows/
+  - ^test/
+  - \.test\.yaml$
+repos:
+  - ^spamorg/
+  - ^baduser/badrepo/
+`
+		if err := os.WriteFile(blocklistPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write test blocklist: %v", err)
+		}
+
+		// Load blocklist
+		blocklist, err := LoadBlocklist(blocklistPath)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if blocklist == nil {
+			t.Fatal("expected non-nil blocklist")
+		}
+
+		// Verify paths were loaded
+		if len(blocklist.Paths) != 3 {
+			t.Errorf("expected 3 path patterns, got %d", len(blocklist.Paths))
+		}
+
+		// Verify repos were loaded
+		if len(blocklist.Repos) != 2 {
+			t.Errorf("expected 2 repo patterns, got %d", len(blocklist.Repos))
+		}
+
+		// Verify patterns were compiled
+		if len(blocklist.GetCompiledPaths()) != 3 {
+			t.Errorf("expected 3 compiled path patterns, got %d", len(blocklist.GetCompiledPaths()))
+		}
+
+		if len(blocklist.GetCompiledRepos()) != 2 {
+			t.Errorf("expected 2 compiled repo patterns, got %d", len(blocklist.GetCompiledRepos()))
+		}
+
+		// Verify patterns work correctly
+		if !IsBlocklisted("baduser", "badrepo", "test.yaml", blocklist) {
+			t.Error("expected baduser/badrepo to be blocklisted")
+		}
+
+		if IsBlocklisted("gooduser", "goodrepo", "template.yaml", blocklist) {
+			t.Error("expected gooduser/goodrepo/template.yaml not to be blocklisted")
+		}
+	})
+
+	t.Run("Missing file returns empty blocklist", func(t *testing.T) {
+		// Try to load non-existent file
+		blocklist, err := LoadBlocklist("/nonexistent/path/blocklist.yaml")
+		if err != nil {
+			t.Fatalf("expected no error for missing file, got: %v", err)
+		}
+
+		if blocklist == nil {
+			t.Fatal("expected non-nil blocklist for missing file")
+		}
+
+		// Should return empty blocklist
+		if len(blocklist.Paths) != 0 {
+			t.Errorf("expected 0 path patterns for missing file, got %d", len(blocklist.Paths))
+		}
+
+		if len(blocklist.Repos) != 0 {
+			t.Errorf("expected 0 repo patterns for missing file, got %d", len(blocklist.Repos))
+		}
+	})
+
+	t.Run("Invalid YAML returns error", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "invalid.yaml")
+
+		// Write invalid YAML
+		content := `paths:
+  - valid pattern
+repos:
+  [unclosed bracket
+invalid yaml`
+		if err := os.WriteFile(blocklistPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+
+		// Should return error
+		blocklist, err := LoadBlocklist(blocklistPath)
+		if err == nil {
+			t.Error("expected error for invalid YAML")
+		}
+
+		if blocklist != nil {
+			t.Error("expected nil blocklist for invalid YAML")
+		}
+	})
+
+	t.Run("Invalid regex pattern returns error", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "bad-regex.yaml")
+
+		// Write blocklist with invalid regex
+		content := `paths:
+  - ^valid/path
+  - "[invalid(regex"
+repos:
+  - ^goodorg/
+`
+		if err := os.WriteFile(blocklistPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+
+		// Should return error when compiling patterns
+		blocklist, err := LoadBlocklist(blocklistPath)
+		if err == nil {
+			t.Error("expected error for invalid regex pattern")
+		}
+
+		if blocklist != nil {
+			t.Error("expected nil blocklist for invalid regex")
+		}
+	})
+
+	t.Run("Empty blocklist file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "empty.yaml")
+
+		// Write empty file
+		if err := os.WriteFile(blocklistPath, []byte(""), 0644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+
+		// Should succeed with empty blocklist
+		blocklist, err := LoadBlocklist(blocklistPath)
+		if err != nil {
+			t.Fatalf("unexpected error for empty file: %v", err)
+		}
+
+		if blocklist == nil {
+			t.Fatal("expected non-nil blocklist for empty file")
+		}
+
+		// Verify no patterns loaded
+		if len(blocklist.Paths) != 0 {
+			t.Errorf("expected 0 path patterns for empty file, got %d", len(blocklist.Paths))
+		}
+
+		if len(blocklist.Repos) != 0 {
+			t.Errorf("expected 0 repo patterns for empty file, got %d", len(blocklist.Repos))
+		}
+	})
+
+	t.Run("Blocklist with only paths", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "paths-only.yaml")
+
+		content := `paths:
+  - ^\.github/
+  - ^test/
+`
+		if err := os.WriteFile(blocklistPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+
+		blocklist, err := LoadBlocklist(blocklistPath)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(blocklist.Paths) != 2 {
+			t.Errorf("expected 2 path patterns, got %d", len(blocklist.Paths))
+		}
+
+		if len(blocklist.Repos) != 0 {
+			t.Errorf("expected 0 repo patterns, got %d", len(blocklist.Repos))
+		}
+	})
+
+	t.Run("Blocklist with only repos", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "repos-only.yaml")
+
+		content := `repos:
+  - ^spamorg/
+  - ^baduser/badrepo$
+`
+		if err := os.WriteFile(blocklistPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+
+		blocklist, err := LoadBlocklist(blocklistPath)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(blocklist.Paths) != 0 {
+			t.Errorf("expected 0 path patterns, got %d", len(blocklist.Paths))
+		}
+
+		if len(blocklist.Repos) != 2 {
+			t.Errorf("expected 2 repo patterns, got %d", len(blocklist.Repos))
+		}
+	})
+
+	t.Run("Permission denied error", func(t *testing.T) {
+		// Skip this test if running as root (permissions don't apply)
+		if os.Getuid() == 0 {
+			t.Skip("skipping permission test when running as root")
+		}
+
+		tmpDir := t.TempDir()
+		blocklistPath := filepath.Join(tmpDir, "forbidden.yaml")
+
+		// Create file and remove read permissions
+		if err := os.WriteFile(blocklistPath, []byte("paths:\n  - test"), 0000); err != nil {
+			t.Fatalf("failed to write test file: %v", err)
+		}
+		defer func() {
+			_ = os.Chmod(blocklistPath, 0644) // Restore permissions for cleanup
+		}()
+
+		blocklist, err := LoadBlocklist(blocklistPath)
+
+		// Should return error (not IsNotExist)
+		if err == nil {
+			t.Error("expected error for permission denied")
+		} else if os.IsNotExist(err) {
+			t.Error("expected permission error, not IsNotExist")
+		}
+
+		if blocklist != nil {
+			t.Error("expected nil blocklist on error")
+		}
+	})
 }
