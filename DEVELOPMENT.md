@@ -90,7 +90,7 @@ go test ./pkg/...
 
 ### Frontend Tests Only
 ```bash
-make test
+make test-js
 # or
 node test.js
 ```

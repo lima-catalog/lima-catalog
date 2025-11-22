@@ -76,7 +76,7 @@ go test ./pkg/...
 
 **Frontend only:**
 ```bash
-make test
+make test-js
 ```
 
 ### Testing Frontend Locally

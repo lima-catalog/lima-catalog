@@ -253,7 +253,7 @@ go test ./pkg/prompt/...     # Prompt builder tests only
 
 ### JavaScript Tests
 ```bash
-make test       # Includes JS tests
+make test-js    # JS tests only
 node test.js    # Direct test runner
 ```
 
