@@ -289,19 +289,55 @@ github://owner/repo/path/template.yaml?ref=sha
 
 **990 lines** of keyboard navigation code extracted into `keyboard.js` for maintainability.
 
-### Navigation Shortcuts
+### Jump to Section Shortcuts
 
 | Key | Action |
 |-----|--------|
-| `J` / `↓` | Next template |
-| `K` / `↑` | Previous template |
-| `Enter` | Open template preview |
-| `Escape` | Close modal / clear filters |
-| `Tab` | Cycle focus areas |
-| `1-9` | Jump to category |
-| `T` | Toggle theme |
-| `S` | Focus search |
-| `?` | Show help |
+| `/` | Focus search box |
+| `k` or `K` | Focus first keyword |
+| `c` or `C` | Focus first category |
+| `s` or `S` | Focus sort dropdown |
+| `t` or `T` | Focus first template card |
+| `Ctrl+↑` | Focus header (theme switcher) |
+
+**Note**: Uppercase shortcuts (`K`, `C`, `S`, `T`) work even while typing in the search box.
+
+### Template Grid Navigation
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` / `←` / `→` | Navigate between template cards (grid-aware) |
+| `Enter` / `Space` | Open template preview modal |
+| `PageUp` / `PageDown` | Scroll one page + focus visible template |
+| `Home` | Focus first template + scroll to top |
+| `End` | Focus last template + scroll to bottom |
+
+**Auto-focus behavior**: Arrow keys (`↑` / `↓`) automatically focus the first visible template when scrolling without focus.
+
+### Section Navigation
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+←` | Templates → Search box (sidebar) |
+| `Ctrl+→` | Sidebar → First template |
+| `Ctrl+↓` | Header → First template |
+| `Tab` | Navigate between interactive elements (native) |
+
+### Filter & Keyword Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `o` | Toggle ORG filter for focused template |
+| `r` | Toggle REPO filter for focused template |
+| `Delete` / `Backspace` | Remove selected keyword (when focused) |
+| `Escape` | Clear search box (when focused in search) |
+
+### Debug & Help
+
+| Key | Action |
+|-----|--------|
+| `@` | Toggle debug mode globally |
+| `?` | Show/hide keyboard help modal |
 
 ### Modal Shortcuts (when preview modal is open)
 
@@ -312,6 +348,12 @@ github://owner/repo/path/template.yaml?ref=sha
 | `↑` / `↓` / `←` / `→` | Scroll YAML content |
 | `@` | Toggle debug mode (YAML ↔ JSON) |
 | `Escape` | Close modal |
+
+**Similar Templates Navigation** (within modal):
+- `Tab` into similar templates list
+- `↑` / `↓` to navigate, shows diff preview
+- `Enter` / `Space` to open selected template
+- `Tab` out to restore original YAML
 
 ### Focus Management
 

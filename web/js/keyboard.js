@@ -880,6 +880,17 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                         </dl>
                     </div>
                     <div class="keyboard-help-section">
+                        <h3>Filters & Debug</h3>
+                        <dl class="keyboard-shortcuts">
+                            <dt><kbd>O</kbd></dt>
+                            <dd>Toggle ORG filter (focused template)</dd>
+                            <dt><kbd>R</kbd></dt>
+                            <dd>Toggle REPO filter (focused template)</dd>
+                            <dt><kbd>@</kbd></dt>
+                            <dd>Toggle debug mode</dd>
+                        </dl>
+                    </div>
+                    <div class="keyboard-help-section">
                         <h3>Preview Modal</h3>
                         <dl class="keyboard-shortcuts">
                             <dt><kbd>Ctrl+←</kbd> <kbd>Ctrl+→</kbd></dt>
@@ -888,6 +899,8 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                             <dd>Previous / next row</dd>
                             <dt><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></dt>
                             <dd>Scroll YAML content</dd>
+                            <dt><kbd>@</kbd></dt>
+                            <dd>Toggle YAML ↔ JSON view</dd>
                             <dt><kbd>Esc</kbd></dt>
                             <dd>Close modal</dd>
                         </dl>
