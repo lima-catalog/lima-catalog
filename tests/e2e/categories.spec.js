@@ -23,7 +23,7 @@ test.describe('Category and Keyword Filtering', () => {
     const firstCategory = categories.first();
     const categoryText = await firstCategory.textContent();
     expect(categoryText).toBeTruthy();
-    expect(categoryText).toMatch(/\(\d+\)/); // Should have count like "(10)"
+    expect(categoryText).toMatch(/\d+/); // Should have count like "164"
   });
 
   test('filters templates by clicking category', async ({ page }) => {

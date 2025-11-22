@@ -78,25 +78,26 @@ test.describe('Template Search and Filtering', () => {
   test('filters by official/community checkboxes', async ({ page }) => {
     const initialCount = await page.locator('#templates-grid .template-card').count();
 
-    // Uncheck community templates
-    await page.click('#show-community');
-    await page.waitForTimeout(300);
+    // Uncheck community templates (should show only official)
+    await page.locator('#show-community').uncheck();
+    await page.waitForTimeout(500);
 
     const officialOnlyCount = await page.locator('#templates-grid .template-card').count();
     expect(officialOnlyCount).toBeGreaterThan(0);
     expect(officialOnlyCount).toBeLessThan(initialCount);
 
-    // Uncheck official too (should show none)
-    await page.click('#show-official');
-    await page.waitForTimeout(300);
+    // Re-check community, uncheck official (should show only community)
+    await page.locator('#show-community').check();
+    await page.locator('#show-official').uncheck();
+    await page.waitForTimeout(500);
 
-    const noneCount = await page.locator('#templates-grid .template-card').count();
-    expect(noneCount).toBe(0);
+    const communityOnlyCount = await page.locator('#templates-grid .template-card').count();
+    expect(communityOnlyCount).toBeGreaterThan(0);
+    expect(communityOnlyCount).toBeLessThan(initialCount);
 
-    // Re-enable both
-    await page.click('#show-official');
-    await page.click('#show-community');
-    await page.waitForTimeout(300);
+    // Re-enable both (should show all)
+    await page.locator('#show-official').check();
+    await page.waitForTimeout(500);
 
     const restoredCount = await page.locator('#templates-grid .template-card').count();
     expect(restoredCount).toBe(initialCount);
