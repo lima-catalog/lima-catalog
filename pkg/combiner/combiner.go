@@ -59,7 +59,8 @@ type CombinedTemplate struct {
 	UpdatedAt               string                                 `json:"updated_at"`
 	Official                bool                                   `json:"official"`
 	URL                     string                                 `json:"url"`
-	RawURL                  string                                 `json:"raw_url"`
+	GithubURL               string                                 `json:"github_url"`  // github: scheme URL
+	RawURL                  string                                 `json:"raw_url"`     // https: raw.githubusercontent.com URL
 	NotabilityScore         float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
 	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown   `json:"notability_score_breakdown,omitempty"` // Debug: score components
 	SimilarTemplates        []types.SimilarTemplate                `json:"similar_templates,omitempty"` // Similar/duplicate templates detected by MinHash+LSH
@@ -134,6 +135,9 @@ func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, 
 		// Calculate notability score with breakdown
 		breakdown := discovery.CalculateNotabilityScoreWithBreakdown(template.Notability, owner, repoName, repo.Stars)
 
+		// Construct github: scheme URL
+		githubURL := getGitHubSchemeURL(template)
+
 		// Get raw URL using Lima's URL transformation
 		rawURL, err := c.getRawURL(ctx, template)
 		if err != nil {
@@ -155,6 +159,7 @@ func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, 
 			UpdatedAt:               c.formatDate(repo.UpdatedAt),
 			Official:                template.IsOfficial,
 			URL:                     template.URL,
+			GithubURL:               githubURL,
 			RawURL:                  rawURL,
 			NotabilityScore:         breakdown.Total,
 			NotabilityScoreBreakdown: &breakdown,
