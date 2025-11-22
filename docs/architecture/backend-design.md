@@ -157,6 +157,70 @@ Non-original templates get their `original_id` field set, pointing to the origin
 
 **Important**: GitHub code search does not return results from forked repositories (unless the fork has more stars than the parent). This means all templates in our catalog are from non-fork repos, simplifying original detection.
 
+### Transitive Similarity Grouping
+
+**The Problem**: Similarity is transitive - if template B is 90% similar to A, and C is 90% similar to B, should C also be considered part of the same duplicate group (even if C is only 85% similar to A)?
+
+**Example**:
+```
+Template A: ubuntu.yaml
+Template B: ubuntu-copy.yaml    (95% similar to A)
+Template C: ubuntu-fork.yaml    (92% similar to B, 85% similar to A)
+```
+
+Without transitive grouping, we might:
+- Show A and hide B (good)
+- Show A and C but hide B (confusing - why show C but not B?)
+
+**The Solution**: Union-Find Algorithm
+
+The system uses a [union-find (disjoint-set)](https://en.wikipedia.org/wiki/Disjoint-set_data_structure) data structure to group all transitively connected templates:
+
+1. **Initialize**: Each template starts in its own group
+2. **Union**: For each exact duplicate pair (>90%), merge their groups
+3. **Find**: Use path compression to efficiently find group representative
+4. **Result**: All transitively similar templates end up in the same group
+
+```go
+// Simplified pseudocode
+func buildExactDuplicateGroups(templates) {
+    parent := map[templateID]templateID{}
+
+    // Union all exact duplicates (>90% similarity)
+    for each template {
+        for each similar in template.SimilarTemplates {
+            if similar.Similarity > 0.9 {
+                union(template.ID, similar.ID)
+            }
+        }
+    }
+
+    // Group by root
+    for each template {
+        root := find(template.ID)
+        groups[root].append(template.ID)
+    }
+}
+```
+
+**Benefits**:
+
+1. **Consistent filtering**: Only one representative shown per group
+2. **Maximizes hiding**: Hides the maximum number of duplicates
+3. **Deterministic**: Same result every time (alphabetical tie-breaker)
+4. **Efficient**: O(n × α(n)) ≈ O(n) with path compression
+
+**Example Outcome**:
+```
+Group 1: [A, B, C]
+Original: A (oldest repo)
+Hidden: B, C (both have original_id = A)
+```
+
+When "Duplicates" checkbox is unchecked (default), users see only A. When checked, they see A, B, and C with badges indicating relationships.
+
+**Implementation**: See `buildExactDuplicateGroups()` and `identifyOriginals()` in `pkg/discovery/analyzer.go:539-596`
+
 ### UI Features
 
 - Color-coded badges: Original (green), Exact (red), Near (orange), Similar (blue)
