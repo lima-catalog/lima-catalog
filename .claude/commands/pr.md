@@ -21,9 +21,9 @@ This will:
 - Show changed files
 - Run appropriate tests based on file types:
   - Only JS files changed → `make test-js`
-  - Only Go files changed → `make test-go` + `make lint`
-  - Both changed → `make test` + `make lint`
-  - No code files → `make test` (to be safe)
+  - Only Go files changed → `make vet test-go` + `make lint`
+  - Both changed → `make test` (vet + test-go + test-js) + `make lint`
+  - No code files → Skip tests (CI will run them)
 - Rebase on origin/main
 - Exit with error if conflicts detected
 

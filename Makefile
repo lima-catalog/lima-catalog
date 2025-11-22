@@ -117,17 +117,16 @@ pr: ## Prepare for PR: rebase on main, run smart tests
 			$(MAKE) lint; \
 		fi; \
 	elif [ -n "$$HAS_GO_FILES" ]; then \
-		echo "🧪 Running Go tests only..."; \
-		$(MAKE) test-go; \
+		echo "🧪 Running Go tests and linting..."; \
+		$(MAKE) vet test-go; \
 		if command -v golangci-lint >/dev/null 2>&1; then \
 			$(MAKE) lint; \
 		fi; \
 	elif [ -n "$$HAS_JS_FILES" ]; then \
-		echo "🧪 Running JS tests only..."; \
+		echo "🧪 Running JS tests..."; \
 		$(MAKE) test-js; \
 	else \
-		echo "📄 No code files changed, running all tests to be safe..."; \
-		$(MAKE) test; \
+		echo "📄 No code files changed, skipping tests (CI will run them)"; \
 	fi
 	@# Attempt rebase
 	@echo ""
