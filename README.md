@@ -87,7 +87,7 @@ The project includes a comprehensive test suite for both Go and JavaScript modul
 
 **Quick test (recommended):**
 ```bash
-npm test
+make test
 # or
 node test.js
 ```

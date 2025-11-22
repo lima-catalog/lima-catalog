@@ -456,7 +456,7 @@ runner.test('filters: AND logic', () => {
 **Running tests**:
 ```bash
 # Node.js (with DOM mocking)
-npm test
+node test.js
 
 # Browser (visual)
 # Open web/tests.html in browser

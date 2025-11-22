@@ -38,9 +38,6 @@ go mod download
 ```bash
 # Requires Node.js for testing
 node --version  # 18+ recommended
-
-# Install test dependencies
-npm install
 ```
 
 ### Environment Variables
@@ -93,7 +90,7 @@ go test ./pkg/...
 
 ### Frontend Tests Only
 ```bash
-npm test
+make test
 # or
 node test.js
 ```
