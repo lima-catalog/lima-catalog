@@ -241,16 +241,22 @@ func TestCheckRateLimit(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				resetTime := time.Now().Add(1 * time.Hour).Unix()
-				response := `{
+				response := fmt.Sprintf(`{
 					"resources": {
 						"core": {
 							"limit": 5000,
-							"remaining": ` + string(rune(tt.remaining+'0')) + `,
-							"reset": ` + string(rune(resetTime)) + `,
-							"used": ` + string(rune(5000-tt.remaining+'0')) + `
+							"remaining": %d,
+							"reset": %d,
+							"used": %d
+						},
+						"search": {
+							"limit": 30,
+							"remaining": 29,
+							"reset": %d,
+							"used": 1
 						}
 					}
-				}`
+				}`, tt.remaining, resetTime, 5000-tt.remaining, resetTime)
 				_, _ = w.Write([]byte(response))
 			}))
 			defer ts.Close()
@@ -265,16 +271,40 @@ func TestCheckRateLimit(t *testing.T) {
 				cache:  NewClient(ctx, "token").cache,
 			}
 
-			// Note: This test is limited because we can't easily mock the rate limit
-			// response structure. In a real implementation, you'd use a more sophisticated
-			// mocking approach or dependency injection for the GitHub client.
-
-			// For now, we're just testing that the function exists and returns
-			// We'd need to refactor the Client to allow injecting a mock GitHub client
-			// for proper testing of CheckRateLimit
-			_ = ghClient
-			_ = tt.expectError
+			err := ghClient.CheckRateLimit(tt.minimumRemaining)
+			if tt.expectError && err == nil {
+				t.Error("expected error but got nil")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("expected no error but got: %v", err)
+			}
 		})
+	}
+}
+
+func TestCheckRateLimit_APIError(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a test server that returns an error
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"message": "Internal Server Error"}`))
+	}))
+	defer ts.Close()
+
+	// Create client pointing to test server
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	err := ghClient.CheckRateLimit(100)
+	if err == nil {
+		t.Error("expected error when API fails")
 	}
 }
 
@@ -321,6 +351,193 @@ func TestHandleRateLimitError(t *testing.T) {
 			err := client.HandleRateLimitError(tt.resp, tt.limitType)
 			if err != tt.expectError {
 				t.Errorf("expected HandleRateLimitError to return %v, got %v", tt.expectError, err)
+			}
+		})
+	}
+}
+
+func TestHandleRateLimitError_UnknownLimitType(t *testing.T) {
+	ctx := context.Background()
+
+	// Mock server that returns rate limit info
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		resetTime := time.Now().Add(1 * time.Hour).Unix()
+		response := fmt.Sprintf(`{
+			"resources": {
+				"core": {
+					"limit": 5000,
+					"remaining": 0,
+					"reset": %d,
+					"used": 5000
+				}
+			}
+		}`, resetTime)
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	// Test with unknown limit type - should return nil without waiting
+	resp := &github.Response{
+		Response: &http.Response{
+			StatusCode: 403,
+		},
+	}
+	err := ghClient.HandleRateLimitError(resp, "unknown")
+	if err != nil {
+		t.Errorf("expected nil for unknown limit type, got %v", err)
+	}
+}
+
+func TestHandleRateLimitError_RateLimitAPIError(t *testing.T) {
+	ctx := context.Background()
+
+	// Mock server that returns error when checking rate limits
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"message": "Internal Server Error"}`))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	// Test with 403 response but rate limit API fails
+	resp := &github.Response{
+		Response: &http.Response{
+			StatusCode: 403,
+		},
+	}
+	err := ghClient.HandleRateLimitError(resp, "core")
+	if err != nil {
+		t.Errorf("expected nil when rate limit API fails (fail-safe), got %v", err)
+	}
+}
+
+func TestHandleRateLimitError_ZeroResetTime(t *testing.T) {
+	ctx := context.Background()
+
+	// Mock server that returns rate limit info with zero reset time
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		response := `{
+			"resources": {
+				"core": {
+					"limit": 5000,
+					"remaining": 0,
+					"reset": 0,
+					"used": 5000
+				}
+			}
+		}`
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	// Test with 403 response but zero reset time
+	resp := &github.Response{
+		Response: &http.Response{
+			StatusCode: 403,
+		},
+	}
+	err := ghClient.HandleRateLimitError(resp, "core")
+	if err != nil {
+		t.Errorf("expected nil for zero reset time, got %v", err)
+	}
+}
+
+func TestHandleRateLimitError_NegativeWaitDuration(t *testing.T) {
+	ctx := context.Background()
+
+	// Mock server that returns rate limit info with reset time in the past
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		resetTime := time.Now().Add(-1 * time.Hour).Unix()
+		response := fmt.Sprintf(`{
+			"resources": {
+				"core": {
+					"limit": 5000,
+					"remaining": 0,
+					"reset": %d,
+					"used": 5000
+				},
+				"search": {
+					"limit": 30,
+					"remaining": 0,
+					"reset": %d,
+					"used": 30
+				}
+			}
+		}`, resetTime, resetTime)
+		_, _ = w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	client := github.NewClient(nil)
+	client.BaseURL, _ = client.BaseURL.Parse(ts.URL + "/")
+
+	ghClient := &Client{
+		client: client,
+		ctx:    ctx,
+		cache:  NewClient(ctx, "token").cache,
+	}
+
+	tests := []struct {
+		name       string
+		statusCode int
+		limitType  string
+	}{
+		{
+			name:       "403 Forbidden with core limit",
+			statusCode: 403,
+			limitType:  "core",
+		},
+		{
+			name:       "429 Too Many Requests with search limit",
+			statusCode: 429,
+			limitType:  "search",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := &github.Response{
+				Response: &http.Response{
+					StatusCode: tt.statusCode,
+				},
+			}
+
+			// Should return nil when wait duration is negative (reset already passed)
+			err := ghClient.HandleRateLimitError(resp, tt.limitType)
+			if err != nil {
+				t.Errorf("expected nil for negative wait duration, got %v", err)
 			}
 		})
 	}
