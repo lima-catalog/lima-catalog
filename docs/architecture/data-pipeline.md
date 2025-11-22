@@ -246,7 +246,7 @@ Combines three data sources:
 - `keywords`, `category`
 - `repo`, `org`, `path`
 - `stars`, `updated_at`
-- `official`, `url`, `raw_url`
+- `official`, `url`, `github_url`, `raw_url`
 - `notability_score`, `notability_score_breakdown`
 - `similar_templates`
 

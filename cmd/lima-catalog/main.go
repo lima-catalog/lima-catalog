@@ -238,7 +238,7 @@ func runAnalysisPhase(ctx context.Context, client *github.Client, store *storage
 }
 
 // runCombinePhase combines all data for the frontend
-func runCombinePhase(store *storage.Storage, dataDir string) error {
+func runCombinePhase(ctx context.Context, store *storage.Storage, dataDir string) error {
 	fmt.Printf("=== Phase 4: Frontend Data Combination === [%s]\n", time.Now().Format("15:04:05"))
 	fmt.Println()
 
@@ -270,7 +270,7 @@ func runCombinePhase(store *storage.Storage, dataDir string) error {
 
 	// Generate catalog file for frontend
 	catalogPath := filepath.Join(dataDir, "catalog.jsonl")
-	if err := dataCombiner.CombineData(combineTemplates, combineRepos, combineOrgs, catalogPath); err != nil {
+	if err := dataCombiner.CombineData(ctx, combineTemplates, combineRepos, combineOrgs, catalogPath); err != nil {
 		return fmt.Errorf("failed to combine data: %w", err)
 	}
 
@@ -565,7 +565,7 @@ func run() error {
 	}
 
 	// Phase 4: Frontend Data Combination
-	if err := runCombinePhase(store, cfg.dataDir); err != nil {
+	if err := runCombinePhase(ctx, store, cfg.dataDir); err != nil {
 		return err
 	}
 
