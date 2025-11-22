@@ -9,9 +9,9 @@ Based on Material Design and Apple Human Interface Guidelines for proper dark mo
 ### Light Theme Colors
 
 ```css
---primary: #2563eb       /* Primary blue for interactive elements */
---primary-dark: #1e40af  /* Darker blue for hover states */
---primary-light: #3b82f6 /* Lighter blue for selected states */
+--primary: #5a7a8c       /* Primary teal-gray for interactive elements */
+--primary-dark: #4a6b7c  /* Darker teal-gray for hover states */
+--primary-light: #6a8a9c /* Lighter teal-gray for selected states */
 --secondary: #64748b     /* Secondary gray */
 --success: #10b981       /* Success green */
 --warning: #f59e0b       /* Warning orange */
@@ -28,9 +28,9 @@ Based on Material Design and Apple Human Interface Guidelines for proper dark mo
 ### Dark Theme Colors
 
 ```css
---primary: #3b82f6       /* Primary blue (brighter for visibility) */
---primary-dark: #2563eb  /* Darker blue for hover */
---primary-light: #60a5fa /* Lighter blue for selected states */
+--primary: #6a8a9c       /* Primary teal-gray (brighter for visibility) */
+--primary-dark: #5a7a8c  /* Darker teal-gray for hover */
+--primary-light: #7a9aac /* Lighter teal-gray for selected states */
 --secondary: #94a3b8     /* Secondary gray */
 --success: #34d399       /* Success green */
 --warning: #fbbf24       /* Warning orange */
@@ -59,9 +59,9 @@ Based on Material Design and Apple Human Interface Guidelines for proper dark mo
 - Reduce saturation for colors in dark mode to avoid visual intensity
 
 **3. Color Saturation**
-- Light mode: Full saturation for vibrant feel
-- Dark mode: Reduced saturation to prevent eye strain
-- Primary blue: #2563eb (light) → #3b82f6 (dark, 10% lighter and less saturated)
+- Light mode: Muted teal-grays for subtle, professional feel
+- Dark mode: Slightly brighter teal-grays for visibility
+- Primary: #5a7a8c (light) → #6a8a9c (dark, slightly lighter for contrast)
 
 > **Note**: Surface hierarchy (bg → surface → elevated) is explained in detail in the [Color Surface Hierarchy](#color-surface-hierarchy) section below.
 
@@ -192,8 +192,8 @@ All utility buttons (copy, clear, close) follow the same interaction pattern for
 **Purpose**: Indicate template source type
 
 **Official**:
-- Background: `var(--primary-light)` (#3b82f6)
-- Color: `white`
+- Background: `var(--lima-lime)` (#B3DF4D)
+- Color: `#2d4a5a` (dark teal)
 - Shape: Fully rounded pill (`border-radius: 9999px`)
 
 **Community**:

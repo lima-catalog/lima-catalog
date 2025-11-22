@@ -11,27 +11,29 @@ Our experiments revealed important insights about Lima templates on GitHub and h
 **Critical Discovery**: GitHub Code Search **does NOT include forks by default**
 
 - Forks are only searchable if they have more stars than the parent repository
-- `lima-vm/lima` has **18,903 stars**
+- `lima-vm/lima` has **19,000+ stars**
 - No fork has more stars, so **all 750 forks are invisible to code search**
 
-### 2. Search Results Breakdown
+### 2. Search Results Breakdown (Initial Research)
 
 Our search query: `minimumLimaVersion extension:yml OR extension:yaml -repo:lima-vm/lima`
 
-Results:
+**Initial findings** (research phase):
 - **57 unique templates** found
 - **35 unique repositories**
 - **34 unique owners**
 - **0 from lima-vm/lima** (explicitly excluded)
 - **0 from forks** (invisible to search due to star count)
 
-These 57 templates are entirely from **independent repositories** - not lima-vm/lima and not its forks.
+These initial results were entirely from **independent repositories** - not lima-vm/lima and not its forks.
+
+*Note: Current catalog has grown significantly through automated discovery.*
 
 ### 3. Lima Template Structure
 
 **lima-vm/lima official templates**:
 - Located in `templates/` directory (not `examples/`)
-- 52 YAML template files
+- Official YAML template files
 - All contain `minimumLimaVersion` field
 - Examples: `ubuntu.yaml`, `k3s.yaml`, `default.yaml`
 

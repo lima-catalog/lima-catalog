@@ -19,7 +19,7 @@ The backend is a Go CLI tool (`cmd/lima-catalog`) that discovers, validates, and
 - **Context Support**: Cancellation for long-running operations
 - **Functional Options**: Flexible configuration
 - **Idiomatic Error Handling**: Sentinel errors, wrapped errors
-- **60%+ Test Coverage**: Comprehensive tests with mocks
+- **Comprehensive Test Coverage**: Tests with mocks for all packages
 
 → For code quality standards, see [Code Standards](../reference/code-standards.md)
 
@@ -34,26 +34,32 @@ The backend is a Go CLI tool (`cmd/lima-catalog`) that discovers, validates, and
 Stored in `notability` field:
 
 - `message_length` - Length of user-facing message (>0 indicates template meant for reuse)
+- `message_line_count` - Number of lines in message (used for scoring)
 - `provision_count` - Number of provision scripts
+- `provision_substantial` - Number of substantial provision scripts (>10 lines, capped at 3, min 1)
 - `provision_total_lines` - Total lines across all provision scripts
 - `probe_count` - Number of probe scripts
+- `probe_substantial` - Number of substantial probe scripts (>10 lines, capped at 3, min 1)
 - `probe_total_lines` - Total lines across all probe scripts
 - `param_count` - Number of configurable parameters
 - `env_count` - Number of environment variables
 - `comment_line_count` - Number of **unique** YAML comment lines (filtered)
 - `unusual_images` - List of unusual image **domains** (not in official templates)
+- `all_images` - All image domains (stored for org/repo name matching)
 
 ### Comment Filtering
 
 Prevents score inflation from inherited comments:
 
-1. Fetches `default.yaml` from lima-vm/lima repository
-2. Extracts all normalized comment lines from default template
-3. Only counts comments that are:
-   - Not present in default.yaml (prevents derivative templates from inheriting scores)
+1. Scans entire git history of lima-vm/lima repository (templates/ and examples/ directories)
+2. Uses local git clone via `LIMA_REPO_PATH` environment variable
+3. Extracts all normalized lines (comments, provision scripts, probes, messages) from official templates across all commits
+4. Stores results in `official.json` file
+5. Only counts comments/lines that are:
+   - Not present in official knowledge (prevents derivative templates from inheriting scores)
    - Not empty (ignores lines with just `#` and whitespace)
 
-**Rationale**: Many templates start from default.yaml and inherit documentation comments. Without filtering, these templates get artificially inflated scores (default.yaml itself scores 1132 primarily from 541 comment lines).
+**Rationale**: Many templates start from official templates and inherit documentation comments. Without filtering, these templates get artificially inflated scores.
 
 ### Official Images Detection
 
@@ -81,10 +87,10 @@ What gets stored:
 Weighted sum of metrics:
 
 1. **Message**: 50 points base + 1 per line (capped at 100 total)
-2. **Provision scripts**: 10 points per script + 1 point per 10 lines
+2. **Provision scripts**: 10 points per substantial script (>10 lines, capped at 3, min 1) + 1 point per 10 total lines
 3. **Parameters**: 20 points per param (capped at 100)
 4. **Environment vars**: 10 points per var (capped at 100)
-5. **Probes**: 5 points per probe + 1 point per 10 lines
+5. **Probes**: 5 points per substantial probe (>10 lines, capped at 3, min 1) + 1 point per 10 total lines
 6. **Image name**: Combined scoring for image-related metrics (only `http://` or `https://` URLs):
    - -100 points if no remote images (won't work on other computers)
    - 0 points if only official/usual images (neutral)
@@ -176,7 +182,7 @@ Non-original templates get their `original_id` field set, pointing to the origin
 
 **Current State:**
 - ✅ 0 critical issues
-- ✅ 60%+ test coverage (83 tests passing)
+- ✅ Comprehensive test coverage across all packages
 - ✅ Idiomatic Go APIs with context support
 - ✅ Dependency injection for testability
 - ✅ Comprehensive documentation
@@ -228,9 +234,7 @@ pkg/
 ├── interfaces/       # Interfaces for testing
 │   └── interfaces.go # HTTPClient, FileSystem, Clock
 └── types/            # Core data structures
-    ├── template.go   # Template, Repository, Organization
-    ├── progress.go   # Progress tracking
-    └── blocklist.go  # Blocklist configuration
+    └── types.go      # Template, Repository, Organization, Progress, Blocklist, NotabilityMetrics, SimilarTemplate
 ```
 
 → For complete file index, see [Source Index](source-index.md)

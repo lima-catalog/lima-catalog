@@ -16,7 +16,7 @@ This document evaluates strategies for detecting duplicate or near-duplicate Lim
 ## Context
 
 ### Current System
-- **716 templates** currently cataloged (51 official + 665 community)
+- **Templates cataloged** from official and community sources
 - **~1.3KB per template** average size (948KB total)
 - **Incremental analysis**: Templates only re-analyzed when SHA changes
 - **Data storage**: JSON Lines format on data branch
@@ -68,13 +68,13 @@ SimHash generates a single fixed-size hash fingerprint (typically 64 or 128 bits
 
 ### Storage Requirements
 - **8 bytes per template** (64-bit hash)
-- **~6KB total** for 716 templates
+- **~6KB total** for current catalog size
 - **Negligible** impact on data size
 
 ### Performance
 - **Hash generation**: ~1ms per template
 - **Comparison**: ~1μs per pair (bitwise XOR + popcount)
-- **All-pairs comparison**: ~1ms for 716 templates
+- **All-pairs comparison**: ~1ms for current catalog size
 
 ### Use Case Fit
 **Good for exact and near-exact duplicates** (>75% similarity)
@@ -113,14 +113,14 @@ MinHash generates multiple hash values (typically 128-256) per document, represe
 
 ### Storage Requirements
 - **512-1024 bytes per template** (128-256 uint32 hashes)
-- **~366KB - 732KB total** for 716 templates
+- **~366KB - 732KB total** for current catalog size
 - **Acceptable** - still <1MB for all templates
 
 ### Performance
 - **Hash generation**: ~10-20ms per template (depends on shingling)
 - **LSH bucketing**: ~1ms per template
 - **Candidate comparison**: ~10μs per pair (Jaccard on hash sets)
-- **All-pairs with LSH**: ~50-100ms for 716 templates (sub-linear)
+- **All-pairs with LSH**: ~50-100ms for current catalog size (sub-linear)
 
 ### Use Case Fit
 **Excellent** - Detects everything from near-exact copies to distant derivatives
@@ -159,12 +159,12 @@ Fuzzy hashing creates context-triggered piecewise hashes that can be compared us
 
 ### Storage Requirements
 - **100-200 bytes per template**
-- **~70-140KB total** for 716 templates
+- **~70-140KB total** for current catalog size
 
 ### Performance
 - **Hash generation**: ~5-10ms per template
 - **Comparison**: ~100μs per pair (edit distance)
-- **All-pairs comparison**: ~51 seconds for 716 templates (O(n²))
+- **All-pairs comparison**: ~51 seconds for current catalog size (O(n²))
 
 ### Use Case Fit
 **Poor** - Templates may be too small
@@ -202,13 +202,13 @@ Convert templates to sets of k-shingles (overlapping sequences) and compute Jacc
 
 ### Storage Requirements
 - **1-5KB per template** (depends on k and template size)
-- **~1-4MB total** for 716 templates
+- **~1-4MB total** for current catalog size
 - **Significant** - 5x larger than current catalog
 
 ### Performance
 - **Shingle extraction**: ~2ms per template
 - **Comparison**: ~1ms per pair (set intersection)
-- **All-pairs comparison**: ~5 minutes for 716 templates
+- **All-pairs comparison**: ~5 minutes for current catalog size
 
 ### Use Case Fit
 **Poor** - Storage and performance don't scale
@@ -248,12 +248,12 @@ Use language models to generate vector embeddings (typically 384-1536 dimensions
 
 ### Storage Requirements
 - **1.5-6KB per template** (384-1536 float32s)
-- **~1-4.3MB total** for 716 templates
+- **~1-4.3MB total** for current catalog size
 
 ### Performance
 - **Embedding generation**: 50-500ms per template (model dependent)
 - **Comparison**: ~50μs per pair (dot product)
-- **All-pairs comparison**: ~25 seconds for 716 templates
+- **All-pairs comparison**: ~25 seconds for current catalog size
 
 ### Use Case Fit
 **Overkill** - Templates are structured YAML, not natural language
@@ -299,7 +299,7 @@ Parse YAML into Abstract Syntax Tree, normalize, and compare tree structures usi
 - **Parsing**: ~1ms per template
 - **Normalization**: ~1ms per template
 - **Tree edit distance**: ~10-100ms per pair (algorithm dependent)
-- **All-pairs comparison**: ~10-100 minutes for 716 templates
+- **All-pairs comparison**: ~10-100 minutes for current catalog size
 
 ### Use Case Fit
 **Poor** - Too slow for all-pairs comparison
@@ -349,7 +349,7 @@ Extract key features from templates (image URLs, provision script lines, paramet
 ### Performance
 - **Feature extraction**: Already done during analysis
 - **Comparison**: ~10μs per pair (feature vector comparison)
-- **All-pairs comparison**: ~7ms for 716 templates
+- **All-pairs comparison**: ~7ms for current catalog size
 
 ### Use Case Fit
 **Good for functional similarity** - Detects templates doing same thing
@@ -465,12 +465,12 @@ Combine multiple strategies for different levels of similarity detection.
 ### Configuration Recommendations
 
 ```go
-// MinHash configuration
+// MinHash configuration (matches actual implementation)
 const (
     ShingleSize     = 5     // 5-word shingles (good for YAML)
     NumHashes       = 128   // 128 hash functions (standard)
-    NumBands        = 16    // LSH bands
-    RowsPerBand     = 8     // LSH rows per band (16*8=128)
+    NumBands        = 32    // LSH bands (actual default)
+    RowsPerBand     = 4     // LSH rows per band (32*4=128)
     SimilarityThreshold = 0.5  // 50% Jaccard similarity
 )
 
@@ -496,7 +496,7 @@ const (
 
 **For Lima Catalog**:
 - **128 hashes** chosen for good accuracy with reasonable storage
-- 716 templates × 512 bytes = 366KB total (acceptable)
+- Current catalog: ~512 bytes per template (acceptable overhead)
 - Scales to 10,000+ templates without issues
 - Standard choice in academic research
 

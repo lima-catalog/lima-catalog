@@ -19,7 +19,7 @@ This document contains detailed implementation notes for completed features. For
 - `pkg/discovery/blocklist.go` - Filtering logic
 
 **Test coverage:**
-- 17 unit test cases for blocklist filtering
+- unit test cases for blocklist filtering
 - Integration test suite (`scripts/test-integration.sh`)
 - Makefile for easy testing
 
@@ -44,7 +44,7 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - Name derivation from paths
 
 **Incremental optimization:**
-- Only re-analyzes templates when SHA changes (see `analyzer.go:170`)
+- Only re-analyzes templates when SHA changes (see `analyzer.go (SHA change optimization)`)
 - Preserves existing analysis until template is updated
 - Significantly reduces daily processing time
 
@@ -61,7 +61,7 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 
 **Files:**
 - `pkg/discovery/metadata.go` - Refresh selection logic
-- `pkg/discovery/metadata_test.go` - 11 unit test cases
+- `pkg/discovery/metadata_test.go` - unit test cases
 
 **Key algorithm:**
 ```go
@@ -91,8 +91,8 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - Extracts org from repo for organization field
 
 **Files:**
-- `pkg/combiner/combiner.go` - Data combination logic (218 lines)
-- `pkg/combiner/combiner_test.go` - 19 unit test cases
+- `pkg/combiner/combiner.go` - Data combination logic (implementation file)
+- `pkg/combiner/combiner_test.go` - unit test cases
 
 **Integration tests:**
 - Test 4 in `scripts/test-integration.sh`
@@ -103,7 +103,7 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - Simplified data loading: single HTTP request instead of two
 - Removed repository state management and lookup code
 - Updated URL helpers to use embedded `raw_url` field
-- All 76 frontend tests passing
+- All frontend tests passing
 
 **Changed files:**
 - `web/js/data.js` - Replaced `loadTemplates()` and `loadRepositories()` with `loadCatalog()`
@@ -129,7 +129,7 @@ Already implemented in Phase 2. Existing keyword/category extraction works well:
 - Data file sorting algorithms
 - Frontend data combination
 
-**Current coverage:** 28 Go tests
+**Current coverage:** Go backend tests
 
 ### Integration Tests
 
@@ -395,4 +395,4 @@ INCREMENTAL=1    # Enable incremental mode
 - 6 new test cases covering breakdown sorting for different components
 - Tests verify correct descending sort order
 - Tests verify graceful handling of missing breakdown data
-- Total: 83 tests passing (77 original + 6 new)
+- Total: comprehensive test coverage

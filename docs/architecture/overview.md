@@ -7,7 +7,7 @@
 ## Current State (November 2025)
 
 **Production:**
-- ✅ 716 templates cataloged (51 official + 665 community)
+- ✅ Templates cataloged from official and community sources
 - ✅ Daily automated updates via GitHub Actions
 - ✅ Smart categorization with keyword extraction
 - ✅ Rich web interface with preview and Lima 2.0 URLs

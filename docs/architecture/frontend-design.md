@@ -27,7 +27,7 @@ The frontend uses a clean separation of concerns:
 
 1. **`app.js`** - Application initialization and event setup
 2. **`appActions.js`** - Shared actions to break circular dependencies (filter, render, UI updates)
-3. **`keyboard.js`** - Keyboard shortcuts and navigation (990 lines, extracted for maintainability)
+3. **`keyboard.js`** - Keyboard shortcuts and navigation (extracted for maintainability)
 
 This architecture prevents circular dependencies while maintaining clean code organization.
 
@@ -86,14 +86,11 @@ web/js/
 
 **Categories**:
 - containers
-- kubernetes
 - development
-- databases
+- general
+- orchestration
 - security
-- machine-learning
-- networking
-- gaming
-- other
+- testing
 
 **Dynamic counts** update based on current filter state
 
@@ -101,13 +98,13 @@ web/js/
 
 ### Debug Mode Features
 
-**Activation**: Press `D` to toggle debug mode globally
+**Activation**: Press `@` to toggle debug mode globally
 
 **Notability Score Breakdown Popup**:
 - Appears when hovering over template badge in debug mode
 - Shows detailed breakdown of notability score components:
   - Message, Provision, Parameters, Env Vars, Probes
-  - Unusual Images, Custom Images, Comments, Stars
+  - Image Name, Comments, Stars
   - Total score
 - Each metric displays score value and rank in catalog
 - Ranks handle ties (templates with same score get same rank)
@@ -121,8 +118,7 @@ When debug mode is enabled, sort dropdown includes breakdown components:
 - [Debug] Parameters
 - [Debug] Environment Variables
 - [Debug] Probes
-- [Debug] Unusual Images
-- [Debug] Custom Images
+- [Debug] Image Name
 - [Debug] YAML Comments
 - [Debug] Repository Stars
 
@@ -274,12 +270,13 @@ github://owner/repo/path/template.yaml?ref=sha
 **Modes**:
 - Light mode
 - Dark mode
+- Auto mode (matches system preference)
 - Remembers preference in localStorage
 
 **Implementation**:
 - CSS custom properties for colors
 - Smooth transitions
-- Keyboard shortcut: `T`
+- Theme switcher button in header (no keyboard shortcut)
 
 **Code**: `theme.js`, `style.css`
 
@@ -287,21 +284,57 @@ github://owner/repo/path/template.yaml?ref=sha
 
 ## Keyboard Navigation
 
-**990 lines** of keyboard navigation code extracted into `keyboard.js` for maintainability.
+Keyboard navigation code extracted into `keyboard.js` for maintainability.
 
-### Navigation Shortcuts
+### Jump to Section Shortcuts
 
 | Key | Action |
 |-----|--------|
-| `J` / `↓` | Next template |
-| `K` / `↑` | Previous template |
-| `Enter` | Open template preview |
-| `Escape` | Close modal / clear filters |
-| `Tab` | Cycle focus areas |
-| `1-9` | Jump to category |
-| `T` | Toggle theme |
-| `S` | Focus search |
-| `?` | Show help |
+| `/` | Focus search box |
+| `k` or `K` | Focus first keyword |
+| `c` or `C` | Focus first category |
+| `s` or `S` | Focus sort dropdown |
+| `t` or `T` | Focus first template card |
+| `Ctrl+↑` | Focus header (theme switcher) |
+
+**Note**: Uppercase shortcuts (`K`, `C`, `S`, `T`) work even while typing in the search box.
+
+### Template Grid Navigation
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` / `←` / `→` | Navigate between template cards (grid-aware) |
+| `Enter` / `Space` | Open template preview modal |
+| `PageUp` / `PageDown` | Scroll one page + focus visible template |
+| `Home` | Focus first template + scroll to top |
+| `End` | Focus last template + scroll to bottom |
+
+**Auto-focus behavior**: Arrow keys (`↑` / `↓`) automatically focus the first visible template when scrolling without focus.
+
+### Section Navigation
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+←` | Templates → Search box (sidebar) |
+| `Ctrl+→` | Sidebar → First template |
+| `Ctrl+↓` | Header → First template |
+| `Tab` | Navigate between interactive elements (native) |
+
+### Filter & Keyword Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `o` | Toggle ORG filter for focused template |
+| `r` | Toggle REPO filter for focused template |
+| `Delete` / `Backspace` | Remove selected keyword (when focused) |
+| `Escape` | Clear search box (when focused in search) |
+
+### Debug & Help
+
+| Key | Action |
+|-----|--------|
+| `@` | Toggle debug mode globally |
+| `?` | Show/hide keyboard help modal |
 
 ### Modal Shortcuts (when preview modal is open)
 
@@ -312,6 +345,12 @@ github://owner/repo/path/template.yaml?ref=sha
 | `↑` / `↓` / `←` / `→` | Scroll YAML content |
 | `@` | Toggle debug mode (YAML ↔ JSON) |
 | `Escape` | Close modal |
+
+**Similar Templates Navigation** (within modal):
+- `Tab` into similar templates list
+- `↑` / `↓` to navigate, shows diff preview
+- `Enter` / `Space` to open selected template
+- `Tab` out to restore original YAML
 
 ### Focus Management
 
@@ -407,7 +446,7 @@ runner.test('filters: AND logic', () => {
 
 ### Test Coverage
 
-**76 frontend tests** covering:
+**Frontend tests** covering:
 - URL helpers (`urlHelpers.test.js`)
 - Data parsing (`data.test.js`)
 - Filters and sorting (`filters.test.js`)
@@ -417,7 +456,7 @@ runner.test('filters: AND logic', () => {
 **Running tests**:
 ```bash
 # Node.js (with DOM mocking)
-npm test
+node test.js
 
 # Browser (visual)
 # Open web/tests.html in browser
@@ -429,7 +468,7 @@ npm test
 
 ### Efficient Rendering
 
-**Virtual scrolling**: Not needed yet (716 templates render instantly)
+**Virtual scrolling**: Not needed for current catalog size
 
 **Debounced search**: 300ms debounce on search input
 

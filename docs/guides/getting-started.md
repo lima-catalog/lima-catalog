@@ -48,14 +48,18 @@ cd lima-catalog
 # Go dependencies
 go mod download
 
-# Node.js test dependencies
-npm install
+# Node.js test framework (no dependencies required)
+# Tests use Node.js built-ins only
 ```
 
 **Set environment variables:**
 ```bash
 export GITHUB_TOKEN=your_personal_access_token
-export ANALYZE=true  # Enable template analysis
+export ANALYZE=true        # Enable template analysis
+export INCREMENTAL=true    # Use incremental mode (optional)
+export FORCE_ANALYZE=true  # Force re-analysis of all templates (optional)
+export DATA_DIR=./data     # Custom data directory (optional, default: ./data)
+export LIMA_REPO_PATH=...  # Path to local lima-vm/lima clone for official knowledge tracking (optional)
 ```
 
 ### Running Tests
@@ -72,7 +76,7 @@ go test ./pkg/...
 
 **Frontend only:**
 ```bash
-npm test
+make test-js
 ```
 
 ### Testing Frontend Locally

@@ -9,6 +9,8 @@ Quick reference for all source files and their purposes.
 | File | Purpose |
 |------|---------|
 | `cmd/lima-catalog/main.go` | Main CLI entry point for template discovery and analysis pipeline |
+| `cmd/debug-template/main.go` | Debug CLI tool for analyzing templates against official knowledge baseline |
+| `cmd/debug-template/main_test.go` | Tests for debug tool |
 | `cmd/prompt-generator/main.go` | Standalone CLI for generating LLM prompts for template analysis |
 | `cmd/prompt-generator/README.md` | Documentation for prompt generator tool |
 | `cmd/prompt-generator/example.sh` | Usage examples for prompt generator |
@@ -48,13 +50,27 @@ Quick reference for all source files and their purposes.
 | `blocklist_test.go` | Tests for blocklist |
 | `notability.go` | Template notability scoring |
 | `notability_test.go` | Tests for notability scoring |
+| `notability_codecomment_test.go` | Additional tests for notability code comment scoring |
+| `official.go` | Official template knowledge management (scans lima-vm/lima git history) |
 | `update.go` | Incremental update logic with timestamp-based discovery |
+| `update_test.go` | Tests for incremental update logic |
 
 #### `pkg/combiner/`
 | File | Purpose |
 |------|---------|
 | `combiner.go` | Combines templates/repos/orgs into frontend-optimized catalog.jsonl |
 | `combiner_test.go` | Tests for combiner |
+
+#### `pkg/minhash/`
+| File | Purpose |
+|------|---------|
+| `minhash.go` | MinHash signature generation for document similarity detection |
+| `minhash_test.go` | Tests for MinHash algorithm |
+| `lsh.go` | Locality-Sensitive Hashing for efficient similarity search |
+| `lsh_test.go` | Tests for LSH implementation |
+| `duplicates.go` | Duplicate template detection using LSH and MinHash |
+| `duplicates_test.go` | Tests for duplicate detection |
+| `example_test.go` | Example usage tests demonstrating MinHash/LSH workflow |
 
 #### `pkg/prompt/`
 | File | Purpose |
@@ -237,8 +253,7 @@ go test ./pkg/prompt/...     # Prompt builder tests only
 
 ### JavaScript Tests
 ```bash
-make test       # Includes JS tests
-npm test        # JS tests only
+make test-js    # JS tests only
 node test.js    # Direct test runner
 ```
 
@@ -311,9 +326,9 @@ No build step required - uses ES6 modules directly in browser.
 - Categorization → `pkg/discovery/analyzer.go`
 - GitHub API calls → `pkg/github/client.go`
 - Data storage → `pkg/storage/storage.go`
-- Frontend data loading → `docs/js/data.js`
-- Template rendering → `docs/js/templateCard.js`
-- Search/filter → `docs/js/filters.js` + `docs/js/app.js`
+- Frontend data loading → `web/js/data.js`
+- Template rendering → `web/js/templateCard.js`
+- Search/filter → `web/js/filters.js` + `web/js/app.js`
 - UI design system → `docs/guides/ui-ux-guidelines.md` + `web/style.css`
 - LLM prompt generation → `pkg/prompt/builder.go`
 - CLI tools → `cmd/*/main.go`
