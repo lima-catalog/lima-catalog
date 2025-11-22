@@ -24,3 +24,15 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+
+# E2E test data (local copy)
+web/catalog.jsonl

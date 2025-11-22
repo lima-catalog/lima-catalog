@@ -1,4 +1,4 @@
-.PHONY: test test-go test-js test-all build clean help lint vet pr
+.PHONY: test test-go test-js test-e2e test-e2e-setup test-e2e-headed test-all build clean help lint vet pr
 
 # Default target
 .DEFAULT_GOAL := help
@@ -24,6 +24,32 @@ test-js: ## Run JavaScript tests (requires Node.js)
 		exit 1; \
 	fi
 	@node test.js
+
+test-e2e-setup: ## Install Playwright and browsers (run once)
+	@echo "🎭 Installing Playwright..."
+	@if ! command -v npm >/dev/null 2>&1; then \
+		echo "❌ Error: npm is not installed. Please install Node.js."; \
+		exit 1; \
+	fi
+	@npm install
+	@npx playwright install chromium
+	@echo "✅ Playwright installed and browsers downloaded"
+
+test-e2e: ## Run end-to-end tests with Playwright
+	@echo "🎭 Running E2E tests..."
+	@if [ ! -d "node_modules/@playwright/test" ]; then \
+		echo "⚠️  Playwright not installed. Run: make test-e2e-setup"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$$HOME/.cache/ms-playwright/chromium-"* ] 2>/dev/null; then \
+		echo "⚠️  Playwright browsers not installed. Run: make test-e2e-setup"; \
+		exit 1; \
+	fi
+	@npx playwright test
+
+test-e2e-headed: ## Run E2E tests with visible browser (for debugging)
+	@echo "🎭 Running E2E tests (headed mode)..."
+	@npx playwright test --headed
 
 test-all: test ## Run all tests (alias for 'test')
 
@@ -72,6 +98,8 @@ clean: ## Remove build artifacts and test data
 	@echo "🧹 Cleaning up..."
 	@rm -f lima-catalog
 	@rm -rf test_data test_incremental
+	@rm -rf playwright-report test-results
+	@rm -rf node_modules
 	@echo "✅ Clean complete"
 
 .PHONY: check-token
