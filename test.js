@@ -44,6 +44,7 @@ await import('./web/js/state.test.js');
 await import('./web/js/utils.test.js');
 await import('./web/js/appActions.test.js');
 await import('./web/js/app.test.js');
+await import('./web/js/sidebar.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');
