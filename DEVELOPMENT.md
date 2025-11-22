@@ -104,6 +104,13 @@ python3 -m http.server 8000
 # Visit http://localhost:8000/tests.html
 ```
 
+### Test Coverage
+
+Current backend coverage: **45.9%** | Target: **70%+**
+
+For detailed test coverage plan and progress tracking, see:
+- **[Test Coverage Plan](docs/testing/test-coverage-plan.md)** - Comprehensive improvement roadmap
+
 ---
 
 ## Building
