@@ -357,16 +357,29 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         }
     }
 
-    // Make card clickable - open preview modal
-    card.style.cursor = 'pointer';
+    // Get the template name element
+    const templateNameElement = card.querySelector('.template-name');
 
-    const handleOpen = (e) => {
-        // Don't open modal if clicking on a link (repo link should open GitHub)
+    // Make only the template name clickable to open the modal
+    if (templateNameElement) {
+        templateNameElement.style.cursor = 'pointer';
+        templateNameElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click from also firing
+            onCardClick(template);
+        });
+    }
+
+    // Clicking the card (but not the name or links) should just select/focus it
+    card.addEventListener('click', (e) => {
+        // Don't interfere with links
         if (e.target.tagName === 'A' || e.target.closest('a')) return;
-        onCardClick(template);
-    };
 
-    card.addEventListener('click', handleOpen);
+        // Don't focus if clicking the template name (it will open the modal)
+        if (e.target.closest('.template-name')) return;
+
+        // Focus the card to select it
+        card.focus();
+    });
 
     // Add keyboard support
     card.addEventListener('keydown', (e) => {
