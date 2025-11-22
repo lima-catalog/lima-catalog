@@ -182,13 +182,13 @@ func isAlphanumericOrUnderscore(b byte) bool {
 
 // NotabilityScoreBreakdown contains the individual components of the notability score
 type NotabilityScoreBreakdown struct {
-	Message    float64 `json:"message"`     // 100 if has message
+	Message    float64 `json:"message"`     // 100 base + 1 per line (capped at 100)
 	Provision  float64 `json:"provision"`   // 10 per script + 1 per 10 lines
-	Parameters float64 `json:"parameters"`  // 20 per param
-	EnvVars    float64 `json:"env_vars"`    // 10 per var
+	Parameters float64 `json:"parameters"`  // 20 per param (capped at 100)
+	EnvVars    float64 `json:"env_vars"`    // 10 per var (capped at 100)
 	Probes     float64 `json:"probes"`      // 5 per probe + 1 per 10 lines
 	ImageName  float64 `json:"image_name"`  // -100 if no remote images, 30 if unusual, +0-70 if custom names
-	Comments   float64 `json:"comments"`    // 2 per comment line
+	Comments   float64 `json:"comments"`    // 2 per comment line (capped at 100)
 	Stars      float64 `json:"stars"`       // 1 per 10 stars (capped at 50)
 	Total      float64 `json:"total"`       // Sum of all components
 }
@@ -197,13 +197,13 @@ type NotabilityScoreBreakdown struct {
 // Higher score = more interesting/notable template
 //
 // Weights (in order of importance):
-// - Message: 100 points (indicates template meant for reuse)
+// - Message: 100 points base + 1 per line (capped at 100 total)
 // - Provision scripts: 10 points per script + 1 point per 10 lines
-// - Parameters: 20 points per param (indicates configurability)
-// - Environment vars: 10 points per var
+// - Parameters: 20 points per param (capped at 100)
+// - Environment vars: 10 points per var (capped at 100)
 // - Probes: 5 points per probe + 1 point per 10 lines
 // - Image name: -100 if no remote images, 30 if unusual images, +0-70 if custom org/repo names
-// - Comment lines: 2 points per comment line (indicates documentation quality)
+// - Comment lines: 2 points per comment line (capped at 100)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) float64 {
 	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, orgName, repoName, repoStars)
@@ -223,11 +223,15 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 
 	// Message presence (strong signal for reusability)
 	// Base bonus for having a message, plus line-based bonus for length
+	// Capped at 100 points
 	if metrics.MessageLength > 0 {
 		breakdown.Message = weights.Message
 		// Add 1 point per line for better filtering granularity
 		// (allows sorting by message quality, not just presence)
 		breakdown.Message += float64(metrics.MessageLineCount)
+		if breakdown.Message > 100 {
+			breakdown.Message = 100
+		}
 	}
 
 	// Provision scripts (indicates customization/setup)
@@ -237,10 +241,18 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 		float64(metrics.ProvisionTotalLines)*weights.ProvisionLine
 
 	// Parameters (indicates configurability)
+	// Capped at 100 points
 	breakdown.Parameters = float64(metrics.ParamCount) * weights.Parameter
+	if breakdown.Parameters > 100 {
+		breakdown.Parameters = 100
+	}
 
 	// Environment variables (shows configuration effort)
+	// Capped at 100 points
 	breakdown.EnvVars = float64(metrics.EnvCount) * weights.EnvVar
+	if breakdown.EnvVars > 100 {
+		breakdown.EnvVars = 100
+	}
 
 	// Probes (less important than provision)
 	// Use substantial script count (>10 lines, capped at 3, min 1) to avoid
@@ -265,7 +277,11 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 	// else: has only usual/official images, ImageName stays 0 (neutral)
 
 	// Comment lines (indicates documentation quality)
+	// Capped at 100 points
 	breakdown.Comments = float64(metrics.CommentLineCount) * weights.CommentLine
+	if breakdown.Comments > 100 {
+		breakdown.Comments = 100
+	}
 
 	// Repository stars (capped to avoid dominating other factors)
 	starsScore := float64(repoStars) / weights.StarsPerPoint
