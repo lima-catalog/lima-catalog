@@ -1,14 +1,14 @@
 # Frontend Test Coverage Improvement Plan
 
-**Current Overall Coverage: ~67% (7 of 9 modules)**
+**Current Overall Coverage: ~72% (7 of 9 modules fully, 2 partially)**
 **Target Coverage: 95%+**
 
 Last Updated: 2025-11-22
 
 **Recent Progress:**
-- ✅ Phase 1.1: Enhanced test framework with timer mocking and DOM utilities
-- ✅ Phase 1.2: Added 45 new tests (state.js: 30 tests, utils.js: 15 tests)
-- 📊 Total: 138 tests (up from 76) - +81% increase
+- ✅ Phase 1: Foundation complete - test framework enhanced, state.js & utils.js tested (+45 tests)
+- ✅ Phase 2: Partial - appActions.js & app.js partially tested (+22 tests)
+- 📊 Total: 160 tests (up from 76) - +110% increase!
 
 ## Coverage Status by Module
 
@@ -21,17 +21,23 @@ Last Updated: 2025-11-22
 - [x] `state.js` - 100% - Complete (30 tests: getters/setters, selections, debug mode) ✨ NEW
 - [x] `utils.js` - 100% - Complete (15 tests: debounce, focus trap, timer mocking) ✨ NEW
 
-**Total Tested:** 138 tests across 7 modules
+**Total Fully Tested:** 138 tests across 7 modules
+
+### ⚠️ Partial Coverage (Isolatable Functions Tested)
+- [x] `appActions.js` - ~40% - Partial (11 tests: sort dropdown, notifications, popstate, clearSearch) ✨ NEW
+- [x] `app.js` - ~35% - Partial (11 tests: event listeners, error handling, focus logic) ✨ NEW
+
+**Note:** Full integration testing requires mocking untested modules (sidebar, modal, keyboard). Deferred to later phases.
+
+**Total Partial:** 22 tests across 2 modules
 
 ### ❌ No Coverage (0%)
 - [ ] `modal.js` - 45KB - Very high complexity - CRITICAL (preview, diff algorithm, YAML loading)
 - [ ] `keyboard.js` - 43KB - Very high complexity - CRITICAL (navigation, accessibility)
 - [ ] `sidebar.js` - 28KB - High complexity - HIGH PRIORITY (keyword cloud, category rendering)
-- [ ] `appActions.js` - 10KB - High complexity - HIGH PRIORITY (filtering orchestration, event handling)
-- [ ] `app.js` - 4KB - Medium complexity - MEDIUM PRIORITY (initialization, setup)
 - [ ] `config.js` - 0.2KB - No logic - N/A (constants only)
 
-**Total Untested:** 130KB (78% of codebase by size, down from 81%)
+**Total Untested:** 116KB (70% of codebase by size, down from 81%)
 
 ---
 

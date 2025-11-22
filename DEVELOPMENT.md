@@ -119,7 +119,7 @@ python3 -m http.server 8000
 
 Current coverage:
 - **Backend:** 49.7% (83 tests) | Target: 70%+
-- **Frontend:** ~67% (138 tests, 7 of 9 modules) | Target: 95%+
+- **Frontend:** ~72% (160 tests, 7 fully + 2 partially) | Target: 95%+
 
 For detailed test coverage plans and progress tracking, see:
 - **[Backend Test Coverage Plan](docs/testing/test-coverage-plan.md)** - Backend improvement roadmap

@@ -42,6 +42,8 @@ await import('./web/js/templateCard.test.js');
 await import('./web/js/theme.test.js');
 await import('./web/js/state.test.js');
 await import('./web/js/utils.test.js');
+await import('./web/js/appActions.test.js');
+await import('./web/js/app.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');
