@@ -9,14 +9,35 @@ Follow these steps exactly when creating a PR:
 - `git diff <base>...HEAD --stat` - summary of all changes
 
 ## 2. Run Tests and Linting
-Before creating a PR, ensure all tests and linting checks pass:
+Before creating a PR, ensure all tests and linting checks pass.
+
+**Smart test selection based on changed files:**
 
 ```bash
-# Run all tests and go vet
-make test
+# Detect which files changed
+CHANGED_FILES=$(git diff <base>...HEAD --name-only)
+HAS_GO_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(go|mod|sum)$' || true)
+HAS_JS_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(js|html|css)$' || true)
 
-# Run linting (if golangci-lint is installed)
-make lint
+# Run appropriate tests
+if [ -n "$HAS_GO_FILES" ] && [ -n "$HAS_JS_FILES" ]; then
+    echo "Running all tests (Go + JS changed)..."
+    make test
+elif [ -n "$HAS_GO_FILES" ]; then
+    echo "Running Go tests only..."
+    make test-go
+elif [ -n "$HAS_JS_FILES" ]; then
+    echo "Running JS tests only..."
+    make test-js
+else
+    echo "No Go or JS files changed, running all tests to be safe..."
+    make test
+fi
+
+# Run linting (if golangci-lint is installed and Go files changed)
+if [ -n "$HAS_GO_FILES" ]; then
+    make lint
+fi
 ```
 
 If any tests fail or linting issues are found, fix them and commit before proceeding.
