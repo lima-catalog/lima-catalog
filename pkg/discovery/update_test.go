@@ -112,7 +112,7 @@ func TestMergeTemplates(t *testing.T) {
 				}
 				if len(result.UpdatedTemplates) > 0 {
 					// Should preserve original discovery time
-					if result.UpdatedTemplates[0].DiscoveredAt == now {
+					if result.UpdatedTemplates[0].DiscoveredAt.Equal(now) {
 						t.Error("Updated template should preserve original DiscoveredAt, not use new time")
 					}
 					// Should have new SHA

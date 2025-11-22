@@ -107,9 +107,9 @@ func checkRateLimits(client *github.Client) error {
 	search := limits.Search
 
 	fmt.Printf("Core API: %d/%d remaining (resets at %s)\n",
-		core.Remaining, core.Limit, core.Reset.Time.Format(time.RFC3339))
+		core.Remaining, core.Limit, core.Reset.Format(time.RFC3339))
 	fmt.Printf("Search API: %d/%d remaining (resets at %s)\n",
-		search.Remaining, search.Limit, search.Reset.Time.Format(time.RFC3339))
+		search.Remaining, search.Limit, search.Reset.Format(time.RFC3339))
 	fmt.Println()
 
 	// Check if we have enough quota
