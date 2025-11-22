@@ -88,7 +88,7 @@ func ParseTemplate(url string, httpClient interfaces.HTTPClient) (*TemplateInfo,
 	if err != nil {
 		return nil, fmt.Errorf("failed to download template: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("failed to download template: HTTP %d", resp.StatusCode)

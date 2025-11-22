@@ -230,7 +230,7 @@ func (a *Analyzer) downloadTemplateContent(url string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to download template: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("failed to download template: HTTP %d", resp.StatusCode)

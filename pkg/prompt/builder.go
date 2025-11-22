@@ -235,7 +235,7 @@ func (b *Builder) findTemplateReferences(owner, repo, templatePath string) ([]Te
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Shallow clone the repository
 	cloneURL := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)

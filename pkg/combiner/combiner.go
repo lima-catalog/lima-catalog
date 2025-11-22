@@ -167,7 +167,7 @@ func (c *Combiner) CombineData(templates []types.Template, repos []types.Reposit
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	for _, t := range combined {

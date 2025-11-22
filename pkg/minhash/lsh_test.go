@@ -290,18 +290,18 @@ func TestLSH_Size(t *testing.T) {
 
 	sig := make([]uint32, 128)
 
-	lsh.Add("template1", sig)
+	_ = lsh.Add("template1", sig)
 	if lsh.Size() != 1 {
 		t.Errorf("Size() = %d, want 1", lsh.Size())
 	}
 
-	lsh.Add("template2", sig)
+	_ = lsh.Add("template2", sig)
 	if lsh.Size() != 2 {
 		t.Errorf("Size() = %d, want 2", lsh.Size())
 	}
 
 	// Adding same template again shouldn't change size
-	lsh.Add("template1", sig)
+	_ = lsh.Add("template1", sig)
 	if lsh.Size() != 2 {
 		t.Errorf("Size() = %d, want 2 (no duplicates counted)", lsh.Size())
 	}
@@ -314,8 +314,8 @@ func TestLSH_Clear(t *testing.T) {
 	}
 
 	sig := make([]uint32, 128)
-	lsh.Add("template1", sig)
-	lsh.Add("template2", sig)
+	_ = lsh.Add("template1", sig)
+	_ = lsh.Add("template2", sig)
 
 	if lsh.Size() != 2 {
 		t.Fatalf("Size() = %d, want 2 before Clear", lsh.Size())
@@ -422,7 +422,7 @@ func BenchmarkLSH_Add(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lsh.Add("template", sig)
+		_ = lsh.Add("template", sig)
 	}
 }
 
@@ -435,7 +435,7 @@ func BenchmarkLSH_Query(b *testing.B) {
 		for j := range sig {
 			sig[j] = uint32(i*j + j)
 		}
-		lsh.Add(string(rune(i)), sig)
+		_ = lsh.Add(string(rune(i)), sig)
 	}
 
 	querySig := make([]uint32, 128)
