@@ -12,11 +12,16 @@ import (
 	"github.com/lima-catalog/lima-catalog/pkg/discovery"
 	"github.com/lima-catalog/lima-catalog/pkg/github"
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
+	"github.com/lima-catalog/lima-catalog/pkg/logging"
 	"github.com/lima-catalog/lima-catalog/pkg/storage"
 	"github.com/lima-catalog/lima-catalog/pkg/types"
 )
 
 func main() {
+	// Set up logrus to filter out Lima's EXPERIMENTAL warnings
+	// This suppresses noisy warnings from Lima while preserving other log messages
+	logging.SetupLogrusFilter("EXPERIMENTAL")
+
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
