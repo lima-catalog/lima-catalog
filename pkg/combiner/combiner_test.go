@@ -440,8 +440,8 @@ func TestCombineData(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create temp file: %v", err)
 			}
-			defer os.Remove(tmpFile.Name())
-			tmpFile.Close()
+			defer func() { _ = os.Remove(tmpFile.Name()) }()
+			_ = tmpFile.Close()
 
 			// Run combine
 			err = combiner.CombineData(tt.templates, tt.repos, tt.orgs, tmpFile.Name())

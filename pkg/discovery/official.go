@@ -50,7 +50,7 @@ func LoadOfficialKnowledge(path string) (*OfficialKnowledge, error) {
 		}
 		return nil, fmt.Errorf("failed to open official knowledge file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var ok OfficialKnowledge
 	if err := json.NewDecoder(file).Decode(&ok); err != nil {
@@ -72,7 +72,7 @@ func SaveOfficialKnowledge(path string, ok *OfficialKnowledge) error {
 	if err != nil {
 		return fmt.Errorf("failed to create official knowledge file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
@@ -295,7 +295,7 @@ func extractKnowledgeFromFile(path string, knowledge *OfficialKnowledge) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Read file content
 	content, err := io.ReadAll(file)

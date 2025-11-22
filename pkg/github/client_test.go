@@ -55,7 +55,7 @@ func TestGetRepository_Caching(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a minimal repository JSON
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"id": 123,
 			"name": "test-repo",
 			"full_name": "test-owner/test-repo",
@@ -117,7 +117,7 @@ func TestGetUser_Caching(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		// Return a minimal user JSON
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"id": 456,
 			"login": "test-user",
 			"name": "Test User",
@@ -174,7 +174,7 @@ func TestGetRepository_Error(t *testing.T) {
 	// Create a test server that returns an error
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"message": "Not Found"}`))
+		_, _ = w.Write([]byte(`{"message": "Not Found"}`))
 	}))
 	defer ts.Close()
 
@@ -250,7 +250,7 @@ func TestCheckRateLimit(t *testing.T) {
 						}
 					}
 				}`
-				w.Write([]byte(response))
+				_, _ = w.Write([]byte(response))
 			}))
 			defer ts.Close()
 
@@ -336,14 +336,15 @@ func TestCacheKeyFormat(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		// Return different IDs based on the path
-		if r.URL.Path == "/repos/owner1/repo1" {
-			w.Write([]byte(`{"id": 1, "name": "repo1", "full_name": "owner1/repo1", "owner": {"login": "owner1"}}`))
-		} else if r.URL.Path == "/repos/owner2/repo2" {
-			w.Write([]byte(`{"id": 2, "name": "repo2", "full_name": "owner2/repo2", "owner": {"login": "owner2"}}`))
-		} else if r.URL.Path == "/users/user1" {
-			w.Write([]byte(`{"id": 10, "login": "user1"}`))
-		} else if r.URL.Path == "/users/user2" {
-			w.Write([]byte(`{"id": 20, "login": "user2"}`))
+		switch r.URL.Path {
+		case "/repos/owner1/repo1":
+			_, _ = w.Write([]byte(`{"id": 1, "name": "repo1", "full_name": "owner1/repo1", "owner": {"login": "owner1"}}`))
+		case "/repos/owner2/repo2":
+			_, _ = w.Write([]byte(`{"id": 2, "name": "repo2", "full_name": "owner2/repo2", "owner": {"login": "owner2"}}`))
+		case "/users/user1":
+			_, _ = w.Write([]byte(`{"id": 10, "login": "user1"}`))
+		case "/users/user2":
+			_, _ = w.Write([]byte(`{"id": 20, "login": "user2"}`))
 		}
 	}))
 	defer ts.Close()

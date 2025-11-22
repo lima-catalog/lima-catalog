@@ -58,9 +58,6 @@ func NewDuplicateDetector(minHash *MinHash, similarityThreshold float64) (*Dupli
 //   - 32×4: threshold ~42% (balanced)
 //   - 64×2: threshold ~15% (loose)
 func chooseLSHConfig(signatureSize int, threshold float64) (numBands, rowsPerBand int) {
-	// Default to 32×4 (threshold ~42%)
-	numBands, rowsPerBand = 32, 4
-
 	if signatureSize != 128 {
 		// For non-standard signature sizes, use balanced configuration
 		numBands = signatureSize / 4
@@ -68,7 +65,7 @@ func chooseLSHConfig(signatureSize int, threshold float64) (numBands, rowsPerBan
 		return
 	}
 
-	// Select configuration based on threshold
+	// Select configuration based on threshold for 128-hash signatures
 	if threshold >= 0.7 {
 		// Strict matching: 16 bands × 8 rows (threshold ~71%)
 		numBands, rowsPerBand = 16, 8

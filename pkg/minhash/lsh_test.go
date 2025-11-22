@@ -146,9 +146,15 @@ func TestLSH_Query(t *testing.T) {
 		sig3[i] = uint32(i * 3) // Different
 	}
 
-	lsh.Add("template1", sig1)
-	lsh.Add("template2", sig2)
-	lsh.Add("template3", sig3)
+	if err := lsh.Add("template1", sig1); err != nil {
+		t.Fatalf("Add(template1) error: %v", err)
+	}
+	if err := lsh.Add("template2", sig2); err != nil {
+		t.Fatalf("Add(template2) error: %v", err)
+	}
+	if err := lsh.Add("template3", sig3); err != nil {
+		t.Fatalf("Add(template3) error: %v", err)
+	}
 
 	// Query with sig1 should find template1 and template2 (identical)
 	candidates, err := lsh.Query(sig1)
@@ -228,9 +234,15 @@ provision:
 	sig2 := mh.Signature(template2)
 	sig3 := mh.Signature(template3)
 
-	lsh.Add("template1", sig1)
-	lsh.Add("template2", sig2)
-	lsh.Add("template3", sig3)
+	if err := lsh.Add("template1", sig1); err != nil {
+		t.Fatalf("Add(template1) failed: %v", err)
+	}
+	if err := lsh.Add("template2", sig2); err != nil {
+		t.Fatalf("Add(template2) failed: %v", err)
+	}
+	if err := lsh.Add("template3", sig3); err != nil {
+		t.Fatalf("Add(template3) failed: %v", err)
+	}
 
 	// Query with template1
 	candidates, err := lsh.Query(sig1)
@@ -278,18 +290,18 @@ func TestLSH_Size(t *testing.T) {
 
 	sig := make([]uint32, 128)
 
-	lsh.Add("template1", sig)
+	_ = lsh.Add("template1", sig)
 	if lsh.Size() != 1 {
 		t.Errorf("Size() = %d, want 1", lsh.Size())
 	}
 
-	lsh.Add("template2", sig)
+	_ = lsh.Add("template2", sig)
 	if lsh.Size() != 2 {
 		t.Errorf("Size() = %d, want 2", lsh.Size())
 	}
 
 	// Adding same template again shouldn't change size
-	lsh.Add("template1", sig)
+	_ = lsh.Add("template1", sig)
 	if lsh.Size() != 2 {
 		t.Errorf("Size() = %d, want 2 (no duplicates counted)", lsh.Size())
 	}
@@ -302,8 +314,8 @@ func TestLSH_Clear(t *testing.T) {
 	}
 
 	sig := make([]uint32, 128)
-	lsh.Add("template1", sig)
-	lsh.Add("template2", sig)
+	_ = lsh.Add("template1", sig)
+	_ = lsh.Add("template2", sig)
 
 	if lsh.Size() != 2 {
 		t.Fatalf("Size() = %d, want 2 before Clear", lsh.Size())
@@ -410,7 +422,7 @@ func BenchmarkLSH_Add(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lsh.Add("template", sig)
+		_ = lsh.Add("template", sig)
 	}
 }
 
@@ -423,7 +435,7 @@ func BenchmarkLSH_Query(b *testing.B) {
 		for j := range sig {
 			sig[j] = uint32(i*j + j)
 		}
-		lsh.Add(string(rune(i)), sig)
+		_ = lsh.Add(string(rune(i)), sig)
 	}
 
 	querySig := make([]uint32, 128)
@@ -433,6 +445,6 @@ func BenchmarkLSH_Query(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lsh.Query(querySig)
+		_, _ = lsh.Query(querySig) // Ignore error in benchmark
 	}
 }

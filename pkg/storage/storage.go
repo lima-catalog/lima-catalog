@@ -108,7 +108,7 @@ func (s *Storage) LoadProgress() (*types.Progress, error) {
 		}
 		return nil, fmt.Errorf("failed to open progress file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var progress types.Progress
 	if err := json.NewDecoder(file).Decode(&progress); err != nil {
@@ -126,7 +126,7 @@ func (s *Storage) SaveProgress(progress *types.Progress) error {
 	if err != nil {
 		return fmt.Errorf("failed to create progress file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
@@ -147,7 +147,7 @@ func loadJSONLines[T any](fs interfaces.FileSystem, path string) ([]T, error) {
 		}
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var items []T
 	scanner := bufio.NewScanner(file)
@@ -175,10 +175,10 @@ func saveJSONLines[T any](fs interfaces.FileSystem, path string, items []T) erro
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	writer := bufio.NewWriter(file)
-	defer writer.Flush()
+	defer func() { _ = writer.Flush() }()
 
 	for _, item := range items {
 		data, err := json.Marshal(item)

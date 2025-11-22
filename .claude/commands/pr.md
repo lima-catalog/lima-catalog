@@ -8,7 +8,20 @@ Follow these steps exactly when creating a PR:
 - `git log --oneline <base>..HEAD` - see all commits to include
 - `git diff <base>...HEAD --stat` - summary of all changes
 
-## 2. Check Documentation
+## 2. Run Tests and Linting
+Before creating a PR, ensure all tests and linting checks pass:
+
+```bash
+# Run all tests and go vet
+make test
+
+# Run linting (if golangci-lint is installed)
+make lint
+```
+
+If any tests fail or linting issues are found, fix them and commit before proceeding.
+
+## 3. Check Documentation
 Review if any documentation needs updates based on the changes:
 - `docs/architecture/frontend-design.md` - for frontend changes
 - `docs/architecture/backend-design.md` - for backend changes
@@ -17,12 +30,12 @@ Review if any documentation needs updates based on the changes:
 
 If docs need updates, make the changes and commit before proceeding.
 
-## 3. Push Changes
+## 4. Push Changes
 ```bash
 git push -u origin <branch-name>
 ```
 
-## 4. Create PR Command
+## 5. Create PR Command
 Provide a copyable `gh pr create` command using HEREDOC format:
 
 ```bash

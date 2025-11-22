@@ -1,4 +1,4 @@
-.PHONY: test test-go test-js test-all build clean help
+.PHONY: test test-go test-js test-all build clean help lint vet
 
 # Default target
 .DEFAULT_GOAL := help
@@ -11,7 +11,7 @@ help: ## Show this help message
 	@echo "Targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-test: test-go test-js ## Run all tests (Go + JavaScript)
+test: vet test-go test-js ## Run linting and all tests (Go + JavaScript)
 
 test-go: ## Run Go unit tests
 	@echo "🧪 Running Go tests..."
@@ -49,6 +49,24 @@ build: ## Build the lima-catalog CLI tool
 	@echo "🔨 Building lima-catalog..."
 	@go build -o lima-catalog ./cmd/lima-catalog
 	@echo "✅ Build complete: ./lima-catalog"
+
+vet: ## Run go vet to check for common errors
+	@echo "🔍 Running go vet..."
+	@go vet ./...
+	@echo "✅ go vet passed"
+
+lint: ## Run golangci-lint (requires golangci-lint to be installed)
+	@echo "🔍 Running golangci-lint..."
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
+		echo "❌ Error: golangci-lint is not installed."; \
+		echo ""; \
+		echo "Install it with:"; \
+		echo "  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b \$$(go env GOPATH)/bin"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@golangci-lint run --timeout=5m
+	@echo "✅ golangci-lint passed"
 
 clean: ## Remove build artifacts and test data
 	@echo "🧹 Cleaning up..."

@@ -230,7 +230,7 @@ func (a *Analyzer) downloadTemplateContent(url string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to download template: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("failed to download template: HTTP %d", resp.StatusCode)
@@ -327,7 +327,12 @@ func (a *Analyzer) generateBasicDescription(template *types.Template, info *Temp
 
 	// Add OS information
 	if len(info.Images) > 0 {
-		parts = append(parts, fmt.Sprintf("%s-based", strings.Title(info.Images[0])))
+		// Capitalize first letter (simple replacement for deprecated strings.Title)
+		os := info.Images[0]
+		if len(os) > 0 {
+			os = strings.ToUpper(os[:1]) + os[1:]
+		}
+		parts = append(parts, fmt.Sprintf("%s-based", os))
 	}
 
 	// Add category
