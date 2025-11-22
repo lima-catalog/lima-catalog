@@ -5,6 +5,7 @@
 import { clearSearch, filterAndRender, updateSortDropdown, showDebugModeNotification } from './appActions.js';
 import * as State from './state.js';
 import { trapFocus } from './utils.js';
+import { getDynamicKeywords } from './filters.js';
 
 function getFirstVisibleTemplateCard() {
     const cards = Array.from(document.querySelectorAll('.template-card'));
@@ -95,6 +96,43 @@ function getGridColumnCount() {
     const gridStyle = window.getComputedStyle(grid);
     const gridTemplateColumns = gridStyle.gridTemplateColumns;
     return gridTemplateColumns.split(' ').length;
+}
+
+/**
+ * Get ORG and REPO keywords for the focused template
+ * @returns {Object} Object with {org: string|null, repo: string|null}
+ */
+function getOrgAndRepoKeywords() {
+    const focusedTemplate = State.getFocusedTemplate();
+    if (!focusedTemplate || !focusedTemplate.org || !focusedTemplate.repo) {
+        return { org: null, repo: null };
+    }
+
+    const allTemplates = State.getTemplates();
+    const filteredTemplates = State.getFilteredTemplates();
+    const dynamicKeywords = getDynamicKeywords(allTemplates, filteredTemplates, focusedTemplate);
+
+    // Extract ORG and REPO keywords from dynamic keywords
+    let orgKeyword = null;
+    let repoKeyword = null;
+
+    for (const [keyword, count, isDynamic] of dynamicKeywords) {
+        if (isDynamic) {
+            if (keyword.includes('/')) {
+                // This is a repo keyword
+                if (keyword === focusedTemplate.repo) {
+                    repoKeyword = keyword;
+                }
+            } else {
+                // This is an org keyword
+                if (keyword === focusedTemplate.org) {
+                    orgKeyword = keyword;
+                }
+            }
+        }
+    }
+
+    return { org: orgKeyword, repo: repoKeyword };
 }
 
 /**
@@ -451,6 +489,30 @@ const KEYBOARD_SHORTCUTS = {
             filterAndRender();
             // Show a subtle notification
             showDebugModeNotification(newDebugMode);
+        }
+    },
+    'o': {
+        description: 'Toggle ORG keyword filter',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const { org } = getOrgAndRepoKeywords();
+            if (org) {
+                State.toggleKeywordSelection(org);
+                filterAndRender();
+            }
+        }
+    },
+    'r': {
+        description: 'Toggle ORG/REPO keyword filter',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const { repo } = getOrgAndRepoKeywords();
+            if (repo) {
+                State.toggleKeywordSelection(repo);
+                filterAndRender();
+            }
         }
     }
 };
@@ -937,6 +999,7 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                               e.key === 's' || e.key === 'S' ||
                               e.key === 't' || e.key === 'T' ||
                               e.key === 'o' || e.key === 'O' ||
+                              e.key === 'r' || e.key === 'R' ||
                               e.key === '/');
 
         if (isShortcutKey) {
@@ -995,4 +1058,4 @@ function closeKeyboardHelp(returnFocusToSearch = false) {
     }
 }
 
-export { setupKeyboardShortcuts, showKeyboardHelp };
+export { setupKeyboardShortcuts, showKeyboardHelp, getOrgAndRepoKeywords as getOrgAndRepoKeywordsForModal };

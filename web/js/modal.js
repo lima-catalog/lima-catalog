@@ -1098,6 +1098,42 @@ export function setupModalEventListeners() {
             return;
         }
 
+        // Toggle ORG keyword filter with 'o' key
+        if (e.key === 'o') {
+            // Import keyboard helper dynamically to avoid circular dependency
+            import('./keyboard.js').then(({ getOrgAndRepoKeywordsForModal }) => {
+                const { org } = getOrgAndRepoKeywordsForModal();
+                if (org) {
+                    const { toggleKeywordSelection } = State;
+                    toggleKeywordSelection(org);
+                    // Re-render to apply filter
+                    import('./appActions.js').then(({ filterAndRender }) => {
+                        filterAndRender();
+                    });
+                }
+            });
+            e.preventDefault();
+            return;
+        }
+
+        // Toggle ORG/REPO keyword filter with 'r' key
+        if (e.key === 'r') {
+            // Import keyboard helper dynamically to avoid circular dependency
+            import('./keyboard.js').then(({ getOrgAndRepoKeywordsForModal }) => {
+                const { repo } = getOrgAndRepoKeywordsForModal();
+                if (repo) {
+                    const { toggleKeywordSelection } = State;
+                    toggleKeywordSelection(repo);
+                    // Re-render to apply filter
+                    import('./appActions.js').then(({ filterAndRender }) => {
+                        filterAndRender();
+                    });
+                }
+            });
+            e.preventDefault();
+            return;
+        }
+
         // Ctrl+Arrow: Navigate to adjacent template in the list
         if (e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
             e.preventDefault();
