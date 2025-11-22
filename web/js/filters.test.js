@@ -3,7 +3,7 @@
  */
 
 import { runner, assert } from './test-framework.js';
-import { getKeywordCounts, getCategoryCounts, applyFilters, sortTemplates, getDynamicKeywords } from './filters.js';
+import { getKeywordCounts, getCategoryCounts, getCheckboxCounts, applyFilters, sortTemplates, getDynamicKeywords } from './filters.js';
 
 // Sample test data
 const sampleTemplates = [
@@ -104,6 +104,71 @@ runner.test('getCategoryCounts: handles templates without categories', () => {
     const result = getCategoryCounts(templates);
     assert.equal(result.length, 1);
     assert.equal(result[0][0], 'foo');
+});
+
+// Test getCheckboxCounts
+runner.test('getCheckboxCounts: counts official and community templates correctly', () => {
+    const result = getCheckboxCounts(sampleTemplates);
+    assert.equal(result.official, 2);
+    assert.equal(result.community, 1);
+});
+
+runner.test('getCheckboxCounts: counts duplicates correctly', () => {
+    const templates = [
+        {
+            name: 'template1',
+            official: true,
+            original_id: 'original',
+            similar_templates: [{ id: 'original', similarity: 1.0 }]
+        },
+        {
+            name: 'template2',
+            official: false,
+            original_id: 'original',
+            similar_templates: [{ id: 'original', similarity: 0.95 }]
+        },
+        {
+            name: 'template3',
+            official: true
+        }
+    ];
+    const result = getCheckboxCounts(templates);
+    assert.equal(result.duplicates, 1);
+});
+
+runner.test('getCheckboxCounts: counts similars correctly', () => {
+    const templates = [
+        {
+            name: 'template1',
+            official: true,
+            original_id: 'original',
+            similar_templates: [{ id: 'original', similarity: 0.95 }]
+        },
+        {
+            name: 'template2',
+            official: false,
+            original_id: 'original',
+            similar_templates: [{ id: 'original', similarity: 1.0 }]
+        },
+        {
+            name: 'template3',
+            official: true
+        }
+    ];
+    const result = getCheckboxCounts(templates);
+    assert.equal(result.similars, 1);
+});
+
+runner.test('getCheckboxCounts: handles templates without similar_templates', () => {
+    const templates = [
+        { name: 'template1', official: true },
+        { name: 'template2', official: false }
+    ];
+    const result = getCheckboxCounts(templates);
+    assert.equal(result.official, 1);
+    assert.equal(result.community, 1);
+    assert.equal(result.duplicates, 0);
+    assert.equal(result.similars, 0);
 });
 
 // Test applyFilters

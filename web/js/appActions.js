@@ -4,7 +4,7 @@
  */
 
 import * as State from './state.js';
-import { applyFilters, sortTemplates } from './filters.js';
+import { applyFilters, sortTemplates, getCheckboxCounts } from './filters.js';
 import { updateSidebar } from './sidebar.js';
 import { renderTemplateGrid } from './templateCard.js';
 import { updateURLWithFilters, getFiltersFromURL } from './modal.js';
@@ -262,6 +262,33 @@ function updateStats() {
 
     document.getElementById('total-count').textContent = templates.length;
     document.getElementById('visible-count').textContent = filteredTemplates.length;
+}
+
+/**
+ * Update checkbox labels with template counts
+ */
+export function updateCheckboxCounts() {
+    const templates = State.getTemplates();
+    const counts = getCheckboxCounts(templates);
+
+    // Update each checkbox label with count
+    const officialLabel = document.querySelector('#show-official + span');
+    const communityLabel = document.querySelector('#show-community + span');
+    const duplicatesLabel = document.querySelector('#show-duplicates + span');
+    const similarsLabel = document.querySelector('#show-similars + span');
+
+    if (officialLabel) {
+        officialLabel.textContent = `Official (${counts.official})`;
+    }
+    if (communityLabel) {
+        communityLabel.textContent = `Community (${counts.community})`;
+    }
+    if (duplicatesLabel) {
+        duplicatesLabel.textContent = `Duplicates (${counts.duplicates})`;
+    }
+    if (similarsLabel) {
+        similarsLabel.textContent = `Similars (${counts.similars})`;
+    }
 }
 
 /**
