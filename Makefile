@@ -1,4 +1,4 @@
-.PHONY: test test-go test-js test-all build clean help lint vet
+.PHONY: test test-go test-js test-all build clean help lint vet pr
 
 # Default target
 .DEFAULT_GOAL := help
@@ -85,4 +85,70 @@ check-token: ## Check if GITHUB_TOKEN is set
 		exit 1; \
 	else \
 		echo "✅ GITHUB_TOKEN is set"; \
+	fi
+
+pr: ## Prepare for PR: rebase on main, run smart tests
+	@echo "🚀 Preparing for PR..."
+	@echo ""
+	@# Check for uncommitted changes
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "❌ Error: You have uncommitted changes"; \
+		echo ""; \
+		echo "Please commit or stash your changes first:"; \
+		echo "  git status"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@# Fetch main
+	@echo "📡 Fetching origin/main..."
+	@git fetch origin main --quiet
+	@# Detect changed files vs origin/main
+	@CHANGED_FILES=$$(git diff origin/main...HEAD --name-only); \
+	HAS_GO_FILES=$$(echo "$$CHANGED_FILES" | grep -E '\.(go|mod|sum)$$' || true); \
+	HAS_JS_FILES=$$(echo "$$CHANGED_FILES" | grep -E '\.(js|html|css)$$' || true); \
+	echo ""; \
+	echo "📝 Changed files:"; \
+	echo "$$CHANGED_FILES" | sed 's/^/  /'; \
+	echo ""; \
+	if [ -n "$$HAS_GO_FILES" ] && [ -n "$$HAS_JS_FILES" ]; then \
+		echo "🧪 Running all tests (Go + JS files changed)..."; \
+		$(MAKE) test; \
+		if command -v golangci-lint >/dev/null 2>&1; then \
+			$(MAKE) lint; \
+		fi; \
+	elif [ -n "$$HAS_GO_FILES" ]; then \
+		echo "🧪 Running Go tests only..."; \
+		$(MAKE) test-go; \
+		if command -v golangci-lint >/dev/null 2>&1; then \
+			$(MAKE) lint; \
+		fi; \
+	elif [ -n "$$HAS_JS_FILES" ]; then \
+		echo "🧪 Running JS tests only..."; \
+		$(MAKE) test-js; \
+	else \
+		echo "📄 No code files changed, running all tests to be safe..."; \
+		$(MAKE) test; \
+	fi
+	@# Attempt rebase
+	@echo ""
+	@echo "🔄 Rebasing on origin/main..."
+	@if git rebase origin/main; then \
+		echo "✅ Rebase successful!"; \
+		echo ""; \
+		echo "Next steps:"; \
+		echo "  1. Push your branch: git push -f"; \
+		echo "  2. Create PR: gh pr create"; \
+	else \
+		echo ""; \
+		echo "❌ Rebase failed - conflicts detected!"; \
+		echo ""; \
+		echo "To resolve conflicts:"; \
+		echo "  1. Fix conflicts in the listed files"; \
+		echo "  2. git add <resolved-files>"; \
+		echo "  3. git rebase --continue"; \
+		echo ""; \
+		echo "Or abort the rebase:"; \
+		echo "  git rebase --abort"; \
+		echo ""; \
+		exit 1; \
 	fi
