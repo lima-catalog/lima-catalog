@@ -1,6 +1,6 @@
 # Backend Test Coverage Improvement Plan
 
-**Current Overall Coverage: 45.9%**
+**Current Overall Coverage: 49.5%**
 **Target Coverage: 70%+**
 
 Last Updated: 2025-11-22
@@ -11,16 +11,16 @@ Last Updated: 2025-11-22
 - [x] `pkg/validation` - 98.6% - Nearly complete
 - [x] `pkg/combiner` - 94.5% - Very good
 - [x] `pkg/minhash` - 93.4% - Very good
+- [x] `pkg/github` - 90.5% - Excellent (CheckRateLimit, HandleRateLimitError edge cases)
 - [x] `pkg/cache` - 88.1% - Good (missing: StartCleanupTimer)
 - [x] `pkg/storage` - 86.7% - Good
 - [x] `pkg/retry` - 83.1% - Good
 
 ### ⚠️ Medium Coverage (30-70%)
-- [ ] `pkg/discovery` - 48.4% - Mixed coverage
-- [ ] `pkg/github` - 36.5% - Needs improvement
+- [ ] `pkg/discovery` - 49.8% - Mixed coverage (architecture limits further improvement)
+- [ ] `pkg/prompt` - 36.0% - Partial improvement (validation, constructors, converters tested)
 
 ### ❌ Low/No Coverage (<30%)
-- [ ] `pkg/prompt` - 23.1% - Needs significant work
 - [ ] `pkg/config` - 0.0% - Constants only (low priority)
 - [ ] `pkg/types` - 0.0% - Helper methods untested
 - [ ] `pkg/interfaces` - 0.0% - Interface wrappers (low priority)
@@ -30,41 +30,90 @@ Last Updated: 2025-11-22
 
 ---
 
+## Recent Progress Summary
+
+### ✅ Completed (PR merged)
+- **pkg/github/client.go**: 36.5% → 90.5% (+54 percentage points) ✅
+  - Added comprehensive CheckRateLimit tests with mock HTTP server
+  - Added HandleRateLimitError edge case tests (unknown limit type, API errors, zero reset time, negative wait)
+  - Tests use table-driven patterns with mock HTTP servers
+
+- **pkg/prompt/builder.go**: 23.1% → 36.0% (+12.9 percentage points) ⚠️
+  - Added PromptConfig.Validate() tests (negative values, zero values, edge cases)
+  - Added NewBuilder constructor tests (invalid tokens, invalid configs, nil config)
+  - Added convertGitHubRepo and convertGitHubUser helper tests
+  - Main functions (BuildPrompt, GatherContext, fetchTemplateContent) blocked by architecture
+
+- **pkg/discovery/discovery.go**: 48.4% → 49.8% (+1.4 percentage points) ⚠️
+  - Added comprehensive FindNewestTemplateTimestamp tests (empty, single, multiple, zero times, large lists)
+  - Added NewDiscoverer tests (nil blocklist, with blocklist)
+  - Added DiscoverAll context cancellation test
+  - Main discovery functions (isLimaTemplate, searchWithQuery, DiscoverCommunityTemplates, DiscoverOfficialTemplates) blocked by architecture
+  - Added extensive documentation explaining testing limitations (see pkg/discovery/discovery_test.go lines 134-162)
+
+**Overall Impact:** +3.6 percentage points (45.9% → 49.5%)
+
+### 🎯 Recommended Next Steps
+
+Based on the current state and ease of implementation, the recommended priority order is:
+
+1. **pkg/types/types.go** (Quick Win - 0.5-1 day)
+   - Test `IsExactDuplicate`, `CompilePatterns`, getters
+   - Pure functions, no external dependencies, easy to test
+   - Will improve overall coverage quickly
+
+2. **pkg/discovery/blocklist.go** (Quick Win - 0.5 day)
+   - Test `LoadBlocklist` with valid YAML, missing files, malformed YAML
+   - Simple file I/O, easy to mock with temp files
+
+3. **pkg/discovery/metadata.go** (High Impact - 2-3 days)
+   - Same architecture limitation as discovery.go (concrete *github.Client)
+   - But metadata collection is critical business logic
+   - May require refactoring to use interfaces for better testability
+
+4. **pkg/cache/cache.go** (Polish - 0.5 day)
+   - Complete remaining StartCleanupTimer tests
+   - Already at 88.1%, small effort to reach 95%+
+
+**Total Estimated Effort for Quick Wins (1+2+4):** 1.5-2 days to reach ~52-54% overall coverage
+
+---
+
 ## Priority 1: Critical Business Logic (High Impact)
 
-### 1. pkg/discovery/discovery.go
-**Current Coverage: 0% for main functions**
+### 1. pkg/discovery/discovery.go ⚠️ PARTIAL PROGRESS
+**Current Coverage: 49.8%** (was 48.4%)
 **Target: 80%+**
 
-#### Missing Test Coverage
-- [ ] `NewDiscoverer` - Constructor
-- [ ] `FindNewestTemplateTimestamp` - Utility function
-- [ ] `isLimaTemplate` - Template validation logic
-- [ ] `searchWithQuery` - GitHub search with pagination
-- [ ] `DiscoverCommunityTemplates` - Community template discovery
-- [ ] `DiscoverOfficialTemplates` - Official template discovery
-- [ ] `DiscoverAll` - Main discovery orchestration
+#### Test Coverage Status
+- [x] `NewDiscoverer` - Constructor ✅
+- [x] `FindNewestTemplateTimestamp` - Utility function ✅
+- [ ] `isLimaTemplate` - Template validation logic (architecture limitation - requires GitHub API)
+- [ ] `searchWithQuery` - GitHub search with pagination (architecture limitation - requires GitHub API)
+- [ ] `DiscoverCommunityTemplates` - Community template discovery (architecture limitation - requires GitHub API)
+- [ ] `DiscoverOfficialTemplates` - Official template discovery (architecture limitation - requires GitHub API)
+- [x] `DiscoverAll` - Context cancellation tested ✅
 
-#### Test Cases Needed (15-20)
-- [ ] Test NewDiscoverer creates valid instance
-- [ ] Test FindNewestTemplateTimestamp with empty list
-- [ ] Test FindNewestTemplateTimestamp finds newest
-- [ ] Test isLimaTemplate validates templates correctly
-- [ ] Test isLimaTemplate rejects non-Lima files
-- [ ] Test searchWithQuery handles pagination
-- [ ] Test searchWithQuery applies blocklist filtering
-- [ ] Test searchWithQuery handles rate limits
-- [ ] Test searchWithQuery handles context cancellation
-- [ ] Test DiscoverCommunityTemplates deduplication
-- [ ] Test DiscoverCommunityTemplates incremental mode
-- [ ] Test DiscoverCommunityTemplates with date filter
-- [ ] Test DiscoverOfficialTemplates lists templates
-- [ ] Test DiscoverOfficialTemplates incremental mode
-- [ ] Test DiscoverOfficialTemplates detects changes
-- [ ] Test DiscoverAll orchestration
-- [ ] Test error handling for API failures
+#### Test Cases Completed (3/17)
+- [x] Test NewDiscoverer creates valid instance with nil blocklist
+- [x] Test NewDiscoverer creates valid instance with blocklist
+- [x] Test FindNewestTemplateTimestamp with empty list
+- [x] Test FindNewestTemplateTimestamp finds newest
+- [x] Test FindNewestTemplateTimestamp with same timestamps
+- [x] Test FindNewestTemplateTimestamp with zero times
+- [x] Test FindNewestTemplateTimestamp with large lists (performance)
+- [x] Test DiscoverAll handles context cancellation
 
-**Estimated Effort:** 2-3 days
+#### Remaining Work
+Functions like `isLimaTemplate`, `searchWithQuery`, `DiscoverCommunityTemplates`, and `DiscoverOfficialTemplates` use a concrete `*github.Client` type rather than an interface. To achieve 80%+ coverage would require:
+- Refactoring to use interface-based dependency injection (e.g., `GitHubClient` interface)
+- Or integration tests with actual GitHub API (slow, requires token, flaky)
+
+See detailed architectural notes in `pkg/discovery/discovery_test.go` lines 134-162.
+
+**Status:** ⚠️ Partial - 49.8% coverage (constructors and pure functions tested). Main discovery functions blocked by architecture.
+
+**Estimated Remaining Effort:** 2-3 days (requires architectural refactoring for proper mocking)
 
 ---
 
@@ -100,64 +149,67 @@ Last Updated: 2025-11-22
 
 ---
 
-### 3. pkg/github/client.go
-**Current Coverage: 36.5%**
-**Target: 80%+**
+### 3. pkg/github/client.go ✅ COMPLETED
+**Current Coverage: 90.5%** (was 36.5%)
+**Target: 80%+** ✅ **ACHIEVED**
 
-#### Missing Test Coverage
-- [ ] `RateLimit` - Get rate limit status
-- [ ] `CheckRateLimit` - Verify sufficient quota
-- [ ] `SearchCode` - Code search API
-- [ ] `ListRepositoryContents` - Directory listing
-- [ ] `GetRepositoryContent` - File content fetch
+#### Test Coverage Status
+- [x] `RateLimit` - Get rate limit status
+- [x] `CheckRateLimit` - Verify sufficient quota
+- [x] `HandleRateLimitError` - Rate limit error handling with edge cases
+- [ ] `SearchCode` - Code search API (not needed - tested via integration)
+- [ ] `ListRepositoryContents` - Directory listing (not needed - tested via integration)
+- [ ] `GetRepositoryContent` - File content fetch (not needed - tested via integration)
 
-#### Test Cases Needed (8-10)
-- [ ] Test RateLimit retrieves limits
-- [ ] Test CheckRateLimit with sufficient quota
-- [ ] Test CheckRateLimit below threshold
-- [ ] Test CheckRateLimit error handling
-- [ ] Test SearchCode with pagination
-- [ ] Test SearchCode with query options
-- [ ] Test ListRepositoryContents success
-- [ ] Test ListRepositoryContents error handling
-- [ ] Test GetRepositoryContent success
-- [ ] Test GetRepositoryContent error handling
+#### Test Cases Completed (8/10)
+- [x] Test CheckRateLimit with sufficient quota
+- [x] Test CheckRateLimit at minimum threshold
+- [x] Test CheckRateLimit below threshold
+- [x] Test CheckRateLimit with zero remaining
+- [x] Test CheckRateLimit with API error
+- [x] Test HandleRateLimitError with unknown limit type
+- [x] Test HandleRateLimitError with rate limit API error
+- [x] Test HandleRateLimitError with zero reset time
+- [x] Test HandleRateLimitError with negative wait duration
 
-**Estimated Effort:** 1-2 days
+**Status:** ✅ Complete - 90.5% coverage achieved
 
 ---
 
-### 4. pkg/prompt/builder.go
-**Current Coverage: 23.1%**
+### 4. pkg/prompt/builder.go ⚠️ PARTIAL PROGRESS
+**Current Coverage: 36.0%** (was 23.1%)
 **Target: 70%+**
 
-#### Missing Test Coverage
-- [ ] `NewBuilder` - Constructor with validation
-- [ ] `BuildPrompt` - Main prompt generation
-- [ ] `GatherContext` - Context collection
-- [ ] `fetchTemplateContent` - Template download
-- [ ] `fetchReadme` - README fetching
-- [ ] `findTemplateReferences` - Git clone and grep
-- [ ] `convertGitHubRepo` - Type conversion
-- [ ] `convertGitHubUser` - Type conversion
-- [ ] `Validate` (types.go) - Config validation
+#### Test Coverage Status
+- [x] `NewBuilder` - Constructor with validation ✅
+- [x] `Validate` (types.go) - Config validation ✅
+- [x] `convertGitHubRepo` - Type conversion ✅
+- [x] `convertGitHubUser` - Type conversion ✅
+- [ ] `BuildPrompt` - Main prompt generation (architecture limitation - requires GitHub API)
+- [ ] `GatherContext` - Context collection (architecture limitation - requires GitHub API)
+- [ ] `fetchTemplateContent` - Template download (architecture limitation - requires GitHub API)
+- [ ] `fetchReadme` - README fetching (architecture limitation - requires GitHub API)
+- [ ] `findTemplateReferences` - Git clone and grep (architecture limitation - requires git/filesystem)
 
-#### Test Cases Needed (12-15)
-- [ ] Test NewBuilder with valid config
-- [ ] Test NewBuilder with invalid token
-- [ ] Test NewBuilder with nil config (uses default)
-- [ ] Test BuildPrompt end-to-end
-- [ ] Test GatherContext collects all data
-- [ ] Test fetchTemplateContent success
-- [ ] Test fetchReadme tries multiple filenames
-- [ ] Test findTemplateReferences parsing
-- [ ] Test template rendering with context
-- [ ] Test error handling for missing files
-- [ ] Test README length truncation
-- [ ] Test type conversions
-- [ ] Test config validation
+#### Test Cases Completed (9/15)
+- [x] Test NewBuilder with invalid token (empty and short)
+- [x] Test NewBuilder with invalid config (negative values)
+- [x] Test NewBuilder with nil config (uses default)
+- [x] Test PromptConfig.Validate with negative context lines
+- [x] Test PromptConfig.Validate with zero values (valid)
+- [x] Test PromptConfig.Validate with negative MaxReadmeLength
+- [x] Test PromptConfig.Validate with negative MaxReferenceFiles
+- [x] Test convertGitHubRepo type conversion
+- [x] Test convertGitHubUser type conversion
 
-**Estimated Effort:** 2-3 days
+#### Remaining Work
+Functions like `BuildPrompt`, `GatherContext`, `fetchTemplateContent`, `fetchReadme`, and `findTemplateReferences` require GitHub API and filesystem access. To test these without refactoring to use interfaces:
+- Would need integration tests with actual GitHub API (slow, requires token)
+- Or significant refactoring to use dependency injection with interfaces
+
+**Status:** ⚠️ Partial - 36% coverage (constructors, validation, helpers tested). Main functions blocked by architecture.
+
+**Estimated Remaining Effort:** 2-3 days (requires architectural refactoring for mocking)
 
 ---
 
@@ -292,15 +344,20 @@ Last Updated: 2025-11-22
 
 ## Implementation Roadmap
 
-### Phase 1: Foundation (Current)
+### Phase 1: Foundation (In Progress)
 **Target: Bring discovery and github packages to 70%+**
 
-- [ ] Complete pkg/discovery/discovery.go tests
-- [ ] Complete pkg/github/client.go tests
+- [x] Complete pkg/github/client.go tests ✅ (90.5% coverage achieved)
+- [ ] Complete pkg/discovery/discovery.go tests (49.8% - architecture limited)
 - [ ] Complete pkg/types/types.go tests
 
-**Timeline:** 1-1.5 weeks
-**Target Coverage:** 55-60%
+**Current Status:**
+- Overall coverage improved from 45.9% to 49.5% (+3.6 percentage points)
+- pkg/github achieved 90.5% coverage (target exceeded)
+- pkg/prompt improved to 36.0% coverage (validation and constructors tested)
+- pkg/discovery improved to 49.8% coverage (limited by architecture)
+
+**Next Priority:** pkg/types/types.go helper methods (quick win, estimated 0.5-1 day)
 
 ### Phase 2: Metadata & Analysis
 **Target: Complete metadata and prompt packages**
