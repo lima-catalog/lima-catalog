@@ -728,6 +728,7 @@ header {
 
 .template-repo:hover {
     color: var(--primary);
+    text-decoration: underline;
 }
 
 .template-stars {
