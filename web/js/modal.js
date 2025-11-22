@@ -5,6 +5,7 @@
 import { getDefaultBranchURL, getGitHubSchemeURL, getRawContentURL } from './urlHelpers.js';
 import { deriveDisplayName } from './templateCard.js';
 import { trapFocus } from './utils.js';
+import * as State from './state.js';
 import { getTemplates, getFilteredTemplates, getSelectedKeywords, getSelectedCategory } from './state.js';
 import { applyFilters } from './filters.js';
 
@@ -1095,6 +1096,36 @@ export function setupModalEventListeners() {
         if (e.key === '@') {
             e.preventDefault();
             toggleDebugMode();
+            return;
+        }
+
+        // Toggle ORG keyword filter with 'o' key
+        if (e.key === 'o') {
+            e.preventDefault();
+            // Use the current modal template's org directly for toggling
+            if (currentTemplate && currentTemplate.org) {
+                const orgKeyword = currentTemplate.org;
+                State.toggleKeywordSelection(orgKeyword);
+                // Re-render to apply filter
+                import('./appActions.js').then(({ filterAndRender }) => {
+                    filterAndRender();
+                });
+            }
+            return;
+        }
+
+        // Toggle ORG/REPO keyword filter with 'r' key
+        if (e.key === 'r') {
+            e.preventDefault();
+            // Use the current modal template's repo directly for toggling
+            if (currentTemplate && currentTemplate.repo) {
+                const repoKeyword = currentTemplate.repo;
+                State.toggleKeywordSelection(repoKeyword);
+                // Re-render to apply filter
+                import('./appActions.js').then(({ filterAndRender }) => {
+                    filterAndRender();
+                });
+            }
             return;
         }
 

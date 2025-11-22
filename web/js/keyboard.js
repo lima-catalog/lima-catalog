@@ -452,6 +452,32 @@ const KEYBOARD_SHORTCUTS = {
             // Show a subtle notification
             showDebugModeNotification(newDebugMode);
         }
+    },
+    'o': {
+        description: 'Toggle ORG keyword filter',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const focusedTemplate = State.getFocusedTemplate();
+            if (focusedTemplate && focusedTemplate.org) {
+                const orgKeyword = focusedTemplate.org;
+                State.toggleKeywordSelection(orgKeyword);
+                filterAndRender();
+            }
+        }
+    },
+    'r': {
+        description: 'Toggle ORG/REPO keyword filter',
+        skipIfTyping: true,
+        preventDefault: true,
+        action: (e, ctx) => {
+            const focusedTemplate = State.getFocusedTemplate();
+            if (focusedTemplate && focusedTemplate.repo) {
+                const repoKeyword = focusedTemplate.repo;
+                State.toggleKeywordSelection(repoKeyword);
+                filterAndRender();
+            }
+        }
     }
 };
 
@@ -937,6 +963,7 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                               e.key === 's' || e.key === 'S' ||
                               e.key === 't' || e.key === 'T' ||
                               e.key === 'o' || e.key === 'O' ||
+                              e.key === 'r' || e.key === 'R' ||
                               e.key === '/');
 
         if (isShortcutKey) {
