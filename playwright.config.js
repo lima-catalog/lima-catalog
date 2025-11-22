@@ -57,6 +57,7 @@ module.exports = defineConfig({
             '--disable-gpu',
             '--disable-dev-shm-usage',
             '--disable-software-rasterizer',
+            '--single-process',  // Run everything in one process to avoid IPC permission issues
           ],
           env: {
             ...process.env,
