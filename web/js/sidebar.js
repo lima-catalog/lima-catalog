@@ -456,6 +456,16 @@ export function setupSidebarNavigation() {
             return;
         }
 
+        // Special handling for sort dropdown - maintain column 1 navigation
+        if (currentElement.id === 'sort' && e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            // Go to community (bottom of column 1), not similars (last in flat list)
+            const community = document.getElementById('show-community');
+            if (community) community.focus();
+            return;
+        }
+
         // Special handling for keywords - preserve row-based navigation
         if (currentElement.classList.contains('keyword-tag')) {
             const keywordTags = Array.from(sidebar.querySelectorAll('.keyword-tag'));

@@ -79,9 +79,12 @@ export function filterAndRender(options = {}) {
     const selectedKeywords = State.getSelectedKeywords();
     const selectedCategory = State.getSelectedCategory();
 
-    // Preserve focused template before re-rendering
+    // Preserve focused element before re-rendering (template card or sidebar element)
     const focusedTemplate = State.getFocusedTemplate();
     const focusedTemplateId = focusedTemplate ? focusedTemplate.id : null;
+    const activeSidebarElement = document.activeElement;
+    const sidebar = document.querySelector('.sidebar');
+    const focusedSidebarElementId = (sidebar && sidebar.contains(activeSidebarElement)) ? activeSidebarElement.id : null;
 
     // Get filter values from UI
     const searchTerm = document.getElementById('search').value;
@@ -145,8 +148,15 @@ export function filterAndRender(options = {}) {
     const gridElement = document.getElementById('templates-grid');
     renderTemplateGrid(filtered, gridElement, handleTemplateClick, sortBy);
 
-    // Restore focus to previously focused template if it still exists
-    if (focusedTemplateId) {
+    // Restore focus to previously focused element
+    if (focusedSidebarElementId) {
+        // Restore focus to sidebar element (checkbox, search, etc.)
+        const elementToFocus = document.getElementById(focusedSidebarElementId);
+        if (elementToFocus) {
+            elementToFocus.focus();
+        }
+    } else if (focusedTemplateId) {
+        // Restore focus to template card
         // Use requestAnimationFrame to ensure DOM has updated
         requestAnimationFrame(() => {
             const cardToFocus = document.querySelector(`[data-template-id="${CSS.escape(focusedTemplateId)}"]`);
