@@ -335,7 +335,9 @@ func TestDuplicateDetector_Clear(t *testing.T) {
 		ID:               "owner/repo/template.yaml",
 		MinHashSignature: mh.Signature("test content"),
 	}
-	dd.Add(template)
+	if err := dd.Add(template); err != nil {
+		t.Fatalf("Add() failed: %v", err)
+	}
 
 	if dd.Size() != 1 {
 		t.Fatalf("Size() = %d, want 1 before Clear", dd.Size())

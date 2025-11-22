@@ -234,9 +234,15 @@ provision:
 	sig2 := mh.Signature(template2)
 	sig3 := mh.Signature(template3)
 
-	lsh.Add("template1", sig1)
-	lsh.Add("template2", sig2)
-	lsh.Add("template3", sig3)
+	if err := lsh.Add("template1", sig1); err != nil {
+		t.Fatalf("Add(template1) failed: %v", err)
+	}
+	if err := lsh.Add("template2", sig2); err != nil {
+		t.Fatalf("Add(template2) failed: %v", err)
+	}
+	if err := lsh.Add("template3", sig3); err != nil {
+		t.Fatalf("Add(template3) failed: %v", err)
+	}
 
 	// Query with template1
 	candidates, err := lsh.Query(sig1)

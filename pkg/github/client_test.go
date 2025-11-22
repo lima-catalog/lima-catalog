@@ -250,7 +250,7 @@ func TestCheckRateLimit(t *testing.T) {
 						}
 					}
 				}`
-				w.Write([]byte(response))
+				_, _ = w.Write([]byte(response))
 			}))
 			defer ts.Close()
 
@@ -337,13 +337,13 @@ func TestCacheKeyFormat(t *testing.T) {
 
 		// Return different IDs based on the path
 		if r.URL.Path == "/repos/owner1/repo1" {
-			w.Write([]byte(`{"id": 1, "name": "repo1", "full_name": "owner1/repo1", "owner": {"login": "owner1"}}`))
+			_, _ = w.Write([]byte(`{"id": 1, "name": "repo1", "full_name": "owner1/repo1", "owner": {"login": "owner1"}}`))
 		} else if r.URL.Path == "/repos/owner2/repo2" {
-			w.Write([]byte(`{"id": 2, "name": "repo2", "full_name": "owner2/repo2", "owner": {"login": "owner2"}}`))
+			_, _ = w.Write([]byte(`{"id": 2, "name": "repo2", "full_name": "owner2/repo2", "owner": {"login": "owner2"}}`))
 		} else if r.URL.Path == "/users/user1" {
-			w.Write([]byte(`{"id": 10, "login": "user1"}`))
+			_, _ = w.Write([]byte(`{"id": 10, "login": "user1"}`))
 		} else if r.URL.Path == "/users/user2" {
-			w.Write([]byte(`{"id": 20, "login": "user2"}`))
+			_, _ = w.Write([]byte(`{"id": 20, "login": "user2"}`))
 		}
 	}))
 	defer ts.Close()
