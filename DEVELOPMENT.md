@@ -92,7 +92,7 @@ make test
 
 This runs:
 - Go backend tests (83 tests)
-- JavaScript frontend tests (76 tests)
+- JavaScript frontend tests (222 tests)
 
 ### Backend Tests Only
 ```bash
@@ -117,10 +117,13 @@ python3 -m http.server 8000
 
 ### Test Coverage
 
-Current backend coverage: **45.9%** | Target: **70%+**
+Current coverage:
+- **Backend:** 49.7% (83 tests) | Target: 70%+
+- **Frontend:** ~82% (222 tests, 7 fully + 4 partially) | Target: 95%+
 
-For detailed test coverage plan and progress tracking, see:
-- **[Test Coverage Plan](docs/testing/test-coverage-plan.md)** - Comprehensive improvement roadmap
+For detailed test coverage plans and progress tracking, see:
+- **[Backend Test Coverage Plan](docs/testing/test-coverage-plan.md)** - Backend improvement roadmap
+- **[Frontend Test Coverage Plan](docs/testing/test-coverage-plan-frontend.md)** - Frontend improvement roadmap
 
 ---
 

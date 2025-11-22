@@ -9,26 +9,69 @@ import { runner } from './web/js/test-framework.js';
 // Mock minimal DOM for Node.js environment
 // Mimics browser behavior: textContent escapes <, >, & but not quotes
 global.document = {
+    activeElement: null,
     createElement: (tag) => {
+        let _innerHTML = '';
+        let _textContent = '';
+
         return {
-            textContent: '',
-            innerHTML: '',
+            get innerHTML() {
+                return _innerHTML;
+            },
+            set innerHTML(value) {
+                _innerHTML = value;
+            },
+            get textContent() {
+                return _textContent;
+            },
             set textContent(value) {
+                _textContent = value;
                 // Simple HTML escaping matching browser textContent behavior
-                this.innerHTML = String(value)
+                _innerHTML = String(value)
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;');
             }
         };
     },
-    getElementById: () => null,
+    getElementById: (id) => null,
     documentElement: {
         setAttribute: () => {},
         removeAttribute: () => {}
     },
-    querySelector: () => null,
-    querySelectorAll: () => []
+    querySelector: (selector) => null,
+    querySelectorAll: (selector) => [],
+    addEventListener: (event, handler) => {},
+    removeEventListener: (event, handler) => {},
+    body: {
+        style: {},
+        appendChild: () => {}
+    }
+};
+
+// Mock window object for URL and history testing
+global.window = {
+    location: {
+        href: 'http://localhost:3000',
+        search: '',
+        pathname: '/',
+        protocol: 'http:',
+        host: 'localhost:3000',
+        hostname: 'localhost',
+        port: '3000'
+    },
+    history: {
+        pushState: () => {},
+        replaceState: () => {}
+    },
+    matchMedia: (query) => ({
+        matches: false,
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {}
+    }),
+    addEventListener: (event, handler) => {},
+    removeEventListener: (event, handler) => {}
 };
 
 // Import all test files
@@ -37,6 +80,12 @@ await import('./web/js/data.test.js');
 await import('./web/js/filters.test.js');
 await import('./web/js/templateCard.test.js');
 await import('./web/js/theme.test.js');
+await import('./web/js/state.test.js');
+await import('./web/js/utils.test.js');
+await import('./web/js/appActions.test.js');
+await import('./web/js/app.test.js');
+await import('./web/js/sidebar.test.js');
+await import('./web/js/modal.test.js');
 
 // Run tests
 console.log('🧪 Running lima-catalog test suite...\n');
