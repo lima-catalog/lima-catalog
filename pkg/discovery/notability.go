@@ -182,7 +182,7 @@ func isAlphanumericOrUnderscore(b byte) bool {
 
 // NotabilityScoreBreakdown contains the individual components of the notability score
 type NotabilityScoreBreakdown struct {
-	Message    float64 `json:"message"`     // 100 base + 1 per line (capped at 100)
+	Message    float64 `json:"message"`     // 50 base + 1 per line (capped at 100)
 	Provision  float64 `json:"provision"`   // 10 per script + 1 per 10 lines
 	Parameters float64 `json:"parameters"`  // 20 per param (capped at 100)
 	EnvVars    float64 `json:"env_vars"`    // 10 per var (capped at 100)
@@ -197,7 +197,7 @@ type NotabilityScoreBreakdown struct {
 // Higher score = more interesting/notable template
 //
 // Weights (in order of importance):
-// - Message: 100 points base + 1 per line (capped at 100 total)
+// - Message: 50 points base + 1 per line (capped at 100 total)
 // - Provision scripts: 10 points per script + 1 point per 10 lines
 // - Parameters: 20 points per param (capped at 100)
 // - Environment vars: 10 points per var (capped at 100)
