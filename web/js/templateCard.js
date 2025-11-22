@@ -381,6 +381,15 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         card.focus();
     });
 
+    // Double-clicking the card should open the modal
+    card.addEventListener('dblclick', (e) => {
+        // Don't interfere with links
+        if (e.target.tagName === 'A' || e.target.closest('a')) return;
+
+        // Open the modal
+        onCardClick(template);
+    });
+
     // Add keyboard support
     card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {

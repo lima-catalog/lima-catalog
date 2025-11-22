@@ -791,6 +791,15 @@ function populateSimilarTemplates(template) {
         // Hover tooltip to explain interaction
         let hoverTimeout = null;
         let tooltip = null;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        const updateTooltipPosition = () => {
+            if (tooltip) {
+                tooltip.style.left = `${lastMouseX + 15}px`;
+                tooltip.style.top = `${lastMouseY + 15}px`;
+            }
+        };
 
         const showTooltip = () => {
             hoverTimeout = setTimeout(() => {
@@ -799,10 +808,8 @@ function populateSimilarTemplates(template) {
                 tooltip.textContent = 'Click to compare • Double-click to open';
                 document.body.appendChild(tooltip);
 
-                const rect = item.getBoundingClientRect();
                 tooltip.style.position = 'fixed';
-                tooltip.style.top = `${rect.top + rect.height / 2 - tooltip.offsetHeight / 2}px`;
-                tooltip.style.left = `${rect.right + 10}px`;
+                updateTooltipPosition();
             }, 800); // 800ms delay
         };
 
@@ -817,8 +824,15 @@ function populateSimilarTemplates(template) {
             }
         };
 
+        const trackMouse = (e) => {
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            updateTooltipPosition();
+        };
+
         item.addEventListener('mouseenter', showTooltip);
         item.addEventListener('mouseleave', hideTooltip);
+        item.addEventListener('mousemove', trackMouse);
 
         items.push({ element: item, template: similarTemplate, id: similar.id });
         similarList.appendChild(item);
