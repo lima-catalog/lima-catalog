@@ -134,6 +134,41 @@ export function getCategoryCounts(templateList) {
 }
 
 /**
+ * Get checkbox filter counts from all templates
+ * @param {Array} templateList - List of all templates
+ * @returns {Object} Counts for each checkbox filter
+ */
+export function getCheckboxCounts(templateList) {
+    let officialCount = 0;
+    let communityCount = 0;
+    let duplicatesCount = 0;
+    let similarsCount = 0;
+
+    templateList.forEach(template => {
+        if (template.official) {
+            officialCount++;
+        } else {
+            communityCount++;
+        }
+
+        if (isExactDuplicate(template)) {
+            duplicatesCount++;
+        }
+
+        if (isNearDuplicate(template)) {
+            similarsCount++;
+        }
+    });
+
+    return {
+        official: officialCount,
+        community: communityCount,
+        duplicates: duplicatesCount,
+        similars: similarsCount
+    };
+}
+
+/**
  * Determine if a template is an exact duplicate (100% similarity)
  * @param {Object} template - Template to check
  * @returns {boolean} True if template has 100% similarity to another
