@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code branch
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           ref: main
 
@@ -34,7 +34,7 @@ jobs:
         run: go build -o lima-catalog ./cmd/lima-catalog
 
       - name: Checkout data branch
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           ref: data
           path: data-branch
