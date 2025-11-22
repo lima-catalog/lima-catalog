@@ -117,8 +117,12 @@ go build -o lima-catalog ./cmd/lima-catalog
 ### Running Template Collection
 
 ```bash
+# Clone Lima repository for template reference resolution
+git clone https://github.com/lima-vm/lima.git /tmp/lima
+
 export GITHUB_TOKEN=your_token_here
 export ANALYZE=true  # Enable template analysis
+export LIMA_TEMPLATES_PATH=/tmp/lima/templates  # Required for base template embedding
 ./lima-catalog
 ```
 
@@ -129,6 +133,7 @@ The tool will discover templates, collect metadata, analyze content, and save to
 - `INCREMENTAL=true` - Merge with existing data (faster, preserves history)
 - `ANALYZE=true` - Parse templates and extract metadata
 - `DATA_DIR=/path` - Use custom output directory
+- `LIMA_TEMPLATES_PATH=/path` - Path to Lima templates directory (required for proper template parsing)
 
 See [docs/architecture/](docs/architecture/) for detailed architecture documentation.
 

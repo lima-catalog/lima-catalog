@@ -441,9 +441,10 @@ func TestAnalyzeTemplate(t *testing.T) {
 		}
 
 		repo := &types.Repository{
-			ID:          "test/repo",
-			Description: "Test repository",
-			Topics:      []string{"testing"},
+			ID:            "test/repo",
+			Description:   "Test repository",
+			Topics:        []string{"testing"},
+			DefaultBranch: "main",
 		}
 
 		err := a.AnalyzeTemplate(context.Background(), template, repo)

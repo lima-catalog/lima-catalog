@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -39,7 +40,8 @@ func main() {
 	// Parse template
 	fmt.Printf("Fetching template from: %s\n", *templateURL)
 	httpClient := interfaces.NewDefaultHTTPClient()
-	info, err := discovery.ParseTemplate(*templateURL, httpClient)
+	ctx := context.Background()
+	info, err := discovery.ParseTemplate(ctx, *templateURL, httpClient)
 	if err != nil {
 		fmt.Printf("Error parsing template: %v\n", err)
 		os.Exit(1)

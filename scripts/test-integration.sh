@@ -32,6 +32,18 @@ fi
 export DATA_DIR=./test_integration_data
 mkdir -p $DATA_DIR
 
+# Set LIMA_TEMPLATES_PATH if lima-repo exists (for template embedding support)
+if [ -d "lima-repo/templates" ]; then
+    export LIMA_TEMPLATES_PATH=./lima-repo/templates
+    echo "ℹ️  Using LIMA_TEMPLATES_PATH=$LIMA_TEMPLATES_PATH"
+elif [ -d "/tmp/lima/templates" ]; then
+    export LIMA_TEMPLATES_PATH=/tmp/lima/templates
+    echo "ℹ️  Using LIMA_TEMPLATES_PATH=$LIMA_TEMPLATES_PATH"
+else
+    echo "ℹ️  LIMA_TEMPLATES_PATH not set (template embedding may not work for official templates)"
+fi
+echo ""
+
 echo "======================================================================"
 echo "Test 1: Full Discovery (baseline)"
 echo "======================================================================"

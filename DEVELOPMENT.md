@@ -48,6 +48,17 @@ export GITHUB_TOKEN=your_personal_access_token
 export ANALYZE=true  # Enable template analysis
 ```
 
+**Required for Lima template embedding**:
+```bash
+# Clone Lima repository for template reference resolution
+git clone https://github.com/lima-vm/lima.git /tmp/lima
+
+# Point to Lima templates directory
+export LIMA_TEMPLATES_PATH=/tmp/lima/templates
+```
+
+This enables proper parsing of templates with base template references like `base: template:_images/ubuntu`.
+
 **Optional**:
 ```bash
 export DATA_DIR=./data        # Custom data directory

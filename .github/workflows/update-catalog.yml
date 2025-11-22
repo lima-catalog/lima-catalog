@@ -53,6 +53,7 @@ jobs:
           ANALYZE: "true"
           FORCE_ANALYZE: ${{ inputs.force_analyze == true && 'true' || '' }}
           LIMA_REPO_PATH: ./lima-repo
+          LIMA_TEMPLATES_PATH: ./lima-repo/templates
         run: |
           # Copy existing data from data branch to enable incremental updates
           mkdir -p catalog-data

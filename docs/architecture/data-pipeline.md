@@ -114,16 +114,31 @@ func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
 
 **Goal**: Extract keywords, categories, and detect duplicates
 
-### YAML Parsing
+### YAML Parsing with Lima Integration
 
-Extracts structured information:
-- Images and architectures
+Uses Lima's native template parsing to properly handle:
+- **Base template references**: `base: template:_images/ubuntu`
+- **Script file embedding**: External provisioning scripts
+- **Template composition**: Multi-layer template inheritance
+
+**Environment Requirements**:
+- `LIMA_TEMPLATES_PATH`: Path to Lima's templates directory (required for `template:` reference resolution)
+- `GITHUB_TOKEN`: Required for API access
+
+**URL Strategy**:
+- When default branch known: `https://raw.githubusercontent.com/owner/repo/branch/path` (most efficient)
+- When branch unknown: `github:owner/repo/path` (Lima resolves via API call)
+
+**Implementation**:
+- `pkg/discovery/parser.go:ParseTemplate()` - Uses Lima's `Read()` and `Embed()`
+- `pkg/discovery/parser.go:ParseTemplateContent()` - Extracts structured information
+
+**Extracts**:
+- Images and architectures (after base template embedding)
 - Provision scripts and probes
 - Parameters and environment variables
 - Message field
 - Comments
-
-**Implementation**: `pkg/discovery/parser.go:ParseTemplate()`
 
 ### Keyword Extraction
 
