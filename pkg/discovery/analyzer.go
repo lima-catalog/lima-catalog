@@ -177,7 +177,12 @@ func (a *Analyzer) AnalyzeTemplate(ctx context.Context, template *types.Template
 	template.DisplayName = GenerateDisplayName(template.Name)
 
 	// Step 2: Parse template content
-	templateInfo, err := ParseTemplate(template.URL, a.HTTPClient)
+	// Use ParseTemplateWithBranch to avoid Lima making API calls to determine the default branch
+	defaultBranch := ""
+	if repoInfo != nil {
+		defaultBranch = repoInfo.DefaultBranch
+	}
+	templateInfo, err := ParseTemplateWithBranch(ctx, template.Repo, template.Path, defaultBranch, a.HTTPClient)
 	if err != nil {
 		// Return error for invalid templates (e.g., missing required 'images' field)
 		return fmt.Errorf("failed to parse template: %w", err)
