@@ -134,6 +134,7 @@ Lima Catalog is a searchable catalog of 700+ Lima VM templates from across GitHu
 - **[Future Work](docs/architecture/future-work.md)** - Planned features
 
 ### Historical
+- **[Architecture Analysis (Nov 2025)](docs/research/architecture-analysis-2025-11.md)** - Comprehensive architectural review with improvement suggestions
 - **[Research](docs/research/)** - Decision rationale and findings
 - **[History](docs/history/)** - Implementation archive
 

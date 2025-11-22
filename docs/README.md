@@ -52,6 +52,7 @@
 ### Research (Decision Rationale)
 Research findings that inform current design - useful for future decisions:
 
+- **[Architecture Analysis (Nov 2025)](research/architecture-analysis-2025-11.md)** - Comprehensive architectural review with improvement suggestions and new feature recommendations
 - **[GitHub Search Behavior](research/github-search-behavior.md)** - Why we search the way we do
 - **[Duplicate Detection Algorithms](research/duplicate-detection-algorithms.md)** - Why MinHash + LSH was chosen
 
@@ -78,6 +79,7 @@ Detailed implementation logs - useful for understanding evolution:
 | Backend patterns and standards | [Backend Design](architecture/backend-design.md) |
 | UI component guidelines | [UI/UX Guidelines](guides/ui-ux-guidelines.md) |
 | Where a file lives | [Source Index](architecture/source-index.md) |
+| Architectural review & suggestions | [Architecture Analysis](research/architecture-analysis-2025-11.md) |
 | Why we chose X over Y | [Research](research/) |
 | How feature X was built | [History](history/) |
 | Future plans | [Future Work](architecture/future-work.md) |
