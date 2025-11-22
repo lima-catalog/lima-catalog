@@ -76,6 +76,10 @@ type TemplateInfo struct {
 	ProvisionLines         []string // Normalized provision script lines (non-comments)
 	ProbeLines             []string // Normalized probe script lines (non-comments)
 	MessageLines           []string // Normalized message lines
+
+	// RawContent is the complete YAML content fetched by Lima (after symlink resolution and embedding)
+	// This is used for MinHash signature generation to ensure duplicate detection works correctly
+	RawContent             string
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file.
@@ -166,9 +170,22 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 		content = string(tmpl.Bytes)
 	} else {
 		// Test path: Use HTTP client directly (for mocking)
-		// Convert GitHub blob URL to raw URL
-		rawURL := strings.Replace(url, "github.com", "raw.githubusercontent.com", 1)
-		rawURL = strings.Replace(rawURL, "/blob/", "/", 1)
+		var rawURL string
+		if repo != "" && path != "" {
+			// Construct a fake GitHub raw URL for testing
+			// Format: https://raw.githubusercontent.com/owner/repo/main/path
+			cleanPath := strings.TrimSuffix(path, ".yaml")
+			cleanPath = cleanPath + ".yaml" // Ensure .yaml extension
+			branch := defaultBranch
+			if branch == "" {
+				branch = "main" // Default branch for tests
+			}
+			rawURL = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", repo, branch, cleanPath)
+		} else {
+			// Convert GitHub blob URL to raw URL
+			rawURL = strings.Replace(url, "github.com", "raw.githubusercontent.com", 1)
+			rawURL = strings.Replace(rawURL, "/blob/", "/", 1)
+		}
 
 		// Download template content using provided HTTP client
 		resp, err := httpClient.Get(rawURL)
@@ -353,6 +370,10 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 			info.Categories = appendUnique(info.Categories, "database")
 		}
 	}
+
+	// Store raw content for MinHash signature generation
+	// This ensures duplicate detection uses the content fetched by Lima (with symlinks resolved)
+	info.RawContent = content
 
 	return info, nil
 }

@@ -566,9 +566,9 @@ provision:
 `
 		mockClient := &urlAwareMockHTTPClient{
 			urlContentMap: map[string]string{
-				"example.com/1": ubuntuContent,
-				"example.com/2": ubuntuContent, // Same as template 1
-				"example.com/3": alpineContent, // Different
+				"owner1/repo1/main/ubuntu.yaml":     ubuntuContent,
+				"owner2/repo2/main/ubuntu-dev.yaml": ubuntuContent, // Same as template 1
+				"owner3/repo3/main/alpine.yaml":     alpineContent, // Different
 			},
 			defaultContent: validTemplateContent,
 		}
