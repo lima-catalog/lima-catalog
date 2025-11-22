@@ -467,3 +467,110 @@ runner.test('applyFilters: handles multiple dynamic keywords', () => {
     assert.equal(result.length, 1);
     assert.equal(result[0].repo, 'lima-vm/lima');
 });
+
+// Test duplicate filtering
+runner.test('applyFilters: hides exact duplicates (100% similarity) by default', () => {
+    const templates = [
+        { name: 'original', original_id: null, similar_templates: [] },
+        {
+            name: 'exact-copy',
+            original_id: 'org/repo/original.yaml',
+            similar_templates: [{ id: 'org/repo/original.yaml', similarity: 1.0 }]
+        }
+    ];
+    const result = applyFilters(templates, { showDuplicates: false });
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0].name, 'original');
+});
+
+runner.test('applyFilters: shows exact duplicates when showDuplicates=true', () => {
+    const templates = [
+        { name: 'original', original_id: null, similar_templates: [] },
+        {
+            name: 'exact-copy',
+            original_id: 'org/repo/original.yaml',
+            similar_templates: [{ id: 'org/repo/original.yaml', similarity: 1.0 }]
+        }
+    ];
+    const result = applyFilters(templates, { showDuplicates: true });
+
+    assert.equal(result.length, 2);
+});
+
+runner.test('applyFilters: hides near duplicates (90-99% similarity) by default', () => {
+    const templates = [
+        { name: 'original', original_id: null, similar_templates: [] },
+        {
+            name: 'near-copy',
+            original_id: 'org/repo/original.yaml',
+            similar_templates: [{ id: 'org/repo/original.yaml', similarity: 0.95 }]
+        }
+    ];
+    const result = applyFilters(templates, { showSimilars: false });
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0].name, 'original');
+});
+
+runner.test('applyFilters: shows near duplicates when showSimilars=true', () => {
+    const templates = [
+        { name: 'original', original_id: null, similar_templates: [] },
+        {
+            name: 'near-copy',
+            original_id: 'org/repo/original.yaml',
+            similar_templates: [{ id: 'org/repo/original.yaml', similarity: 0.95 }]
+        }
+    ];
+    const result = applyFilters(templates, { showSimilars: true });
+
+    assert.equal(result.length, 2);
+});
+
+runner.test('applyFilters: distinguishes between exact and near duplicates', () => {
+    const templates = [
+        { name: 'original', original_id: null, similar_templates: [] },
+        {
+            name: 'exact-copy',
+            original_id: 'org/repo/original.yaml',
+            similar_templates: [{ id: 'org/repo/original.yaml', similarity: 1.0 }]
+        },
+        {
+            name: 'near-copy',
+            original_id: 'org/repo/original.yaml',
+            similar_templates: [{ id: 'org/repo/original.yaml', similarity: 0.95 }]
+        }
+    ];
+
+    // Neither checkbox enabled - hide both
+    let result = applyFilters(templates, { showDuplicates: false, showSimilars: false });
+    assert.equal(result.length, 1);
+    assert.equal(result[0].name, 'original');
+
+    // Only duplicates enabled - show exact but hide near
+    result = applyFilters(templates, { showDuplicates: true, showSimilars: false });
+    assert.equal(result.length, 2);
+    assert.ok(result.find(t => t.name === 'original'));
+    assert.ok(result.find(t => t.name === 'exact-copy'));
+
+    // Only similars enabled - show near but hide exact
+    result = applyFilters(templates, { showDuplicates: false, showSimilars: true });
+    assert.equal(result.length, 2);
+    assert.ok(result.find(t => t.name === 'original'));
+    assert.ok(result.find(t => t.name === 'near-copy'));
+
+    // Both enabled - show all
+    result = applyFilters(templates, { showDuplicates: true, showSimilars: true });
+    assert.equal(result.length, 3);
+});
+
+runner.test('applyFilters: handles templates without similar_templates array', () => {
+    const templates = [
+        { name: 'regular', original_id: null },
+        { name: 'no-array', original_id: 'org/repo/original.yaml' }
+    ];
+    const result = applyFilters(templates, { showDuplicates: false, showSimilars: false });
+
+    // Should not crash, both templates shown (no-array doesn't have similarity data)
+    assert.equal(result.length, 2);
+});

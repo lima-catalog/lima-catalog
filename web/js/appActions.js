@@ -48,6 +48,7 @@ export function applyFiltersFromURL() {
     document.getElementById('show-official').checked = urlFilters.official;
     document.getElementById('show-community').checked = urlFilters.community;
     document.getElementById('show-duplicates').checked = urlFilters.duplicates;
+    document.getElementById('show-similars').checked = urlFilters.similars;
 
     // Apply sort if valid option exists
     const sortDropdown = document.getElementById('sort');
@@ -87,6 +88,7 @@ export function filterAndRender(options = {}) {
     const showOfficial = document.getElementById('show-official').checked;
     const showCommunity = document.getElementById('show-community').checked;
     const showDuplicates = document.getElementById('show-duplicates').checked;
+    const showSimilars = document.getElementById('show-similars').checked;
     const sortBy = document.getElementById('sort').value;
 
     // Determine type filter based on checkboxes
@@ -104,7 +106,8 @@ export function filterAndRender(options = {}) {
         typeFilter,
         selectedCategory,
         selectedKeywords,
-        showDuplicates
+        showDuplicates,
+        showSimilars
     });
 
     // Sort templates
@@ -122,6 +125,7 @@ export function filterAndRender(options = {}) {
             official: showOfficial,
             community: showCommunity,
             duplicates: showDuplicates,
+            similars: showSimilars,
             sort: sortBy
         };
         // Use replaceState to avoid polluting browser history on every filter change
