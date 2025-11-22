@@ -45,15 +45,17 @@ git log HEAD..origin/main --oneline
 git rebase origin/main
 ```
 
-### Step 3: Run tests (REQUIRED!)
+### Step 3: Run tests and linting (REQUIRED!)
 
-**⚠️ CRITICAL: ALL tests must pass before creating a PR:**
+**⚠️ CRITICAL: ALL tests and linting must pass before creating a PR:**
 
 ```bash
-make test
+make test    # Runs go vet + all tests (Go + JavaScript)
+make lint    # Runs golangci-lint (if installed)
 ```
 
-**This will run all tests (Go + JavaScript):**
+**The test command will run:**
+- `go vet` to catch common errors
 - Go backend tests (83 tests)
 - JavaScript frontend tests (76 tests)
 
@@ -68,7 +70,7 @@ make test
 
 ### Step 4: Build/test additional components if applicable
 
-- Go changes: `go build -o lima-catalog ./cmd/lima-catalog`
+- Go changes: `make build` (builds lima-catalog binary)
 - JavaScript changes: Tests are automated, but manual testing on GitHub Pages may be helpful
 
 **REMINDERS:**
@@ -94,6 +96,41 @@ make test
 **Historical Reference:**
 - Research findings → [docs/research/](../docs/research/)
 - Implementation details → [docs/history/](../docs/history/)
+
+---
+
+## Using Makefile Targets
+
+**⚠️ ALWAYS use `make` targets instead of running commands directly:**
+
+This project uses a Makefile with helpful targets for common operations. **ALWAYS prefer these over raw commands:**
+
+```bash
+# ✅ CORRECT - Use make targets
+make test          # Runs go vet + all tests (Go + JavaScript)
+make test-go       # Run only Go tests
+make test-js       # Run only JavaScript tests
+make build         # Build the lima-catalog binary
+make vet           # Run go vet
+make lint          # Run golangci-lint
+make clean         # Clean build artifacts
+
+# ❌ INCORRECT - Don't run raw commands
+go test ./...      # Missing vet step
+go vet ./...       # Should use make vet
+go build ./...     # Should use make build
+```
+
+**Why use make targets?**
+- Ensures consistent workflow across sessions
+- Runs checks in the correct order (e.g., vet before test)
+- Provides helpful output formatting
+- Documents the development workflow
+
+**When you can use raw commands:**
+- One-off git operations (git status, git log, etc.)
+- Specialized commands not in Makefile
+- Debugging specific issues
 
 ---
 
@@ -126,9 +163,10 @@ make test
 
 ### Making Backend Changes
 1. Edit `pkg/` or `cmd/` files
-2. Build with `go build` to verify
-3. Changes take effect on next workflow run
-4. New templates are discovered daily; existing templates only re-analyzed if SHA changes
+2. Verify with `make test` (runs vet + tests)
+3. Build with `make build` to verify binary compilation
+4. Changes take effect on next workflow run
+5. New templates are discovered daily; existing templates only re-analyzed if SHA changes
 
 ### Updating Keywords/Analysis Logic
 - Changes to `parser.go` or `analyzer.go` only affect NEW templates or templates with updated files
