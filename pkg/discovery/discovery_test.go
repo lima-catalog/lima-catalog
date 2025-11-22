@@ -163,7 +163,7 @@ func TestNewDiscoverer(t *testing.T) {
 
 func TestDiscoverAll_ContextCancellation(t *testing.T) {
 	// This test verifies that DiscoverAll respects context cancellation
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	cancel() // Cancel immediately
 
 	ghClient := gh.NewClient(ctx, "test-token")
