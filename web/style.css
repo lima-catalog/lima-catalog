@@ -614,6 +614,12 @@ header {
     color: var(--text);
     margin-bottom: 0.25rem;
     word-break: break-word;
+    transition: color 0.2s ease;
+}
+
+.template-name:hover {
+    color: var(--primary);
+    text-decoration: underline;
 }
 
 .template-id {
