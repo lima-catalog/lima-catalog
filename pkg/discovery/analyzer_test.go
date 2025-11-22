@@ -348,7 +348,6 @@ func TestAnalyzeTemplatesSkipLogic(t *testing.T) {
 					Repo:        "test/repo",
 					LastUpdated: newTime,      // Content changed
 					AnalyzedAt:  fixedTime,    // Analysis is outdated
-					URL:         "http://test", // Would need mocking for real analysis
 				},
 			},
 			expectedAnalyzedCount:  1,
@@ -364,7 +363,6 @@ func TestAnalyzeTemplatesSkipLogic(t *testing.T) {
 					Repo:        "test/repo",
 					LastUpdated: oldTime,
 					AnalyzedAt:  fixedTime,
-					URL:         "http://test",
 				},
 			},
 			expectedAnalyzedCount:  1,
@@ -380,7 +378,6 @@ func TestAnalyzeTemplatesSkipLogic(t *testing.T) {
 					Repo:        "test/repo",
 					LastUpdated: fixedTime,
 					AnalyzedAt:  time.Time{}, // Zero value = never analyzed
-					URL:         "http://test",
 				},
 			},
 			expectedAnalyzedCount:  1,
@@ -437,7 +434,6 @@ func TestAnalyzeTemplate(t *testing.T) {
 			ID:   "test/repo/example.yaml",
 			Path: "example.yaml",
 			Repo: "test/repo",
-			URL:  "http://example.com/template.yaml",
 		}
 
 		repo := &types.Repository{
@@ -495,7 +491,6 @@ func TestAnalyzeTemplate(t *testing.T) {
 			ID:   "test/repo/template.yaml",
 			Path: "template.yaml",
 			Repo: "test/repo",
-			URL:  "http://example.com/template.yaml",
 		}
 
 		err := a.AnalyzeTemplate(context.Background(), template, nil)
@@ -566,9 +561,9 @@ provision:
 `
 		mockClient := &urlAwareMockHTTPClient{
 			urlContentMap: map[string]string{
-				"example.com/1": ubuntuContent,
-				"example.com/2": ubuntuContent, // Same as template 1
-				"example.com/3": alpineContent, // Different
+				"owner1/repo1/main/ubuntu.yaml":     ubuntuContent,
+				"owner2/repo2/main/ubuntu-dev.yaml": ubuntuContent, // Same as template 1
+				"owner3/repo3/main/alpine.yaml":     alpineContent, // Different
 			},
 			defaultContent: validTemplateContent,
 		}
@@ -590,21 +585,18 @@ provision:
 				ID:               "owner1/repo1/ubuntu.yaml",
 				Path:             "ubuntu.yaml",
 				Repo:             "owner1/repo1",
-				URL:              "http://example.com/1",
 				MinHashSignature: sig1,
 			},
 			{
 				ID:               "owner2/repo2/ubuntu-dev.yaml",
 				Path:             "ubuntu-dev.yaml",
 				Repo:             "owner2/repo2",
-				URL:              "http://example.com/2",
 				MinHashSignature: sig2,
 			},
 			{
 				ID:               "owner3/repo3/alpine.yaml",
 				Path:             "alpine.yaml",
 				Repo:             "owner3/repo3",
-				URL:              "http://example.com/3",
 				MinHashSignature: sig3,
 			},
 		}
@@ -665,14 +657,12 @@ provision:
 				ID:               "test/repo/template1.yaml",
 				Path:             "template1.yaml",
 				Repo:             "test/repo",
-				URL:              "http://example.com/1",
 				MinHashSignature: sig,
 			},
 			{
 				ID:               "test/repo/template2.yaml",
 				Path:             "template2.yaml",
 				Repo:             "test/repo",
-				URL:              "http://example.com/2",
 				MinHashSignature: sig,
 			},
 		}
@@ -703,7 +693,6 @@ provision:
 				ID:               "test/repo/no-signature.yaml",
 				Path:             "no-signature.yaml",
 				Repo:             "test/repo",
-				URL:              "http://example.com/1",
 				MinHashSignature: nil, // No signature
 			},
 		}

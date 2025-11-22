@@ -58,7 +58,6 @@ type CombinedTemplate struct {
 	Stars                   int                                    `json:"stars"`
 	UpdatedAt               string                                 `json:"updated_at"`
 	Official                bool                                   `json:"official"`
-	URL                     string                                 `json:"url"`
 	GithubURL               string                                 `json:"github_url"`  // github: scheme URL
 	RawURL                  string                                 `json:"raw_url"`     // https: raw.githubusercontent.com URL
 	NotabilityScore         float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
@@ -158,7 +157,6 @@ func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, 
 			Stars:                   repo.Stars,
 			UpdatedAt:               c.formatDate(repo.UpdatedAt),
 			Official:                template.IsOfficial,
-			URL:                     template.URL,
 			GithubURL:               githubURL,
 			RawURL:                  rawURL,
 			NotabilityScore:         breakdown.Total,

@@ -9,23 +9,26 @@
  * @returns {string} URL with default branch
  */
 export function getDefaultBranchURL(template) {
-    // If we have raw_url, convert it to display URL
+    // Convert raw_url to display URL
     // From: https://raw.githubusercontent.com/owner/repo/branch/path
     // To: https://github.com/owner/repo/blob/branch/path
-    if (template.raw_url) {
-        // Parse the raw URL
-        // Format: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH
-        const rawPattern = /^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/;
-        const match = template.raw_url.match(rawPattern);
-
-        if (match) {
-            const [, owner, repo, branch, path] = match;
-            return `https://github.com/${owner}/${repo}/blob/${branch}/${path}`;
-        }
+    if (!template.raw_url) {
+        console.error('Template missing raw_url field:', template.id);
+        return '';
     }
 
-    // Fallback to original URL
-    return template.url;
+    // Parse the raw URL
+    // Format: https://raw.githubusercontent.com/OWNER/REPO/BRANCH/PATH
+    const rawPattern = /^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/;
+    const match = template.raw_url.match(rawPattern);
+
+    if (match) {
+        const [, owner, repo, branch, path] = match;
+        return `https://github.com/${owner}/${repo}/blob/${branch}/${path}`;
+    }
+
+    console.error('Could not parse raw_url:', template.raw_url);
+    return '';
 }
 
 /**

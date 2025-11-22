@@ -8,24 +8,24 @@ import { getDefaultBranchURL, getRawContentURL } from './urlHelpers.js';
 // Test getDefaultBranchURL
 runner.test('getDefaultBranchURL: converts raw URL to display URL with default branch', () => {
     const template = {
-        url: 'https://github.com/owner/repo/blob/abc123def456abc123def456abc123def456abc1/path/to/template.yaml',
+        id: 'owner/repo/path/to/template.yaml',
         raw_url: 'https://raw.githubusercontent.com/owner/repo/main/path/to/template.yaml'
     };
     const result = getDefaultBranchURL(template);
     assert.equal(result, 'https://github.com/owner/repo/blob/main/path/to/template.yaml');
 });
 
-runner.test('getDefaultBranchURL: returns original URL if no raw_url', () => {
+runner.test('getDefaultBranchURL: returns empty string if no raw_url', () => {
     const template = {
-        url: 'https://github.com/owner/repo/blob/abc123def456abc123def456abc123def456abc1/template.yaml'
+        id: 'owner/repo/template.yaml'
     };
     const result = getDefaultBranchURL(template);
-    assert.equal(result, template.url);
+    assert.equal(result, '');
 });
 
 runner.test('getDefaultBranchURL: converts raw URL with branch name', () => {
     const template = {
-        url: 'https://github.com/owner/repo/blob/main/template.yaml',
+        id: 'owner/repo/template.yaml',
         raw_url: 'https://raw.githubusercontent.com/owner/repo/main/template.yaml'
     };
     const result = getDefaultBranchURL(template);
@@ -34,7 +34,7 @@ runner.test('getDefaultBranchURL: converts raw URL with branch name', () => {
 
 runner.test('getDefaultBranchURL: handles deep nested paths', () => {
     const template = {
-        url: 'https://github.com/lima-vm/lima/blob/1234567890abcdef1234567890abcdef12345678/examples/alpine.yaml',
+        id: 'lima-vm/lima/examples/alpine.yaml',
         raw_url: 'https://raw.githubusercontent.com/lima-vm/lima/master/examples/alpine.yaml'
     };
     const result = getDefaultBranchURL(template);
