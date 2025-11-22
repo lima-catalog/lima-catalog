@@ -27,7 +27,7 @@ provision:
 `,
 			want: &TemplateInfo{
 				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:            []string{"ubuntu", "docker"},
+				Keywords:            []string{"ubuntu", "docker", "containerd"}, // containerd enabled by Lima defaults
 				Categories:          []string{"containers"},
 				HasDocker:           true,
 				ProvisionCount:      1,
@@ -56,8 +56,8 @@ provision:
 `,
 			want: &TemplateInfo{
 				Images:        []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:      []string{"ubuntu"},
-				MessageLength: 29, // "This template includes Docker" is 29 chars
+				Keywords:      []string{"ubuntu", "containerd"}, // containerd enabled by Lima defaults
+				MessageLength: 29,                               // "This template includes Docker" is 29 chars
 				ParamCount:    2,
 				EnvCount:      1,
 			},
@@ -76,8 +76,8 @@ provision:
 `,
 			want: &TemplateInfo{
 				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:            []string{"ubuntu", "k3s", "node"}, // "node" detected from "nodes"
-				Categories:          []string{"orchestration", "development"}, // "development" from node keyword
+				Keywords:            []string{"ubuntu", "k3s", "containerd", "node"}, // "node" detected from "nodes", containerd by Lima defaults
+				Categories:          []string{"orchestration", "development"},        // "development" from node keyword
 				HasK8s:              true,
 				ProvisionCount:      1,
 				ProvisionTotalLines: 2, // Changed from 3: only non-empty lines count now
@@ -97,9 +97,9 @@ probes:
 `,
 			want: &TemplateInfo{
 				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:        []string{"ubuntu"},
-				ProbeCount:      1,
-				ProbeTotalLines: 1, // Changed from 2: only non-empty lines count now
+				Keywords:            []string{"ubuntu", "containerd"}, // containerd enabled by Lima defaults
+				ProbeCount:          1,
+				ProbeTotalLines:     1, // Changed from 2: only non-empty lines count now
 			},
 			wantErr: false,
 		},
@@ -115,10 +115,10 @@ provision:
 `,
 			want: &TemplateInfo{
 				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:   []string{"ubuntu", "git", "python", "pip", "node", "npm", "go", "rust", "cargo"},
-				Categories: []string{"development"},
-				HasDocker:  false,
-				HasK8s:     false,
+				Keywords:            []string{"ubuntu", "containerd", "git", "python", "pip", "node", "npm", "go", "rust", "cargo"}, // containerd by Lima defaults
+				Categories:          []string{"development"},
+				HasDocker:           false,
+				HasK8s:              false,
 			},
 			wantErr: false,
 		},
@@ -134,8 +134,8 @@ provision:
 `,
 			want: &TemplateInfo{
 				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:   []string{"ubuntu", "go", "postgres", "mysql", "mongodb", "redis"}, // "go" from "mongodb"
-				Categories: []string{"development", "database"}, // "development" from "go"
+				Keywords:            []string{"ubuntu", "containerd", "go", "postgres", "mysql", "mongodb", "redis"}, // "go" from "mongodb", containerd by Lima defaults
+				Categories:          []string{"development", "database"},                                             // "development" from "go"
 			},
 			wantErr: false,
 		},
@@ -163,8 +163,8 @@ arch: "x86_64"
 `,
 			want: &TemplateInfo{
 				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords: []string{"ubuntu"},
-				Arch:     []string{"x86_64"},
+				Keywords:            []string{"ubuntu", "containerd"}, // containerd by Lima defaults
+				Arch:                []string{"x86_64"},
 			},
 			wantErr: false,
 		},
