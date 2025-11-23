@@ -56,6 +56,12 @@ type NotabilityWeights struct {
 	// CommentLine points per unique comment line
 	CommentLine float64
 
+	// ValidationWarningFirstPenalty penalty for the first validation warning
+	ValidationWarningFirstPenalty float64
+
+	// ValidationWarningExtraPenalty penalty per additional validation warning after the first
+	ValidationWarningExtraPenalty float64
+
 	// StarsPerPoint number of stars required for 1 point (capped at 50 points)
 	StarsPerPoint float64
 
@@ -66,16 +72,18 @@ type NotabilityWeights struct {
 // DefaultNotabilityWeights returns the default scoring weights
 func DefaultNotabilityWeights() NotabilityWeights {
 	return NotabilityWeights{
-		Message:        50.0,  // Base bonus for user-facing message
-		ProvisionBase:  10.0,  // Points per provision script
-		ProvisionLine:  0.1,   // Points per line (10 lines = 1 point)
-		ProbeBase:      5.0,   // Points per probe script
-		ProbeLine:      0.1,   // Points per line (10 lines = 1 point)
-		Parameter:      20.0,  // Indicates configurability
-		EnvVar:         10.0,  // Shows configuration effort
-		UnusualImage:   30.0,  // Interesting unusual images
-		CommentLine:    2.0,   // Documentation quality
-		StarsPerPoint:  10.0,  // 10 stars = 1 point
-		MaxStarsPoints: 50.0,  // Cap star contribution
+		Message:                       50.0, // Base bonus for user-facing message
+		ProvisionBase:                 10.0, // Points per provision script
+		ProvisionLine:                 0.1,  // Points per line (10 lines = 1 point)
+		ProbeBase:                     5.0,  // Points per probe script
+		ProbeLine:                     0.1,  // Points per line (10 lines = 1 point)
+		Parameter:                     20.0, // Indicates configurability
+		EnvVar:                        10.0, // Shows configuration effort
+		UnusualImage:                  30.0, // Interesting unusual images
+		CommentLine:                   2.0,  // Documentation quality
+		ValidationWarningFirstPenalty: 50.0, // Penalty for first warning (subtracted from score)
+		ValidationWarningExtraPenalty: 10.0, // Penalty per additional warning (subtracted from score)
+		StarsPerPoint:                 10.0, // 10 stars = 1 point
+		MaxStarsPoints:                50.0, // Cap star contribution
 	}
 }

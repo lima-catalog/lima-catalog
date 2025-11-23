@@ -182,15 +182,16 @@ func isAlphanumericOrUnderscore(b byte) bool {
 
 // NotabilityScoreBreakdown contains the individual components of the notability score
 type NotabilityScoreBreakdown struct {
-	Message    float64 `json:"message"`     // 50 base + 1 per line (capped at 100)
-	Provision  float64 `json:"provision"`   // 10 per script + 1 per 10 lines
-	Parameters float64 `json:"parameters"`  // 20 per param (capped at 100)
-	EnvVars    float64 `json:"env_vars"`    // 10 per var (capped at 100)
-	Probes     float64 `json:"probes"`      // 5 per probe + 1 per 10 lines
-	ImageName  float64 `json:"image_name"`  // -100 if no remote images, 30 if unusual, +0-70 if custom names
-	Comments   float64 `json:"comments"`    // 2 per comment line (capped at 100)
-	Stars      float64 `json:"stars"`       // 1 per 10 stars (capped at 50)
-	Total      float64 `json:"total"`       // Sum of all components
+	Message             float64 `json:"message"`              // 50 base + 1 per line (capped at 100)
+	Provision           float64 `json:"provision"`            // 10 per script + 1 per 10 lines
+	Parameters          float64 `json:"parameters"`           // 20 per param (capped at 100)
+	EnvVars             float64 `json:"env_vars"`             // 10 per var (capped at 100)
+	Probes              float64 `json:"probes"`               // 5 per probe + 1 per 10 lines
+	ImageName           float64 `json:"image_name"`           // -100 if no remote images, 30 if unusual, +0-70 if custom names
+	Comments            float64 `json:"comments"`             // 2 per comment line (capped at 100)
+	ValidationWarnings  float64 `json:"validation_warnings"`  // Penalty for validation warnings (negative)
+	Stars               float64 `json:"stars"`                // 1 per 10 stars (capped at 50)
+	Total               float64 `json:"total"`                // Sum of all components
 }
 
 // CalculateNotabilityScore computes a weighted score from notability metrics
@@ -204,6 +205,7 @@ type NotabilityScoreBreakdown struct {
 // - Probes: 5 points per probe + 1 point per 10 lines
 // - Image name: -100 if no remote images, 30 if unusual images, +0-70 if custom org/repo names
 // - Comment lines: 2 points per comment line (capped at 100)
+// - Validation warnings: -50 points for first warning, -10 per additional warning (penalty)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) float64 {
 	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, orgName, repoName, repoStars)
@@ -283,6 +285,15 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 		breakdown.Comments = 100
 	}
 
+	// Validation warnings (penalty for templates with issues)
+	// First warning: -50 points, additional warnings: -10 points each
+	if metrics.ValidationWarnings > 0 {
+		breakdown.ValidationWarnings = -weights.ValidationWarningFirstPenalty
+		if metrics.ValidationWarnings > 1 {
+			breakdown.ValidationWarnings -= float64(metrics.ValidationWarnings-1) * weights.ValidationWarningExtraPenalty
+		}
+	}
+
 	// Repository stars (capped to avoid dominating other factors)
 	starsScore := float64(repoStars) / weights.StarsPerPoint
 	if starsScore > weights.MaxStarsPoints {
@@ -293,7 +304,7 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 	// Calculate total
 	breakdown.Total = breakdown.Message + breakdown.Provision + breakdown.Parameters +
 		breakdown.EnvVars + breakdown.Probes + breakdown.ImageName +
-		breakdown.Comments + breakdown.Stars
+		breakdown.Comments + breakdown.ValidationWarnings + breakdown.Stars
 
 	return breakdown
 }
@@ -480,19 +491,21 @@ func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types
 	probeSubstantial := countSubstantialScripts(info.ProbeScriptLines, info.ProbeCount)
 
 	return &types.NotabilityMetrics{
-		MessageLength:        messageLength,
-		MessageLineCount:     messageLineCount,
-		ProvisionCount:       info.ProvisionCount,
-		ProvisionSubstantial: provisionSubstantial,
-		ProvisionTotalLines:  uniqueProvisionLines,
-		ProbeCount:           info.ProbeCount,
-		ProbeSubstantial:     probeSubstantial,
-		ProbeTotalLines:      uniqueProbeLines,
-		ParamCount:           info.ParamCount,
-		EnvCount:             info.EnvCount,
-		CommentLineCount:     uniqueCommentCount,
-		UnusualImages:        IdentifyUnusualImages(info.Images, officialImages),
-		AllImages:            info.Images,
+		MessageLength:         messageLength,
+		MessageLineCount:      messageLineCount,
+		ProvisionCount:        info.ProvisionCount,
+		ProvisionSubstantial:  provisionSubstantial,
+		ProvisionTotalLines:   uniqueProvisionLines,
+		ProbeCount:            info.ProbeCount,
+		ProbeSubstantial:      probeSubstantial,
+		ProbeTotalLines:       uniqueProbeLines,
+		ParamCount:            info.ParamCount,
+		EnvCount:              info.EnvCount,
+		CommentLineCount:      uniqueCommentCount,
+		ValidationWarnings:    info.ValidationWarnings,
+		ValidationWarningMsgs: info.ValidationWarningMsgs,
+		UnusualImages:         IdentifyUnusualImages(info.Images, officialImages),
+		AllImages:             info.Images,
 	}
 }
 

@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
+	"github.com/lima-catalog/lima-catalog/pkg/logging"
 	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
 	"github.com/lima-vm/lima/v2/pkg/limayaml"
+	"github.com/sirupsen/logrus"
 )
 
 // TemplateInfo contains extracted information from a Lima template
@@ -33,6 +35,8 @@ type TemplateInfo struct {
 	ParamCount             int
 	EnvCount               int
 	CommentLineCount       int
+	ValidationWarnings     int      // Number of validation warnings from Lima
+	ValidationWarningMsgs  []string // Actual warning messages from Lima
 	CommentLines           []string // Normalized comment lines for filtering
 	ProvisionLines         []string // Normalized provision script lines (non-comments)
 	ProbeLines             []string // Normalized probe script lines (non-comments)
@@ -171,6 +175,26 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 
 // ParseTemplateContent parses Lima template YAML content
 func ParseTemplateContent(content string) (*TemplateInfo, error) {
+	// Set up warning capture hook
+	hook := logging.NewWarningCaptureHook()
+	logrus.AddHook(hook)
+	defer func() {
+		// Remove the hook after we're done to avoid affecting other operations
+		// Note: logrus doesn't provide a RemoveHook method, so we need to work around this
+		// by clearing the hooks list after capturing
+		logger := logrus.StandardLogger()
+		// Create a new hooks map without our hook
+		newHooks := make(logrus.LevelHooks)
+		for level, hooks := range logger.Hooks {
+			for _, h := range hooks {
+				if h != hook {
+					newHooks[level] = append(newHooks[level], h)
+				}
+			}
+		}
+		logger.ReplaceHooks(newHooks)
+	}()
+
 	// Use Lima's validation to ensure the template is valid
 	ctx := context.Background()
 	y, err := limayaml.Load(ctx, []byte(content), "template.yaml")
@@ -182,16 +206,18 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	info := &TemplateInfo{
-		Images:               []string{},
-		Arch:                 []string{},
-		Keywords:             []string{},
-		Categories:           []string{},
-		CommentLines:         []string{},
-		ProvisionLines:       []string{},
-		ProbeLines:           []string{},
-		MessageLines:         []string{},
-		ProvisionScriptLines: []int{},
-		ProbeScriptLines:     []int{},
+		Images:                []string{},
+		Arch:                  []string{},
+		Keywords:              []string{},
+		Categories:            []string{},
+		CommentLines:          []string{},
+		ProvisionLines:        []string{},
+		ProbeLines:            []string{},
+		MessageLines:          []string{},
+		ProvisionScriptLines:  []int{},
+		ProbeScriptLines:      []int{},
+		ValidationWarnings:    hook.Count(),
+		ValidationWarningMsgs: hook.Warnings,
 	}
 
 	// Extract notability metrics

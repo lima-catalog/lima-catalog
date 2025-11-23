@@ -82,6 +82,8 @@ type NotabilityMetrics struct {
 	ParamCount               int      `json:"param_count"`                         // Number of configurable parameters
 	EnvCount                 int      `json:"env_count"`                           // Number of environment variables
 	CommentLineCount         int      `json:"comment_line_count"`                  // Number of unique comment lines in template
+	ValidationWarnings       int      `json:"validation_warnings,omitempty"`       // Number of validation warnings from Lima (unknown fields, deprecated syntax, etc.)
+	ValidationWarningMsgs    []string `json:"validation_warning_msgs,omitempty"`   // Actual warning messages from Lima validation
 	UnusualImages            []string `json:"unusual_images,omitempty"`            // Images not in official templates
 	AllImages                []string `json:"all_images,omitempty"`                // All image locations (for org/repo name matching)
 }

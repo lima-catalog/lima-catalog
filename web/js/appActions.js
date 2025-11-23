@@ -242,6 +242,7 @@ export function updateSortDropdown() {
         { value: 'breakdown-probes', label: '[Debug] Probes' },
         { value: 'breakdown-image_name', label: '[Debug] Image Name' },
         { value: 'breakdown-comments', label: '[Debug] YAML Comments' },
+        { value: 'breakdown-validation_warnings', label: '[Debug] Validation Warnings' },
         { value: 'breakdown-stars', label: '[Debug] Repository Stars' }
     ];
 
