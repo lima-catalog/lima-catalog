@@ -41,8 +41,6 @@ async function globalSetup() {
     console.warn('Warning: Error pre-loading catalog:', error.message);
   }
 
-  // Give server time to stabilize after initial requests
-  await new Promise(resolve => setTimeout(resolve, 2000));
   console.log('Global setup complete');
 }
 

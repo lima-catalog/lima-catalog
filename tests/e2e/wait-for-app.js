@@ -21,9 +21,6 @@ async function waitForApp(page) {
 
     return hasAppActions && hasTemplates;
   }, { timeout: 15000 }); // Longer timeout for data loading
-
-  // Small additional delay to ensure DOM updates have completed
-  await page.waitForTimeout(500);
 }
 
 module.exports = { waitForApp };
