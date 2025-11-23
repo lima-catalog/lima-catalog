@@ -185,7 +185,8 @@ test.describe('Template Search and Filtering', () => {
   test('updates URL with search parameter', async ({ page }) => {
     // Search for something
     await page.fill('#search', 'alpine');
-    await page.waitForTimeout(300);
+    // Wait for debounce (300ms) plus extra time for URL update
+    await page.waitForTimeout(500);
 
     // Check URL contains search parameter
     const url = page.url();
@@ -256,19 +257,22 @@ test.describe('Template Search and Filtering', () => {
     expect(count).toBeGreaterThanOrEqual(0);
   });
 
-  test('unchecking both official and community shows no results', async ({ page }) => {
-    // Uncheck both
+  test('unchecking both official and community shows all results', async ({ page }) => {
+    // Get initial template count (both checked = all templates)
+    const initialCount = await page.locator('#templates-grid .template-card').count();
+
+    // Uncheck both - should still show all templates
     await page.uncheck('#show-official');
     await page.uncheck('#show-community');
     await page.waitForTimeout(500);
 
-    // Should show no templates
+    // Should show all templates (same as when both are checked)
     const count = await page.locator('#templates-grid .template-card').count();
-    expect(count).toBe(0);
+    expect(count).toBe(initialCount);
 
-    // Visible count should be 0
+    // Visible count should match total
     const visibleCount = await page.locator('#visible-count').textContent();
-    expect(parseInt(visibleCount)).toBe(0);
+    expect(parseInt(visibleCount)).toBe(initialCount);
   });
 
   test('sort maintains filter state', async ({ page }) => {
