@@ -59,8 +59,16 @@ jobs:
           mkdir -p catalog-data
           cp -r data-branch/data/* catalog-data/ 2>/dev/null || true
 
-          # Run catalog tool in incremental mode
-          ./lima-catalog
+          # Run catalog tool in incremental mode and capture output
+          ./lima-catalog 2>&1 | tee lima-catalog-output.txt
+
+      - name: Upload tool output as artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: lima-catalog-output
+          path: lima-catalog-output.txt
+          retention-days: 30
+        # Uploads console output from lima-catalog tool for easier local analysis
 
       - name: Copy data to data branch
         run: |
