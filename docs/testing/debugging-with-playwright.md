@@ -9,6 +9,7 @@
 - [Playwright API Reference](https://playwright.dev/docs/api/class-playwright)
 - [Project playwright.config.js](/home/user/lima-catalog/playwright.config.js)
 - [E2E Test Directory](/home/user/lima-catalog/tests/e2e/)
+- [E2E Test Fixtures](/home/user/lima-catalog/tests/e2e/fixtures/README.md) - Local YAML fixtures for modal testing
 - [E2E Testing Options Analysis](./e2e-integration-testing-options.md)
 
 ---
@@ -140,6 +141,40 @@ Without this directory, all tests fail with browser crash errors.
 **Known Issues:**
 - Visual regression tests are skipped until UI is more stable
 - Some tests may be flaky due to timing - increase timeouts if needed
+
+### E2E Test Fixtures
+
+The E2E tests use a local fixture system for template YAML files to avoid network dependencies. See [`tests/e2e/fixtures/README.md`](../../tests/e2e/fixtures/README.md) for complete documentation.
+
+**How it works:**
+1. **Generation**: Scripts analyze the catalog and select 20 representative templates
+2. **Storage**: Sample YAML files are stored in `tests/e2e/fixtures/templates/`
+3. **Manifest**: A `manifest.json` file maps template URLs to local fixture filenames
+4. **Serving**: During tests, `tests/e2e/fixtures.js` intercepts GitHub requests and serves local fixtures
+
+**Key features:**
+- ✅ Offline testing - no network access required
+- ✅ Stable test data - fixtures don't change unexpectedly
+- ✅ Fast tests - no network latency
+- ✅ Predictable - same fixtures on every run
+
+**Regenerating fixtures:**
+```bash
+# Generate sample fixtures (recommended for local development)
+node scripts/create-sample-fixtures.js web/catalog.jsonl
+
+# Download real YAML files (requires network)
+node scripts/create-test-fixtures.js web/catalog.jsonl
+```
+
+**Fixture selection criteria:**
+- First 3 templates from catalog (for index-based tests)
+- First 5 templates alphabetically by name (matches UI default sort)
+- 2 official templates from lima-vm/lima
+- 2 templates with similar templates (for diff testing)
+- Diverse categories and high notability scores
+
+This enables comprehensive modal content testing without external dependencies.
 
 ---
 
