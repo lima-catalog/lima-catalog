@@ -1,0 +1,35 @@
+# Lima template: Flux Usernetes
+# Https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img-based orchestration with Kubernetes (x86_64). Flux Framework running in a LIMA (Linux Virtual Machine) with eBPF stuffs installed for learning!
+# Category: orchestration
+# Official: false
+# Source: github:converged-computing/flux-lima/usernetes/flux-usernetes
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      # Install Docker
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable --now docker
+
+
+# Keywords: ubuntu, docker, k8s, git, npm, python, pip, sqlite
+
+# Notability Score: 142.2

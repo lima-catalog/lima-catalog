@@ -1,0 +1,27 @@
+# Lima template: Blintdb Alpine Lima
+# Https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/cloud/nocloud_alpine-3.21.2-x86_64-uefi-cloudinit-r0.qcow2-based development (x86_64). Binary symbols database for OWASP blint
+# Category: development
+# Official: false
+# Source: github:AppThreat/blint-db/contrib/blintdb-alpine-lima
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+
+
+
+# Keywords: alpine, git, node, npm, python, pip, go, rust, cargo, sqlite
+
+# Notability Score: 21.9

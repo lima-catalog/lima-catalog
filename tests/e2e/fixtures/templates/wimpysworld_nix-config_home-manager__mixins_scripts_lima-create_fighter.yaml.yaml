@@ -1,0 +1,27 @@
+# Lima template: Fighter
+# Https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img-based development (x86_64). Wimpy's NixOS, nix-darwin  & Home Manager Configurations ❄️
+# Category: development
+# Official: false
+# Source: github:wimpysworld/nix-config/home-manager/_mixins/scripts/lima-create/fighter
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+
+
+
+# Keywords: ubuntu, git, python, pip
+
+# Notability Score: 155.8

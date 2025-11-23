@@ -1,0 +1,38 @@
+# Lima template: Depscan Ubuntu
+# Https://cloud-images.ubuntu.com/releases/noble/release-20250313/ubuntu-24.04-server-cloudimg-amd64.img-based containers with Docker (x86_64). OWASP dep-scan is a next-generation security and risk audit tool based on known vulnerabilities, advisories, and license limitations for project dependencies. Both local repositories and container images are supported as the input, and the tool is ideal for integration.
+# Category: containers
+# Official: false
+# Source: github:owasp-dep-scan/dep-scan/contrib/lima/depscan-ubuntu
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      # Install Docker
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable --now docker
+
+
+# Keywords: ubuntu, docker, podman, containerd, git, node, npm, python, pip, go, cargo, sqlite
+
+# Notability Score: 168.7

@@ -1,0 +1,30 @@
+# Lima template: Advent Ebpf
+# Https://cloud-images.ubuntu.com/releases/23.10/release/ubuntu-23.10-server-cloudimg-amd64.img-based development (x86_64). Advent of code in eBPF
+# Category: development
+# Official: false
+# Source: github:lizrice/ebpf-advent/advent-ebpf
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: ubuntu, containerd, python, pip
+
+# Notability Score: 15.1

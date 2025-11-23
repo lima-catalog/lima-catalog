@@ -1,0 +1,38 @@
+# Lima template: Cdxgen Ubuntu
+# Https://cloud-images.ubuntu.com/releases/noble/release-20250313/ubuntu-24.04-server-cloudimg-amd64.img-based containers with Docker (x86_64). Creates CycloneDX Bill of Materials (BOM) for your projects from source and container images. Supports many languages and package managers. Integrate in your CI/CD pipeline with automatic submission to Dependency Track server
+# Category: containers
+# Official: false
+# Source: github:CycloneDX/cdxgen/contrib/lima/cdxgen-ubuntu
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      # Install Docker
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable --now docker
+
+
+# Keywords: ubuntu, docker, podman, containerd, git, node, npm, python, pip, go, cargo, sqlite
+
+# Notability Score: 170.3

@@ -1,0 +1,30 @@
+# Lima template: Aicoder
+# Https://geo.mirror.pkgbuild.com/images/v20250615.366044/Arch-Linux-x86_64-cloudimg-20250615.366044.qcow2-based development (x86_64). Software defined virtual cluster to run distributed applications on developer's workstation/laptop
+# Category: development
+# Official: false
+# Source: github:schnell18/vCluster/lima/aicoder/aicoder
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: arch, containerd, git, pip
+
+# Notability Score: 34.8

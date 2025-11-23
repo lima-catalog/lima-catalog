@@ -1,0 +1,366 @@
+{
+  "generated_at": "2025-11-23T05:34:49.169Z",
+  "template_count": 20,
+  "templates": {
+    "48763/devops-note/system/script/lima/template.yaml": {
+      "filename": "48763_devops-note_system_script_lima_template.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/48763/devops-note/master/system/script/lima/template.yaml",
+      "github_url": "github:48763/devops-note/system/script/lima/template",
+      "name": "Devops Note",
+      "category": "development",
+      "official": false,
+      "has_similars": false,
+      "similar_count": 0,
+      "keywords": [
+        "ubuntu",
+        "containerd",
+        "pip"
+      ],
+      "notability_score": 38.2
+    },
+    "AJORGEST/xbase/development/native-lxd-stack/config/lima.yaml": {
+      "filename": "AJORGEST_xbase_development_native-lxd-stack_config_lima.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/AJORGEST/xbase/main/development/native-lxd-stack/config/lima.yaml",
+      "github_url": "github:AJORGEST/xbase/development/native-lxd-stack/config/lima",
+      "name": "Config",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 2,
+      "keywords": [
+        "ubuntu",
+        "containerd",
+        "rust"
+      ],
+      "notability_score": 13.2
+    },
+    "AppThreat/blint-db/contrib/blintdb-alpine-lima.yaml": {
+      "filename": "AppThreat_blint-db_contrib_blintdb-alpine-lima.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/AppThreat/blint-db/master/contrib/blintdb-alpine-lima.yaml",
+      "github_url": "github:AppThreat/blint-db/contrib/blintdb-alpine-lima",
+      "name": "Blintdb Alpine Lima",
+      "category": "development",
+      "official": false,
+      "has_similars": false,
+      "similar_count": 0,
+      "keywords": [
+        "alpine",
+        "git",
+        "node",
+        "npm",
+        "python",
+        "pip",
+        "go",
+        "rust",
+        "cargo",
+        "sqlite"
+      ],
+      "notability_score": 21.9
+    },
+    "lizrice/ebpf-advent/advent-ebpf.yaml": {
+      "filename": "lizrice_ebpf-advent_advent-ebpf.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/lizrice/ebpf-advent/main/advent-ebpf.yaml",
+      "github_url": "github:lizrice/ebpf-advent/advent-ebpf",
+      "name": "Advent Ebpf",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 6,
+      "keywords": [
+        "ubuntu",
+        "containerd",
+        "python",
+        "pip"
+      ],
+      "notability_score": 15.1
+    },
+    "schnell18/vCluster/lima/aicoder/aicoder.yaml": {
+      "filename": "schnell18_vCluster_lima_aicoder_aicoder.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/schnell18/vCluster/master/lima/aicoder/aicoder.yaml",
+      "github_url": "github:schnell18/vCluster/lima/aicoder/aicoder",
+      "name": "Aicoder",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 1,
+      "keywords": [
+        "arch",
+        "containerd",
+        "git",
+        "pip"
+      ],
+      "notability_score": 34.8
+    },
+    "pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky.yaml": {
+      "filename": "pavelanni_lima_templates_templates_pre-1.1.0_aistor_rocky.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/pavelanni/lima_templates/main/templates/pre-1.1.0/aistor_rocky.yaml",
+      "github_url": "github:pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky",
+      "name": "Aistor Rocky",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 1,
+      "keywords": [
+        "rocky",
+        "containerd",
+        "git"
+      ],
+      "notability_score": 11.7
+    },
+    "pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky_4disks.yaml": {
+      "filename": "pavelanni_lima_templates_templates_pre-1.1.0_aistor_rocky_4disks.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/pavelanni/lima_templates/main/templates/pre-1.1.0/aistor_rocky_4disks.yaml",
+      "github_url": "github:pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky_4disks",
+      "name": "Aistor Rocky 4disks",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 2,
+      "keywords": [
+        "rocky",
+        "containerd",
+        "git"
+      ],
+      "notability_score": 12.299999999999999
+    },
+    "pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky_8disks.yaml": {
+      "filename": "pavelanni_lima_templates_templates_pre-1.1.0_aistor_rocky_8disks.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/pavelanni/lima_templates/main/templates/pre-1.1.0/aistor_rocky_8disks.yaml",
+      "github_url": "github:pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky_8disks",
+      "name": "Aistor Rocky 8disks",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 1,
+      "keywords": [
+        "rocky",
+        "containerd",
+        "git"
+      ],
+      "notability_score": 12.7
+    },
+    "lima-vm/lima/templates/apptainer-rootful.yaml": {
+      "filename": "lima-vm_lima_templates_apptainer-rootful.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/lima-vm/lima/master/templates/apptainer-rootful.yaml",
+      "github_url": "github:lima-vm/lima/templates/apptainer-rootful",
+      "name": "Apptainer Rootful",
+      "category": "development",
+      "official": true,
+      "has_similars": true,
+      "similar_count": 2,
+      "keywords": [
+        "ubuntu",
+        "pip"
+      ],
+      "notability_score": 65
+    },
+    "lima-vm/lima/templates/almalinux-10.yaml": {
+      "filename": "lima-vm_lima_templates_almalinux-10.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/lima-vm/lima/master/templates/almalinux-10.yaml",
+      "github_url": "github:lima-vm/lima/templates/almalinux-10",
+      "name": "Almalinux 10",
+      "category": "general",
+      "official": true,
+      "has_similars": true,
+      "similar_count": 1,
+      "keywords": [
+        "almalinux",
+        "containerd"
+      ],
+      "notability_score": 50
+    },
+    "DesktopECHO/PiCon/PiCon.app/Contents/Resources/arm64/share/lima/examples/default.yaml": {
+      "filename": "DesktopECHO_PiCon_PiCon.app_Contents_Resources_arm64_share_lima_examples_default.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/DesktopECHO/PiCon/main/PiCon.app/Contents/Resources/arm64/share/lima/examples/default.yaml",
+      "github_url": "github:DesktopECHO/PiCon/PiCon.app/Contents/Resources/arm64/share/lima/examples/default",
+      "name": "Picon",
+      "category": "general",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 24,
+      "keywords": [
+        "ubuntu",
+        "containerd"
+      ],
+      "notability_score": 0.7
+    },
+    "canelhasmateus/ormos/shared-cheat/osx-lima.yaml": {
+      "filename": "canelhasmateus_ormos_shared-cheat_osx-lima.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/canelhasmateus/ormos/master/shared-cheat/osx-lima.yaml",
+      "github_url": "github:canelhasmateus/ormos/shared-cheat/osx-lima",
+      "name": "OSX Lima",
+      "category": "general",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 24,
+      "keywords": [
+        "ubuntu",
+        "containerd"
+      ],
+      "notability_score": 0
+    },
+    "ryanmaclean/vibecode-webgui/config/lima/nodejs-dev-vm.yaml": {
+      "filename": "ryanmaclean_vibecode-webgui_config_lima_nodejs-dev-vm.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/ryanmaclean/vibecode-webgui/main/config/lima/nodejs-dev-vm.yaml",
+      "github_url": "github:ryanmaclean/vibecode-webgui/config/lima/nodejs-dev-vm",
+      "name": "Nodejs DEV VM",
+      "category": "development",
+      "official": false,
+      "has_similars": false,
+      "similar_count": 0,
+      "keywords": [
+        "ubuntu",
+        "containerd",
+        "git",
+        "node",
+        "npm",
+        "yarn",
+        "python",
+        "pip",
+        "go",
+        "rust",
+        "cargo"
+      ],
+      "notability_score": 204.60000000000002
+    },
+    "ryanmaclean/vibecode-webgui/config/lima/postgresql-pgvector-vm.yaml": {
+      "filename": "ryanmaclean_vibecode-webgui_config_lima_postgresql-pgvector-vm.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/ryanmaclean/vibecode-webgui/main/config/lima/postgresql-pgvector-vm.yaml",
+      "github_url": "github:ryanmaclean/vibecode-webgui/config/lima/postgresql-pgvector-vm",
+      "name": "Postgresql Pgvector VM",
+      "category": "development",
+      "official": false,
+      "has_similars": false,
+      "similar_count": 0,
+      "keywords": [
+        "ubuntu",
+        "containerd",
+        "git",
+        "postgres"
+      ],
+      "notability_score": 204.5
+    },
+    "CycloneDX/cdxgen/contrib/lima/cdxgen-opensuse.yaml": {
+      "filename": "CycloneDX_cdxgen_contrib_lima_cdxgen-opensuse.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/CycloneDX/cdxgen/master/contrib/lima/cdxgen-opensuse.yaml",
+      "github_url": "github:CycloneDX/cdxgen/contrib/lima/cdxgen-opensuse",
+      "name": "Cdxgen Opensuse",
+      "category": "development",
+      "official": false,
+      "has_similars": false,
+      "similar_count": 0,
+      "keywords": [
+        "containerd",
+        "git",
+        "node",
+        "npm",
+        "python",
+        "pip",
+        "go",
+        "rust",
+        "cargo",
+        "postgres"
+      ],
+      "notability_score": 174
+    },
+    "CycloneDX/cdxgen/contrib/lima/cdxgen-ubuntu.yaml": {
+      "filename": "CycloneDX_cdxgen_contrib_lima_cdxgen-ubuntu.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/CycloneDX/cdxgen/master/contrib/lima/cdxgen-ubuntu.yaml",
+      "github_url": "github:CycloneDX/cdxgen/contrib/lima/cdxgen-ubuntu",
+      "name": "Cdxgen Ubuntu",
+      "category": "containers",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 1,
+      "keywords": [
+        "ubuntu",
+        "docker",
+        "podman",
+        "containerd",
+        "git",
+        "node",
+        "npm",
+        "python",
+        "pip",
+        "go",
+        "cargo",
+        "sqlite"
+      ],
+      "notability_score": 170.3
+    },
+    "ryanmaclean/vibecode-webgui/config/lima/valkey-vm.yaml": {
+      "filename": "ryanmaclean_vibecode-webgui_config_lima_valkey-vm.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/ryanmaclean/vibecode-webgui/main/config/lima/valkey-vm.yaml",
+      "github_url": "github:ryanmaclean/vibecode-webgui/config/lima/valkey-vm",
+      "name": "Valkey VM",
+      "category": "database",
+      "official": false,
+      "has_similars": false,
+      "similar_count": 0,
+      "keywords": [
+        "alpine",
+        "redis"
+      ],
+      "notability_score": 169
+    },
+    "owasp-dep-scan/dep-scan/contrib/lima/depscan-ubuntu.yaml": {
+      "filename": "owasp-dep-scan_dep-scan_contrib_lima_depscan-ubuntu.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/owasp-dep-scan/dep-scan/master/contrib/lima/depscan-ubuntu.yaml",
+      "github_url": "github:owasp-dep-scan/dep-scan/contrib/lima/depscan-ubuntu",
+      "name": "Depscan Ubuntu",
+      "category": "containers",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 1,
+      "keywords": [
+        "ubuntu",
+        "docker",
+        "podman",
+        "containerd",
+        "git",
+        "node",
+        "npm",
+        "python",
+        "pip",
+        "go",
+        "cargo",
+        "sqlite"
+      ],
+      "notability_score": 168.7
+    },
+    "wimpysworld/nix-config/home-manager/_mixins/scripts/lima-create/defender.yaml": {
+      "filename": "wimpysworld_nix-config_home-manager__mixins_scripts_lima-create_defender.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/wimpysworld/nix-config/main/home-manager/_mixins/scripts/lima-create/defender.yaml",
+      "github_url": "github:wimpysworld/nix-config/home-manager/_mixins/scripts/lima-create/defender",
+      "name": "Defender",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 3,
+      "keywords": [
+        "ubuntu",
+        "git",
+        "python",
+        "pip"
+      ],
+      "notability_score": 157
+    },
+    "wimpysworld/nix-config/home-manager/_mixins/scripts/lima-create/fighter.yaml": {
+      "filename": "wimpysworld_nix-config_home-manager__mixins_scripts_lima-create_fighter.yaml.yaml",
+      "raw_url": "https://raw.githubusercontent.com/wimpysworld/nix-config/main/home-manager/_mixins/scripts/lima-create/fighter.yaml",
+      "github_url": "github:wimpysworld/nix-config/home-manager/_mixins/scripts/lima-create/fighter",
+      "name": "Fighter",
+      "category": "development",
+      "official": false,
+      "has_similars": true,
+      "similar_count": 3,
+      "keywords": [
+        "ubuntu",
+        "git",
+        "python",
+        "pip"
+      ],
+      "notability_score": 155.8
+    }
+  }
+}

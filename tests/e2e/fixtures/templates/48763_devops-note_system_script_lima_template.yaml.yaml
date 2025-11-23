@@ -1,0 +1,30 @@
+# Lima template: Devops Note
+# ~/Downloads/impish-server-cloudimg-amd64.img-based development (x86_64)
+# Category: development
+# Official: false
+# Source: github:48763/devops-note/system/script/lima/template
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: ubuntu, containerd, pip
+
+# Notability Score: 38.2
