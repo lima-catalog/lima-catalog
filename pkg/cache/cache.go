@@ -1,3 +1,29 @@
+// Package cache provides a thread-safe in-memory cache with TTL (time-to-live) support.
+//
+// The cache supports:
+//
+//   - Thread-safe concurrent access via read-write mutexes
+//   - Configurable TTL per entry or cache-wide default
+//   - Automatic expiration checking on Get operations
+//   - Manual and automatic cleanup of expired entries
+//   - Background cleanup timer to periodically remove stale data
+//
+// Example usage:
+//
+//	// Create cache with 5-minute default TTL
+//	cache := cache.New(5 * time.Minute)
+//
+//	// Store a value
+//	cache.Set("key", "value")
+//
+//	// Retrieve a value
+//	if val, ok := cache.Get("key"); ok {
+//	    // Use val
+//	}
+//
+//	// Start automatic cleanup every minute
+//	ticker := cache.StartCleanupTimer(1 * time.Minute)
+//	defer ticker.Stop() // Don't forget to stop the timer
 package cache
 
 import (

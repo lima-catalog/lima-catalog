@@ -1,3 +1,32 @@
+// Package prompt generates structured prompts for Large Language Model analysis of Lima templates.
+//
+// The package builds comprehensive context documents that include:
+//
+//   - Template YAML content and structure
+//   - Repository and organization metadata
+//   - Template comments and documentation
+//   - References to the template file within the repository
+//   - README content (optional, with length limits)
+//
+// The prompts are formatted as markdown documents designed for LLM consumption,
+// using customizable templates with embedded defaults.
+//
+// Example usage:
+//
+//	builder, err := prompt.NewBuilder(ctx, githubToken, nil)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	promptText, err := builder.BuildPrompt("owner", "repo", "path/to/template.yaml")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	// Send promptText to LLM for analysis
+//
+// Configuration options control which sections are included, context line counts
+// for code references, and maximum lengths for README content.
 package prompt
 
 import (

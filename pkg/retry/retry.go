@@ -1,3 +1,34 @@
+// Package retry provides exponential backoff retry logic with context cancellation support.
+//
+// The package implements flexible retry mechanisms for operations that may fail transiently,
+// such as network requests or API calls. It supports:
+//
+//   - Exponential backoff with configurable delays and multipliers
+//   - Context cancellation for early termination
+//   - Custom retry policies via ShouldRetry functions
+//   - Generic return values with Do[T] functions
+//
+// Example usage:
+//
+//	// Simple retry with default config
+//	err := retry.WithExponentialBackoff(func() error {
+//	    return makeAPICall()
+//	}, 3)
+//
+//	// Generic function with return value
+//	result, err := retry.Do(func() (string, error) {
+//	    return fetchData()
+//	}, 3)
+//
+//	// Custom configuration
+//	config := &retry.Config{
+//	    MaxRetries:   5,
+//	    InitialDelay: 100 * time.Millisecond,
+//	    MaxDelay:     10 * time.Second,
+//	    Multiplier:   2.0,
+//	    ShouldRetry:  retry.IsRetryable,
+//	}
+//	err = retry.WithConfig(fn, config)
 package retry
 
 import (
