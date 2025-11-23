@@ -917,12 +917,14 @@ function populateSimilarTemplates(template) {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             e.stopPropagation();
-            const newIndex = selectedIndex < items.length - 1 ? selectedIndex + 1 : 0;
+            // Stop at the end instead of wrapping to the beginning
+            const newIndex = Math.min(selectedIndex + 1, items.length - 1);
             updateSelection(newIndex);
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             e.stopPropagation();
-            const newIndex = selectedIndex > 0 ? selectedIndex - 1 : items.length - 1;
+            // Stop at the beginning instead of wrapping to the end
+            const newIndex = Math.max(selectedIndex - 1, 0);
             updateSelection(newIndex);
         } else if ((e.key === 'Enter' || e.key === ' ') && selectedIndex >= 0) {
             e.preventDefault();
