@@ -8,12 +8,13 @@ test.describe('Theme Switching and Persistence', () => {
     await page.evaluate(() => localStorage.clear());
   });
 
-  test('displays theme toggle button', async ({ page }) => {
+  test('displays theme switcher buttons', async ({ page }) => {
     await page.goto('/');
 
-    // Verify theme toggle button exists
-    const themeToggle = page.locator('#theme-toggle');
-    await expect(themeToggle).toBeVisible();
+    // Verify theme switcher exists with three options
+    await expect(page.locator('.theme-option[data-theme="light"]')).toBeVisible();
+    await expect(page.locator('.theme-option[data-theme="auto"]')).toBeVisible();
+    await expect(page.locator('.theme-option[data-theme="dark"]')).toBeVisible();
   });
 
   test('defaults to system preference when no saved theme', async ({ page }) => {
@@ -38,34 +39,42 @@ test.describe('Theme Switching and Persistence', () => {
     await expect(html).toHaveAttribute('data-theme', 'light');
   });
 
-  test('toggles from light to dark theme', async ({ page }) => {
+  test('switches from light to dark theme', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/');
     await page.waitForTimeout(100);
 
-    // Verify starting in light mode
+    // Click light theme button explicitly
+    await page.click('.theme-option[data-theme="light"]');
+    await page.waitForTimeout(100);
+
+    // Verify light theme is active
     const html = page.locator('html');
     await expect(html).toHaveAttribute('data-theme', 'light');
 
-    // Click theme toggle
-    await page.click('#theme-toggle');
+    // Click dark theme button
+    await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(100);
 
     // Verify switched to dark mode
     await expect(html).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('toggles from dark to light theme', async ({ page }) => {
+  test('switches from dark to light theme', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto('/');
     await page.waitForTimeout(100);
 
-    // Verify starting in dark mode
+    // Click dark theme button explicitly
+    await page.click('.theme-option[data-theme="dark"]');
+    await page.waitForTimeout(100);
+
+    // Verify dark theme is active
     const html = page.locator('html');
     await expect(html).toHaveAttribute('data-theme', 'dark');
 
-    // Click theme toggle
-    await page.click('#theme-toggle');
+    // Click light theme button
+    await page.click('.theme-option[data-theme="light"]');
     await page.waitForTimeout(100);
 
     // Verify switched to light mode
@@ -76,8 +85,8 @@ test.describe('Theme Switching and Persistence', () => {
     await page.goto('/');
     await page.waitForTimeout(100);
 
-    // Toggle to dark theme
-    await page.click('#theme-toggle');
+    // Select dark theme
+    await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(100);
 
     // Verify localStorage has the theme saved
@@ -118,7 +127,7 @@ test.describe('Theme Switching and Persistence', () => {
     await page.goto('/');
 
     // Set dark theme
-    await page.click('#theme-toggle');
+    await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(100);
 
     // Verify dark theme is set
@@ -134,24 +143,27 @@ test.describe('Theme Switching and Persistence', () => {
     await expect(html).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('theme icon updates when toggling', async ({ page }) => {
+  test('theme button shows active state', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/');
     await page.waitForTimeout(100);
 
-    const themeToggle = page.locator('#theme-toggle');
-
-    // In light mode, should show moon icon (☾) or sun icon depending on implementation
-    const initialIcon = await themeToggle.textContent();
-    expect(initialIcon).toBeTruthy();
-
-    // Toggle theme
-    await page.click('#theme-toggle');
+    // Click light theme
+    await page.click('.theme-option[data-theme="light"]');
     await page.waitForTimeout(100);
 
-    // Verify icon changed
-    const newIcon = await themeToggle.textContent();
-    expect(newIcon).not.toBe(initialIcon);
+    // Verify light theme button is active
+    const lightButton = page.locator('.theme-option[data-theme="light"]');
+    await expect(lightButton).toHaveClass(/active/);
+
+    // Click dark theme
+    await page.click('.theme-option[data-theme="dark"]');
+    await page.waitForTimeout(100);
+
+    // Verify dark theme button is active and light is not
+    const darkButton = page.locator('.theme-option[data-theme="dark"]');
+    await expect(darkButton).toHaveClass(/active/);
+    await expect(lightButton).not.toHaveClass(/active/);
   });
 
   test('applies correct background color in light mode', async ({ page }) => {
@@ -192,11 +204,19 @@ test.describe('Theme Switching and Persistence', () => {
     let count = await cards.count();
     expect(count).toBeGreaterThan(0);
 
-    // Toggle theme
-    await page.click('#theme-toggle');
+    // Switch to dark theme
+    await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(300);
 
-    // Verify cards still visible in new theme
+    // Verify cards still visible in dark theme
+    count = await cards.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Switch to light theme
+    await page.click('.theme-option[data-theme="light"]');
+    await page.waitForTimeout(300);
+
+    // Verify cards still visible in light theme
     count = await cards.count();
     expect(count).toBeGreaterThan(0);
   });
@@ -204,7 +224,7 @@ test.describe('Theme Switching and Persistence', () => {
   test('modal is styled correctly in dark theme', async ({ page }) => {
     // Set dark theme
     await page.goto('/');
-    await page.click('#theme-toggle');
+    await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(200);
 
     // Wait for templates to load
