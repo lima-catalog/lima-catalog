@@ -567,7 +567,11 @@ Web server logs are automatically redirected to `test-results/webserver.log` (co
 cat test-results/webserver.log
 
 # In CI: Download the "playwright-report" artifact from the failed workflow
-# The artifact includes test-results/webserver.log along with screenshots, traces, and videos
+# The artifact includes:
+# - test-output.txt: Complete console output from the test run
+# - results.json: Structured test data for automated analysis
+# - webserver.log: Python HTTP server logs
+# - screenshots, traces, and videos for failed tests
 ```
 
 ---
