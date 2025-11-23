@@ -41,8 +41,8 @@ test.describe('Category and Keyword Filtering', () => {
     // Wait for filter to apply
     await page.waitForTimeout(300);
 
-    // Verify category is marked as active
-    await expect(firstCategory).toHaveClass(/active/);
+    // Verify category is marked as selected
+    await expect(firstCategory).toHaveClass(/selected/);
 
     // Verify templates are filtered
     const filteredCount = await page.locator('#templates-grid .template-card').count();
@@ -72,7 +72,7 @@ test.describe('Category and Keyword Filtering', () => {
     await page.waitForTimeout(300);
 
     // Verify filter is cleared
-    await expect(category).not.toHaveClass(/active/);
+    await expect(category).not.toHaveClass(/selected/);
     const restoredCount = await page.locator('#templates-grid .template-card').count();
     expect(restoredCount).toBe(initialCount);
   });
