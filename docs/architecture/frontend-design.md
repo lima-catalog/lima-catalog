@@ -446,21 +446,46 @@ runner.test('filters: AND logic', () => {
 
 ### Test Coverage
 
-**Frontend tests** covering:
-- URL helpers (`urlHelpers.test.js`)
-- Data parsing (`data.test.js`)
-- Filters and sorting (`filters.test.js`)
-- Template card rendering (`templateCard.test.js`)
-- Theme management (`theme.test.js`)
+**Frontend Unit Tests** (226 tests) covering:
+- URL helpers (`urlHelpers.test.js` - 7 tests)
+- Data parsing (`data.test.js` - 7 tests)
+- Filters and sorting (`filters.test.js` - 50 tests)
+- Template card rendering (`templateCard.test.js` - 25 tests)
+- Theme management (`theme.test.js` - 9 tests)
+- State management (`state.test.js` - 29 tests)
+- Utilities (`utils.test.js` - 15 tests)
+- App actions (`appActions.test.js` - 11 tests)
+- App initialization (`app.test.js` - 11 tests)
+- Sidebar rendering (`sidebar.test.js` - 12 tests)
+- Modal functionality (`modal.test.js` - 50 tests)
+
+**Frontend E2E Tests** (125 tests, 100 active) using Playwright:
+- Search and filtering (`search.spec.js` - 17 tests)
+- Categories and keywords (`categories.spec.js` - 24 tests)
+- Modal interactions (`modal.spec.js` - 22 tests)
+- Keyboard navigation (`keyboard.spec.js` - 22 tests)
+- Theme switching (`theme.spec.js` - 15 tests)
+- Visual regression (`visual.spec.js` - 25 tests, currently skipped)
 
 **Running tests**:
 ```bash
-# Node.js (with DOM mocking)
+# Unit tests - Node.js (with DOM mocking)
 node test.js
 
-# Browser (visual)
+# Unit tests - Browser (visual)
 # Open web/tests.html in browser
+
+# E2E tests - Playwright
+npm run test:e2e
+
+# E2E tests - Headed mode (see browser)
+npm run test:e2e:headed
 ```
+
+**Test Documentation:**
+- [Frontend Test Coverage Plan](../testing/test-coverage-plan-frontend.md)
+- [E2E Testing with Playwright](../testing/debugging-with-playwright.md)
+- [E2E Testing Options Analysis](../testing/e2e-integration-testing-options.md)
 
 ---
 

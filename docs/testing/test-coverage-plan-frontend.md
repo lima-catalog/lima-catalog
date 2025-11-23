@@ -3,27 +3,28 @@
 **Current Overall Coverage: ~82% (7 of 9 modules fully, 4 partially)**
 **Target Coverage: 95%+**
 
-Last Updated: 2025-11-22
+Last Updated: 2025-11-23
 
 **Recent Progress:**
 - ✅ Phase 1: Foundation complete - test framework enhanced, state.js & utils.js tested (+45 tests)
 - ✅ Phase 2: Partial - appActions.js & app.js partially tested (+22 tests)
 - ✅ Phase 3: Partial - sidebar.js core rendering tested (+12 tests)
 - ✅ Phase 4: Partial - modal.js core functions tested (+50 tests)
-- 📊 Total: 222 tests (up from 76) - +192% increase!
+- ✅ Phase 6: E2E Test Infrastructure complete - 125 E2E tests with Playwright (+125 tests)
+- 📊 Total: 351 tests (226 unit + 125 E2E) - +362% increase from original 76!
 
 ## Coverage Status by Module
 
 ### ✅ Excellent Coverage (100%)
 - [x] `data.js` - 100% - Complete (7 tests: JSONL parsing, error handling)
-- [x] `filters.js` - 100% - Complete (24+ tests: filtering, sorting, keyword counts)
-- [x] `templateCard.js` - 100% - Complete (18+ tests: display names, HTML escaping, formatting)
-- [x] `theme.js` - 100% - Complete (11 tests: theme management, localStorage, system preferences)
-- [x] `urlHelpers.js` - 100% - Complete (4 tests: URL generation, GitHub URL parsing)
-- [x] `state.js` - 100% - Complete (30 tests: getters/setters, selections, debug mode) ✨ NEW
+- [x] `filters.js` - 100% - Complete (50 tests: filtering, sorting, keyword counts)
+- [x] `templateCard.js` - 100% - Complete (25 tests: display names, HTML escaping, formatting)
+- [x] `theme.js` - 100% - Complete (9 tests: theme management, localStorage, system preferences)
+- [x] `urlHelpers.js` - 100% - Complete (7 tests: URL generation, GitHub URL parsing)
+- [x] `state.js` - 100% - Complete (29 tests: getters/setters, selections, debug mode) ✨ NEW
 - [x] `utils.js` - 100% - Complete (15 tests: debounce, focus trap, timer mocking) ✨ NEW
 
-**Total Fully Tested:** 138 tests across 7 modules
+**Total Fully Tested:** 142 tests across 7 modules
 
 ### ⚠️ Partial Coverage (Core Functions Tested)
 - [x] `appActions.js` - ~40% - Partial (11 tests: sort dropdown, notifications, popstate, clearSearch) ✨ NEW
@@ -40,6 +41,74 @@ Last Updated: 2025-11-22
 - [ ] `config.js` - 0.2KB - No logic - N/A (constants only)
 
 **Total Untested:** 43KB (26% of codebase by size, down from 81%)
+
+---
+
+## E2E Test Coverage (Playwright)
+
+### ✅ Complete E2E Test Suite (125 tests, 100 active)
+
+**Test Infrastructure:**
+- Playwright configured for both local VM and CI environments
+- Local fixture system with 20 representative YAML templates
+- Global setup for data pre-loading to prevent flaky tests
+- Automatic web server log redirection
+
+**Coverage by Feature:**
+
+- [x] **Search & Filtering** (`search.spec.js` - 17 tests)
+  - Basic search functionality
+  - Search with URL parameters
+  - Sort dropdown (by name, stars, last updated)
+  - Official/community filters
+  - Show duplicates toggle
+  - Search result counts and visibility
+
+- [x] **Categories & Keywords** (`categories.spec.js` - 24 tests)
+  - Category filtering and URL state
+  - Keyword selection (single and multiple)
+  - Dynamic org/repo keywords
+  - Clear selections functionality
+  - Category/keyword combination filtering
+  - URL parameter persistence
+
+- [x] **Modal Preview** (`modal.spec.js` - 22 tests)
+  - Modal open/close functionality
+  - YAML content loading from fixtures
+  - Template navigation (next/previous)
+  - Similar templates display
+  - GitHub URL scheme display
+  - Keyboard shortcuts (Escape, arrow keys)
+
+- [x] **Keyboard Navigation** (`keyboard.spec.js` - 22 tests)
+  - Arrow key navigation (up/down/left/right)
+  - Enter to open preview
+  - Tab/Shift+Tab focus management
+  - Keyboard shortcuts (?/h for help, / for search)
+  - Focus indicators and ARIA attributes
+  - Grid navigation wrapping
+
+- [x] **Theme Switching** (`theme.spec.js` - 15 tests)
+  - Light/dark/auto theme modes
+  - Theme persistence in localStorage
+  - System preference detection
+  - Theme toggle button functionality
+  - Visual theme application
+
+- [ ] **Visual Regression** (`visual.spec.js` - 25 tests, currently skipped)
+  - Homepage layout snapshots
+  - Search results layout
+  - Modal appearance
+  - Theme variations
+  - Category sidebar
+  - *Note: Tests written but skipped until UI baselines are stable*
+
+**Total E2E Coverage:** 125 tests (100 active + 25 skipped for visual regression)
+
+**Documentation:**
+- See [`docs/testing/debugging-with-playwright.md`](debugging-with-playwright.md) for debugging guide
+- See [`tests/e2e/fixtures/README.md`](../../tests/e2e/fixtures/README.md) for fixture system details
+- See [`docs/testing/e2e-integration-testing-options.md`](e2e-integration-testing-options.md) for tool selection rationale
 
 ---
 
@@ -879,9 +948,9 @@ runner.test('modal traps focus within container', () => {
 
 ## Summary
 
-### Current State (2025-11-22)
+### Current State (2025-11-23)
 
-The Lima Catalog frontend has achieved **82% module coverage** across **222 tests** (up from 76 tests, +192% increase).
+The Lima Catalog frontend has achieved **82% module coverage** with **351 total tests** (226 unit + 125 E2E), up from 76 tests - a **+362% increase**.
 
 **What's Tested (7 modules at 100%, 4 modules partially):**
 - ✅ **100% Coverage:** data.js, filters.js, templateCard.js, theme.js, urlHelpers.js, state.js, utils.js
