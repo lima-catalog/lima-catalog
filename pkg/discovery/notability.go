@@ -180,8 +180,97 @@ func isAlphanumericOrUnderscore(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || b == '_'
 }
 
+// ScoreComponentMetadata defines metadata for a notability score component
+type ScoreComponentMetadata struct {
+	Key         string  // JSON key name
+	DisplayName string  // Human-readable name for frontend
+	Description string  // Detailed description
+}
+
+// ScoreComponentRegistry is the single source of truth for all notability score components
+//
+// DEDUPLICATION MECHANISM:
+// This registry ensures that score components are only defined once in the backend.
+// When you add a new component, follow these steps:
+//
+// 1. Add the component to this registry with its metadata
+// 2. Add the corresponding field to NotabilityScoreBreakdown struct (for JSON serialization)
+// 3. Add the calculation logic in CalculateNotabilityScoreWithBreakdown()
+// 4. The frontend will AUTOMATICALLY pick up the new component from the JSON data and display it in:
+//    - Debug filters (filters.js - dynamic sorting)
+//    - Sort dropdown (appActions.js - dynamic options)
+//    - Score popup (templateCard.js - dynamic display)
+//    - Rank calculations (templateCard.js - dynamic ranking)
+//
+// Example of adding a new component:
+//   1. Add to registry: {Key: "my_metric", DisplayName: "My Metric", Description: "..."}
+//   2. Add to struct: MyMetric float64 `json:"my_metric"`
+//   3. Add calculation: breakdown.MyMetric = calculateMyMetric(...)
+//   4. Frontend automatically handles it!
+//
+// This design ensures:
+// - Components are only added once in the backend
+// - No frontend code changes needed when adding new components
+// - Registry serves as documentation of all available components
+var ScoreComponentRegistry = []ScoreComponentMetadata{
+	{Key: "message", DisplayName: "Message", Description: "50 base + 1 per line (capped at 100)"},
+	{Key: "provision", DisplayName: "Provision Scripts", Description: "10 per script + 0.1 per line"},
+	{Key: "parameters", DisplayName: "Parameters", Description: "20 per param (capped at 100)"},
+	{Key: "env_vars", DisplayName: "Environment Variables", Description: "10 per var (capped at 100)"},
+	{Key: "probes", DisplayName: "Probes", Description: "5 per probe + 0.1 per line"},
+	{Key: "image_name", DisplayName: "Image Name", Description: "-100 if no remote images, 30 if unusual, +0-70 if custom names"},
+	{Key: "comments", DisplayName: "YAML Comments", Description: "2 per comment line (capped at 100)"},
+	{Key: "validation_warnings", DisplayName: "Validation Warnings", Description: "Penalty for validation warnings (negative)"},
+	{Key: "stars", DisplayName: "Repository Stars", Description: "1 per 10 stars (capped at 50)"},
+	{Key: "custom_driver", DisplayName: "Custom VM Driver", Description: "70 if vmtype is not empty and not qemu/vz/wsl2"},
+}
+
+// GetScoreComponentKeys returns all score component keys in order
+func GetScoreComponentKeys() []string {
+	keys := make([]string, len(ScoreComponentRegistry))
+	for i, component := range ScoreComponentRegistry {
+		keys[i] = component.Key
+	}
+	return keys
+}
+
+// ToMap returns the breakdown as a map for easier validation and iteration
+// Useful for ensuring all registry components are present
+func (b *NotabilityScoreBreakdown) ToMap() map[string]float64 {
+	return map[string]float64{
+		"message":              b.Message,
+		"provision":            b.Provision,
+		"parameters":           b.Parameters,
+		"env_vars":             b.EnvVars,
+		"probes":               b.Probes,
+		"image_name":           b.ImageName,
+		"comments":             b.Comments,
+		"validation_warnings":  b.ValidationWarnings,
+		"stars":                b.Stars,
+		"custom_driver":        b.CustomDriver,
+		"total":                b.Total,
+	}
+}
+
+// ValidateCompleteness checks if the breakdown has all components from the registry
+// Returns an error if any component is missing
+func (b *NotabilityScoreBreakdown) ValidateCompleteness() error {
+	breakdownMap := b.ToMap()
+	for _, component := range ScoreComponentRegistry {
+		if _, exists := breakdownMap[component.Key]; !exists {
+			return fmt.Errorf("missing score component in breakdown: %s", component.Key)
+		}
+	}
+	return nil
+}
+
 // NotabilityScoreBreakdown contains the individual components of the notability score
-type NotabilityScoreBreakdown struct {
+// IMPORTANT: When adding a new score component:
+// 1. Add it to ScoreComponentRegistry above (single source of truth)
+// 2. Add the field here for JSON serialization
+// 3. Add the calculation logic in CalculateNotabilityScoreWithBreakdown
+// 4. Frontend will automatically pick it up from the JSON
+type NotabilityScoreBreakdown struct{
 	Message             float64 `json:"message"`              // 50 base + 1 per line (capped at 100)
 	Provision           float64 `json:"provision"`            // 10 per script + 1 per 10 lines
 	Parameters          float64 `json:"parameters"`           // 20 per param (capped at 100)
@@ -198,23 +287,16 @@ type NotabilityScoreBreakdown struct {
 // CalculateNotabilityScore computes a weighted score from notability metrics
 // Higher score = more interesting/notable template
 //
-// Weights (in order of importance):
-// - Message: 50 points base + 1 per line (capped at 100 total)
-// - Provision scripts: 10 points per script + 1 point per 10 lines
-// - Parameters: 20 points per param (capped at 100)
-// - Environment vars: 10 points per var (capped at 100)
-// - Probes: 5 points per probe + 1 point per 10 lines
-// - Image name: -100 if no remote images, 30 if unusual images, +0-70 if custom org/repo names
-// - Comment lines: 2 points per comment line (capped at 100)
-// - Validation warnings: -50 points for first warning, -10 per additional warning (penalty)
-// - Repository stars: 1 point per 10 stars (capped at 50 points)
-// - Custom driver: 70 points if vmtype is not empty and not qemu/vz/wsl2
+// Score components are defined in ScoreComponentRegistry (single source of truth)
+// See CalculateNotabilityScoreWithBreakdown for implementation details
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) float64 {
 	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, orgName, repoName, repoStars)
 	return breakdown.Total
 }
 
 // CalculateNotabilityScoreWithBreakdown computes the score and returns the breakdown
+// IMPORTANT: When adding a new score component, update ScoreComponentRegistry first,
+// then add the calculation logic here
 func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) NotabilityScoreBreakdown {
 	breakdown := NotabilityScoreBreakdown{}
 

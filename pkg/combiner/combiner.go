@@ -47,23 +47,24 @@ import (
 
 // CombinedTemplate represents the optimized template data for the frontend
 type CombinedTemplate struct {
-	ID                      string                                 `json:"id"`
-	Name                    string                                 `json:"name"`
-	Description             string                                 `json:"description"`
-	Keywords                []string                               `json:"keywords"`
-	Category                string                                 `json:"category"`
-	Repo                    string                                 `json:"repo"`
-	Org                     string                                 `json:"org"`
-	Path                    string                                 `json:"path"`
-	Stars                   int                                    `json:"stars"`
-	UpdatedAt               string                                 `json:"updated_at"`
-	Official                bool                                   `json:"official"`
-	GithubURL               string                                 `json:"github_url"`  // github: scheme URL
-	RawURL                  string                                 `json:"raw_url"`     // https: raw.githubusercontent.com URL
-	NotabilityScore         float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
-	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown   `json:"notability_score_breakdown,omitempty"` // Debug: score components
-	SimilarTemplates        []types.SimilarTemplate                `json:"similar_templates,omitempty"` // Similar/duplicate templates detected by MinHash+LSH
-	OriginalID              string                                 `json:"original_id,omitempty"`      // If this is a copy, the ID of the original template
+	ID                       string                                 `json:"id"`
+	Name                     string                                 `json:"name"`
+	Description              string                                 `json:"description"`
+	Keywords                 []string                               `json:"keywords"`
+	Category                 string                                 `json:"category"`
+	Repo                     string                                 `json:"repo"`
+	Org                      string                                 `json:"org"`
+	Path                     string                                 `json:"path"`
+	Stars                    int                                    `json:"stars"`
+	UpdatedAt                string                                 `json:"updated_at"`
+	Official                 bool                                   `json:"official"`
+	GithubURL                string                                 `json:"github_url"`  // github: scheme URL
+	RawURL                   string                                 `json:"raw_url"`     // https: raw.githubusercontent.com URL
+	NotabilityScore          float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
+	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown    `json:"notability_score_breakdown,omitempty"` // Debug: score components
+	NotabilityScoreRanks     map[string]int                         `json:"notability_score_ranks,omitempty"`     // Rank for each component (1-based, with ties)
+	SimilarTemplates         []types.SimilarTemplate                `json:"similar_templates,omitempty"` // Similar/duplicate templates detected by MinHash+LSH
+	OriginalID               string                                 `json:"original_id,omitempty"`      // If this is a copy, the ID of the original template
 }
 
 // Combiner combines templates with repo/org metadata for frontend consumption
@@ -86,6 +87,105 @@ func NewCombinerWithFS(blocklist *types.Blocklist, fs interfaces.FileSystem, url
 		fs:             fs,
 		urlTransformer: urlTransformer,
 	}
+}
+
+// calculateRanks computes ranks for all score components across all templates
+// Returns a map from template ID to component ranks
+func calculateRanks(templates []CombinedTemplate) map[string]map[string]int {
+	if len(templates) == 0 {
+		return nil
+	}
+
+	// Get all component keys from registry
+	componentKeys := discovery.GetScoreComponentKeys()
+	componentKeys = append(componentKeys, "total") // Add total as well
+
+	// Initialize rank maps
+	ranksByTemplateID := make(map[string]map[string]int)
+
+	// For each component, calculate ranks
+	for _, componentKey := range componentKeys {
+		// Collect all scores for this component
+		type scoreWithID struct {
+			templateID string
+			score      float64
+		}
+		var scores []scoreWithID
+
+		for _, t := range templates {
+			if t.NotabilityScoreBreakdown == nil {
+				continue
+			}
+
+			var score float64
+			if componentKey == "total" {
+				score = t.NotabilityScoreBreakdown.Total
+			} else {
+				// Use the breakdown's ToMap to access component dynamically
+				breakdownMap := t.NotabilityScoreBreakdown.ToMap()
+				score = breakdownMap[componentKey]
+			}
+
+			scores = append(scores, scoreWithID{
+				templateID: t.ID,
+				score:      score,
+			})
+		}
+
+		// Sort by score descending
+		slices.SortFunc(scores, func(a, b scoreWithID) int {
+			if a.score > b.score {
+				return -1
+			}
+			if a.score < b.score {
+				return 1
+			}
+			return 0
+		})
+
+		// Assign ranks (1-based, with ties)
+		rank := 1
+		for i, item := range scores {
+			// Update rank if score changed (handle ties)
+			if i > 0 && scores[i].score != scores[i-1].score {
+				rank = i + 1
+			}
+
+			// Initialize map if needed
+			if ranksByTemplateID[item.templateID] == nil {
+				ranksByTemplateID[item.templateID] = make(map[string]int)
+			}
+
+			ranksByTemplateID[item.templateID][componentKey] = rank
+		}
+	}
+
+	return ranksByTemplateID
+}
+
+// writeScoreMetadata writes score component registry metadata to a JSON file
+// This allows the frontend to use proper display names and descriptions from the backend
+func (c *Combiner) writeScoreMetadata(metadataPath string) error {
+	// Export the registry
+	metadata := struct {
+		Components []discovery.ScoreComponentMetadata `json:"components"`
+	}{
+		Components: discovery.ScoreComponentRegistry,
+	}
+
+	file, err := c.fs.Create(metadataPath)
+	if err != nil {
+		return fmt.Errorf("failed to create metadata file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ") // Pretty-print for readability
+	if err := encoder.Encode(metadata); err != nil {
+		return fmt.Errorf("failed to encode metadata: %w", err)
+	}
+
+	return nil
 }
 
 // CombineData creates the frontend-optimized templates-combined.jsonl file
@@ -166,6 +266,16 @@ func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, 
 		})
 	}
 
+	// Calculate ranks for all templates across all components
+	ranksByTemplateID := calculateRanks(combined)
+
+	// Assign ranks to templates
+	for i := range combined {
+		if ranks, hasRanks := ranksByTemplateID[combined[i].ID]; hasRanks {
+			combined[i].NotabilityScoreRanks = ranks
+		}
+	}
+
 	// Sort combined templates by org/repo/path for stable output
 	slices.SortFunc(combined, func(a, b CombinedTemplate) int {
 		return cmp.Or(
@@ -193,7 +303,14 @@ func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, 
 	fmt.Printf("Total templates: %d\n", len(templates))
 	fmt.Printf("Filtered (blocklist): %d\n", filtered)
 	fmt.Printf("Combined output: %d templates\n", len(combined))
-	fmt.Printf("Output file: %s\n\n", outputPath)
+	fmt.Printf("Output file: %s\n", outputPath)
+
+	// Write score metadata file (score_metadata.json in same directory as catalog)
+	metadataPath := strings.TrimSuffix(outputPath, ".jsonl") + "_score_metadata.json"
+	if err := c.writeScoreMetadata(metadataPath); err != nil {
+		return fmt.Errorf("failed to write score metadata: %w", err)
+	}
+	fmt.Printf("Score metadata: %s\n\n", metadataPath)
 
 	// Print notability score statistics
 	printScoreStatistics(combined)
