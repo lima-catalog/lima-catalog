@@ -107,7 +107,7 @@ test.describe('Category and Keyword Filtering', () => {
     await page.waitForTimeout(300);
 
     // Verify keyword is moved to selected keywords
-    const selectedKeywords = page.locator('#selected-keywords .keyword-tag-selected');
+    const selectedKeywords = page.locator('#selected-keywords .selected-keyword');
     await expect(selectedKeywords).toHaveCount(1);
 
     // Verify templates are filtered
@@ -134,7 +134,7 @@ test.describe('Category and Keyword Filtering', () => {
     await page.waitForTimeout(300);
 
     // Verify both keywords are selected
-    const selectedKeywords = page.locator('#selected-keywords .keyword-tag-selected');
+    const selectedKeywords = page.locator('#selected-keywords .selected-keyword');
     await expect(selectedKeywords).toHaveCount(2);
 
     // Verify results are more filtered (AND logic)
@@ -151,16 +151,16 @@ test.describe('Category and Keyword Filtering', () => {
     await page.waitForTimeout(300);
 
     // Verify keyword is selected
-    await expect(page.locator('#selected-keywords .keyword-tag-selected')).toHaveCount(1);
+    await expect(page.locator('#selected-keywords .selected-keyword')).toHaveCount(1);
 
     const filteredCount = await page.locator('#templates-grid .template-card').count();
 
-    // Click remove button on selected keyword
-    await page.locator('#selected-keywords .keyword-tag-selected .keyword-remove').click();
+    // Click on the selected keyword to remove it (the whole element is clickable)
+    await page.locator('#selected-keywords .selected-keyword').click();
     await page.waitForTimeout(300);
 
     // Verify keyword is removed
-    await expect(page.locator('#selected-keywords .keyword-tag-selected')).toHaveCount(0);
+    await expect(page.locator('#selected-keywords .selected-keyword')).toHaveCount(0);
 
     // Verify templates are restored
     const restoredCount = await page.locator('#templates-grid .template-card').count();
@@ -178,7 +178,7 @@ test.describe('Category and Keyword Filtering', () => {
     await page.waitForTimeout(200);
 
     // Verify keywords are selected
-    const selectedCount = await page.locator('#selected-keywords .keyword-tag-selected').count();
+    const selectedCount = await page.locator('#selected-keywords .selected-keyword').count();
     expect(selectedCount).toBeGreaterThan(0);
 
     // Click clear all button
@@ -186,7 +186,7 @@ test.describe('Category and Keyword Filtering', () => {
     await page.waitForTimeout(300);
 
     // Verify all keywords are cleared
-    await expect(page.locator('#selected-keywords .keyword-tag-selected')).toHaveCount(0);
+    await expect(page.locator('#selected-keywords .selected-keyword')).toHaveCount(0);
 
     // Verify clear button is hidden
     await expect(page.locator('#clear-keywords')).not.toBeVisible();
