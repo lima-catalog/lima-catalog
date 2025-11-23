@@ -24,9 +24,9 @@ module.exports = defineConfig({
   globalSetup: require.resolve('./tests/e2e/global-setup.js'),
 
   // Reporter to use
-  // 'dot' reporter shows one character per test (compact progress indicator)
+  // 'line' reporter shows one line per completed test (better for streaming in CI)
   // 'github' reporter adds annotations to GitHub Actions
-  reporter: process.env.CI ? [['dot'], ['github']] : 'list',
+  reporter: process.env.CI ? [['line'], ['github']] : 'list',
 
   // Shared settings for all the projects below
   use: {
