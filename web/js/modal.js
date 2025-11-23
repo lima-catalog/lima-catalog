@@ -767,6 +767,12 @@ function populateSimilarTemplates(template) {
         return a.id.localeCompare(b.id);
     });
 
+    // Update title with count
+    const similarTitle = document.querySelector('.similar-templates-title');
+    if (similarTitle) {
+        similarTitle.textContent = `Similar Templates (${sortedSimilarTemplates.length})`;
+    }
+
     sortedSimilarTemplates.forEach((similar, index) => {
         const similarTemplate = templateMap.get(similar.id);
         const similarityPercent = Math.round(similar.similarity * 100);

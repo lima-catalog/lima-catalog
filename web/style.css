@@ -1169,11 +1169,34 @@ footer a:hover {
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     background: var(--bg-secondary);
+    /* Force scrollbar to always be visible */
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
 }
 
 .similar-templates-list:focus {
     outline: 2px solid var(--primary);
     outline-offset: -1px;
+}
+
+/* WebKit scrollbar styling for similar templates list (Chrome, Safari, Edge) */
+.similar-templates-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.similar-templates-list::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+.similar-templates-list::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+    border: 2px solid var(--scrollbar-track);
+}
+
+.similar-templates-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
 }
 
 .similar-template-item {
