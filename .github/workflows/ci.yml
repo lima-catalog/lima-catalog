@@ -88,6 +88,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
+      - name: Checkout data branch for test fixtures
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          ref: data
+          path: data-branch
+
+      - name: Copy catalog data for tests
+        run: cp data-branch/data/catalog.jsonl web/catalog.jsonl
+
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -101,10 +110,6 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-
-      - name: Fetch catalog data for tests
-        run: |
-          curl -L -o web/catalog.jsonl https://raw.githubusercontent.com/lima-catalog/lima-catalog/data/data/catalog.jsonl
 
       - name: Run E2E tests
         run: npx playwright test
