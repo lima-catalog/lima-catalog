@@ -1,0 +1,30 @@
+# Lima template: Aistor Rocky 4disks
+# Https://dl.rockylinux.org/pub/rocky/9.5/images/x86_64/Rocky-9-GenericCloud-Base-9.5-20241118.0.x86_64.qcow2-based development (x86_64). Templates for Lima VM
+# Category: development
+# Official: false
+# Source: github:pavelanni/lima_templates/templates/pre-1.1.0/aistor_rocky_4disks
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: rocky, containerd, git
+
+# Notability Score: 12.3

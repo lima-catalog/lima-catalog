@@ -1,0 +1,30 @@
+# Lima template: Config
+# Https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img-based development (x86_64)
+# Category: development
+# Official: false
+# Source: github:AJORGEST/xbase/development/native-lxd-stack/config/lima
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: ubuntu, containerd, rust
+
+# Notability Score: 13.2

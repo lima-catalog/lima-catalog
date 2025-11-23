@@ -1,0 +1,27 @@
+# Lima template: Apptainer Rootful
+# Https://cloud-images.ubuntu.com/releases/noble/release-20251031/ubuntu-24.04-server-cloudimg-amd64.img-based development (x86_64). Linux virtual machines, with a focus on running containers
+# Category: development
+# Official: true
+# Source: github:lima-vm/lima/templates/apptainer-rootful
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+
+
+
+# Keywords: ubuntu, pip
+
+# Notability Score: 65.0

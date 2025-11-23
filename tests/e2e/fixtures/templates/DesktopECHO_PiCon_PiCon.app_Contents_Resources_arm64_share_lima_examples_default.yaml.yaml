@@ -1,0 +1,30 @@
+# Lima template: Picon
+# Https://cloud-images.ubuntu.com/releases/23.04/release-20230810/ubuntu-23.04-server-cloudimg-amd64.img-based general (x86_64). Pi-hole container for macOS - Built with QEMU · Lima · PiBar · Alacritty
+# Category: general
+# Official: false
+# Source: github:DesktopECHO/PiCon/PiCon.app/Contents/Resources/arm64/share/lima/examples/default
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: ubuntu, containerd
+
+# Notability Score: 0.7

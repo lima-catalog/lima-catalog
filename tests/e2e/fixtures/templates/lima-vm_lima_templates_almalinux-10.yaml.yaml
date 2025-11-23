@@ -1,0 +1,30 @@
+# Lima template: Almalinux 10
+# Https://repo.almalinux.org/almalinux/10.0/cloud/x86_64/images/AlmaLinux-10-GenericCloud-10.0-20250528.0.x86_64.qcow2-based general (x86_64). Linux virtual machines, with a focus on running containers
+# Category: general
+# Official: true
+# Source: github:lima-vm/lima/templates/almalinux-10
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+containerd:
+  system: false
+  user: true
+
+
+
+# Keywords: almalinux, containerd
+
+# Notability Score: 50.0

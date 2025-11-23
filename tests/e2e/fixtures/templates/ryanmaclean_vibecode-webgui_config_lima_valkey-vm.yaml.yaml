@@ -1,0 +1,27 @@
+# Lima template: Valkey VM
+# Https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/cloud/nocloud_alpine-3.22.0-aarch64-uefi-cloudinit-r0.qcow2-based database (aarch64). Sample vibecoding platform based on code-server mixed with OpenRouter, monitored via Datadog/OpenTelemetry/Vector. Uses optional PostgreSQL pgvector for RAG implementation.
+# Category: database
+# Official: false
+# Source: github:ryanmaclean/vibecode-webgui/config/lima/valkey-vm
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+    digest: "sha256:example-digest-for-testing"
+
+cpus: 4
+memory: "4GiB"
+disk: "100GiB"
+
+mounts:
+  - location: "~"
+    writable: true
+  - location: "/tmp/lima"
+    writable: true
+
+
+
+
+# Keywords: alpine, redis
+
+# Notability Score: 169.0
