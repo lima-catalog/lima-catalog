@@ -205,21 +205,55 @@ make test
 
 ## Documentation Standards
 
-### Before Creating PRs
+### Code Documentation Requirements
 
-**⚠️ CRITICAL: Update documentation FIRST**:
+**⚠️ REQUIRED for all code:**
 
-1. **New features** → Update [docs/architecture/overview.md](../architecture/overview.md) or [future-work.md](../architecture/future-work.md)
-2. **UI changes** → Update [docs/guides/ui-ux-guidelines.md](../guides/ui-ux-guidelines.md)
-3. **Backend changes** → Update [docs/architecture/backend-design.md](../architecture/backend-design.md)
-4. **Data pipeline changes** → Update [docs/architecture/data-pipeline.md](../architecture/data-pipeline.md)
+#### Test Files: Block Comments with High-Level Overview
 
-Then commit docs before creating PR.
+All test files must have a comprehensive comment block at the top describing what is tested:
 
-### Godoc Standards
+**Go test files** (`*_test.go`):
+```go
+// Unit Tests: Storage Package
+//
+// This file tests the Storage interface implementation for managing
+// template and repository data. Tests cover:
+// - Creating and retrieving templates
+// - Updating template analysis results
+// - Error handling for invalid inputs
+// - Edge cases (nil values, empty strings)
+package storage_test
+```
 
-All exported types and functions should have godoc comments:
+**JavaScript test files** (`*.test.js`):
+```javascript
+// Unit Tests: Filter Module
+//
+// This file tests the filtering functionality for templates and repositories.
+// Tests cover:
+// - Category filtering (single and multiple categories)
+// - Keyword search (case-insensitive, partial matches)
+// - Combined filters (category + keyword)
+// - Edge cases (empty results, special characters)
+```
 
+**E2E test files**:
+```go
+// E2E Tests: Template Analysis Pipeline
+//
+// This file tests the end-to-end template analysis workflow including:
+// - Fetching templates from GitHub
+// - Running keyword extraction
+// - Storing analysis results
+// - Handling network failures gracefully
+```
+
+#### Regular Code: GoDoc and JSDoc
+
+All production code (non-test files) must have proper documentation:
+
+**Go code** - Use GoDoc for all exported types, functions, and methods:
 ```go
 // AnalyzeTemplate extracts keywords, categories, and notability metrics
 // from a template. It skips analysis if the template's SHA hasn't changed
@@ -230,6 +264,37 @@ func (a *Analyzer) AnalyzeTemplate(template *types.Template, repoInfo *types.Rep
     // ...
 }
 ```
+
+**JavaScript code** - Use JSDoc for all exported functions and modules:
+```javascript
+/**
+ * Filters templates by category and keyword search.
+ *
+ * @param {Array<Object>} templates - Array of template objects to filter
+ * @param {string} category - Category to filter by (empty string matches all)
+ * @param {string} keyword - Keyword to search for in name/description (case-insensitive)
+ * @returns {Array<Object>} Filtered array of templates
+ */
+export function applyFilters(templates, category, keyword) {
+    // ...
+}
+```
+
+**Why this matters:**
+- Test comments explain the high-level testing strategy at a glance
+- GoDoc/JSDoc provides API documentation for code consumers
+- Both improve maintainability and onboarding for new contributors
+
+### Before Creating PRs
+
+**⚠️ CRITICAL: Update documentation FIRST**:
+
+1. **New features** → Update [docs/architecture/overview.md](../architecture/overview.md) or [future-work.md](../architecture/future-work.md)
+2. **UI changes** → Update [docs/guides/ui-ux-guidelines.md](../guides/ui-ux-guidelines.md)
+3. **Backend changes** → Update [docs/architecture/backend-design.md](../architecture/backend-design.md)
+4. **Data pipeline changes** → Update [docs/architecture/data-pipeline.md](../architecture/data-pipeline.md)
+
+Then commit docs before creating PR.
 
 ---
 
