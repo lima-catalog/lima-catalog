@@ -47,7 +47,7 @@
 
 ### Testing
 - **[E2E & Integration Testing Options](testing/e2e-integration-testing-options.md)** - Comprehensive analysis of testing tools (Playwright, Puppeteer, Cypress, chromedp, rod)
-- **[Backend Test Coverage Plan](testing/test-coverage-plan.md)** - Go test coverage improvement roadmap
+- **[Backend Test Coverage Plan](testing/test-coverage-plan-backend.md)** - Go test coverage improvement roadmap
 - **[Frontend Test Coverage Plan](testing/test-coverage-plan-frontend.md)** - JavaScript test coverage plan
 
 ---
