@@ -24,9 +24,12 @@ module.exports = defineConfig({
   globalSetup: require.resolve('./tests/e2e/global-setup.js'),
 
   // Reporter to use
-  // 'line' reporter shows one line per completed test (better for streaming in CI)
+  // 'line' reporter shows one line per completed test (better for streaming in CI, saved to test-output.txt)
   // 'github' reporter adds annotations to GitHub Actions
-  reporter: process.env.CI ? [['line'], ['github']] : 'list',
+  // 'json' reporter creates structured data for automated analysis (saved to test-results/results.json)
+  reporter: process.env.CI
+    ? [['line'], ['github'], ['json', { outputFile: 'test-results/results.json' }]]
+    : 'list',
 
   // Shared settings for all the projects below
   use: {
