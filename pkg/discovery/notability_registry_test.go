@@ -8,7 +8,7 @@ import (
 
 func TestScoreComponentRegistry(t *testing.T) {
 	// Test that the registry has the expected number of components
-	expectedComponents := 9 // message, provision, parameters, env_vars, probes, image_name, comments, validation_warnings, stars
+	expectedComponents := 10 // message, provision, parameters, env_vars, probes, image_name, comments, validation_warnings, stars, custom_driver
 	if len(ScoreComponentRegistry) != expectedComponents {
 		t.Errorf("Expected %d components in registry, got %d", expectedComponents, len(ScoreComponentRegistry))
 	}
