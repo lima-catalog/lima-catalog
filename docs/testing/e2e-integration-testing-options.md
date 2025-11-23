@@ -38,7 +38,7 @@ This document analyzes available options for implementing end-to-end (e2e) and i
 
 **Go Backend:**
 - Unit tests: `go test ./...`
-- Current coverage: ~49.7% (see [test-coverage-plan.md](test-coverage-plan.md))
+- Current coverage: ~49.7% (see [test-coverage-plan-backend.md](test-coverage-plan-backend.md))
 - Integration tests: `scripts/test-integration.sh` (CLI tool testing with real GitHub API)
 
 **JavaScript Frontend:**
