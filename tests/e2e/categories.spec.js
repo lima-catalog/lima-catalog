@@ -255,7 +255,7 @@ test.describe('Category and Keyword Filtering', () => {
 
   test('loads category from URL parameter', async ({ page }) => {
     // Navigate with category parameter
-    await page.goto('/?category=Container');
+    await page.goto('/?category=containers');
     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
     await page.waitForTimeout(300);
 
@@ -274,14 +274,14 @@ test.describe('Category and Keyword Filtering', () => {
     await keyword.click();
     await page.waitForTimeout(300);
 
-    // Check URL contains keyword parameter
+    // Check URL contains keywords parameter (plural)
     const url = page.url();
-    expect(url).toContain('keyword=');
+    expect(url).toContain('keywords=');
   });
 
   test('loads keywords from URL parameter', async ({ page }) => {
-    // Navigate with keyword parameter
-    await page.goto('/?keyword=docker');
+    // Navigate with keywords parameter (plural)
+    await page.goto('/?keywords=docker');
     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
     await page.waitForTimeout(300);
 
@@ -291,8 +291,8 @@ test.describe('Category and Keyword Filtering', () => {
   });
 
   test('loads multiple keywords from URL parameter', async ({ page }) => {
-    // Navigate with multiple keywords
-    await page.goto('/?keyword=docker&keyword=linux');
+    // Navigate with multiple keywords (comma-separated)
+    await page.goto('/?keywords=docker,linux');
     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
     await page.waitForTimeout(300);
 
