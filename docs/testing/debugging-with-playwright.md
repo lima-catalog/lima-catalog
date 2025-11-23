@@ -510,6 +510,31 @@ ERROR:net/socket/ssl_client_socket_impl.cc:902] handshake failed
 **Solution:**
 These are warnings from GitHub API calls and can be ignored. Configuration includes `ignoreHTTPSErrors: true` for this reason.
 
+### Issue: Web server logs flooding CI output
+
+**Symptom:**
+Thousands of HTTP request logs appear in test output:
+```
+127.0.0.1 - - [23/Nov/2025 05:33:34] "GET /js/sidebar.js HTTP/1.1" 200 -
+127.0.0.1 - - [23/Nov/2025 05:33:34] "GET /js/app.js HTTP/1.1" 200 -
+...
+```
+
+**Solution:**
+Web server logs are automatically redirected to `test-results/webserver.log` (configured in `playwright.config.js`). This file is:
+- Created automatically when tests run
+- Included in CI artifacts on test failure (see `.github/workflows/ci.yml`)
+- Available for debugging without cluttering console output
+
+**To view web server logs:**
+```bash
+# After running tests locally
+cat test-results/webserver.log
+
+# In CI: Download the "playwright-report" artifact from the failed workflow
+# The artifact includes test-results/webserver.log along with screenshots, traces, and videos
+```
+
 ---
 
 ## Writing Debug Scripts
