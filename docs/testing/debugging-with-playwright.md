@@ -19,9 +19,10 @@
 2. [Environment Setup](#environment-setup)
 3. [Running Tests](#running-tests)
 4. [Interactive Debugging](#interactive-debugging)
-5. [Playwright MCP Limitations](#playwright-mcp-limitations)
-6. [Common Issues and Solutions](#common-issues-and-solutions)
-7. [Writing Debug Scripts](#writing-debug-scripts)
+5. [Debugging Test Flakiness](#debugging-test-flakiness)
+6. [Playwright MCP Limitations](#playwright-mcp-limitations)
+7. [Common Issues and Solutions](#common-issues-and-solutions)
+8. [Writing Debug Scripts](#writing-debug-scripts)
 
 ---
 
@@ -110,20 +111,9 @@ npx playwright test --debug
 
 ### Current Test Status (as of 2025-11-23)
 
-- ✅ 16 tests passing
-- ❌ 8 tests failing (mostly due to missing dynamic data)
-- ⏭️ 1 skipped
-
-**Passing tests include:**
-- Category filtering
-- Keyword filtering
-- Modal functionality (partial)
-- Search filtering
-- Checkbox filters
-
-**Failing tests:**
-- Tests that depend on `/js/data.js` having full catalog data
-- Console shows: `[getDynamicKeywords] Returning empty - missing data`
+- ✅ 25 tests total
+- All tests passing after implementing proper data loading synchronization
+- Tests include category filtering, keyword filtering, modal functionality, search, and checkbox filters
 
 ---
 
@@ -240,6 +230,172 @@ await page.screenshot({ path: 'step2-filtered.png' });
 
 ---
 
+## Debugging Test Flakiness
+
+### Recognizing Data Loading Timing Issues
+
+**Critical Pattern:** If ALL tests fail on first run but ALL pass on retry, this is a strong indicator of asynchronous data loading timing issues, often related to caching.
+
+**Symptoms:**
+- Test report shows many "flaky" tests (e.g., "23 flaky")
+- Individual test runs show failures with timeouts or missing elements
+- Retries consistently pass
+- Local tests may pass while CI fails (or vice versa)
+
+**Root Cause:**
+Tests run before async data (like `catalog.jsonl`) has finished loading. On retry, the data is cached by the browser, so it loads instantly and tests pass.
+
+### The waitForApp Pattern
+
+**Problem:** Simply waiting for DOM elements with `waitForSelector` is insufficient. The page may render before JavaScript state is initialized or data is loaded.
+
+**Solution:** Use `waitForFunction` to verify both DOM elements AND application state:
+
+```javascript
+// tests/e2e/wait-for-app.js
+async function waitForApp(page) {
+  // Wait for DOM elements to exist
+  await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
+
+  // Wait for app state to be initialized AND data to be loaded
+  await page.waitForFunction(() => {
+    // Check that core app functions are available
+    const hasAppActions = window.appActions &&
+           typeof window.appActions.applyFiltersAndRender === 'function';
+
+    // Check that templates data is actually loaded (not empty)
+    const hasTemplates = window.state &&
+                        window.state.getTemplates &&
+                        window.state.getTemplates().length > 0;
+
+    return hasAppActions && hasTemplates;
+  }, { timeout: 15000 });
+
+  // Small additional delay to ensure DOM updates have completed
+  await page.waitForTimeout(500);
+}
+
+module.exports = { waitForApp };
+```
+
+**Usage in tests:**
+```javascript
+const { waitForApp } = require('./wait-for-app');
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/');
+  await waitForApp(page);  // Don't proceed until data is loaded
+});
+```
+
+### Global Setup for Data Pre-loading
+
+To reduce flakiness, pre-load critical data files before any tests run:
+
+```javascript
+// tests/e2e/global-setup.js
+async function globalSetup() {
+  const baseURL = 'http://localhost:8000';
+
+  // Wait for web server to be ready
+  for (let i = 0; i < 10; i++) {
+    try {
+      const response = await fetch(baseURL);
+      if (response.ok) break;
+    } catch (error) {
+      if (i === 9) throw new Error('Web server not ready');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  // Pre-load catalog.jsonl to warm up the cache/server
+  const catalogResponse = await fetch(`${baseURL}/js/catalog.jsonl`);
+  await catalogResponse.text(); // Actually read the response
+
+  // Give server time to stabilize
+  await new Promise(resolve => setTimeout(resolve, 2000));
+}
+```
+
+**Configure in playwright.config.js:**
+```javascript
+module.exports = defineConfig({
+  globalSetup: require.resolve('./tests/e2e/global-setup.js'),
+  // ... other config
+});
+```
+
+### Identifying Cache-Related Issues
+
+**How to diagnose:**
+1. Run tests multiple times and note the pattern
+2. If first run consistently fails and retries pass → likely caching issue
+3. Check browser DevTools Network tab for resource loading times
+4. Add console logging to track data loading:
+   ```javascript
+   page.on('console', msg => console.log('Browser:', msg.text()));
+   ```
+
+**Common cache-related failures:**
+- Timeouts waiting for elements that depend on data
+- Empty arrays or undefined values in app state
+- Filters returning zero results when data isn't loaded
+
+### CI-Specific Flakiness
+
+**Why CI differs from local:**
+- Different caching behavior
+- Resource constraints (CPU, memory)
+- Network latency to external resources
+- Parallel test execution may cause resource contention
+
+**CI-specific configurations:**
+```javascript
+// playwright.config.js
+module.exports = defineConfig({
+  timeout: process.env.CI ? 60 * 1000 : 30 * 1000,
+  fullyParallel: !process.env.CI,  // Disable parallel in CI
+  workers: process.env.CI ? 1 : undefined,  // Single worker in CI
+  retries: process.env.CI ? 2 : 0,
+
+  use: {
+    actionTimeout: process.env.CI ? 15 * 1000 : 10 * 1000,
+    navigationTimeout: process.env.CI ? 30 * 1000 : 15 * 1000,
+  },
+});
+```
+
+### Debugging Checklist for Flaky Tests
+
+When debugging flaky tests, check:
+
+1. ✅ **Data Loading**: Is `waitForFunction` used to verify data is loaded?
+2. ✅ **Global Setup**: Are critical resources pre-loaded before tests?
+3. ✅ **Network Idle**: Is `waitForLoadState('networkidle')` used where appropriate?
+4. ✅ **Timeouts**: Are timeouts sufficient for slow CI environments?
+5. ✅ **Parallel Execution**: Could resource contention be causing issues?
+6. ✅ **Browser Cache**: Could caching affect test behavior between runs?
+7. ✅ **Console Errors**: Are there JavaScript errors preventing proper initialization?
+
+### Best Practices
+
+**DO:**
+- ✅ Wait for application state, not just DOM elements
+- ✅ Verify data is loaded before running assertions
+- ✅ Pre-load critical resources in global setup
+- ✅ Use longer timeouts in CI environments
+- ✅ Run tests sequentially in CI if resource-constrained
+- ✅ Add retry logic for network-dependent operations
+
+**DON'T:**
+- ❌ Rely solely on `waitForSelector` for async data
+- ❌ Assume data is loaded when elements appear
+- ❌ Use fixed `waitForTimeout` as the primary synchronization method
+- ❌ Run highly parallel tests in resource-constrained environments
+- ❌ Ignore "flaky" test patterns - they indicate real issues
+
+---
+
 ## Playwright MCP Limitations
 
 ### Why Playwright MCP Doesn't Work
@@ -270,6 +426,31 @@ Instead of MCP tools, use programmatic Playwright via Node.js scripts (see [Inte
 ---
 
 ## Common Issues and Solutions
+
+### Issue: Tests are "flaky" - fail on first run, pass on retry
+
+**Symptom:**
+```
+Notice: 23 flaky tests
+```
+
+All or most tests fail initially but pass when retried.
+
+**Solution:**
+This is almost always a data loading timing issue. See the [Debugging Test Flakiness](#debugging-test-flakiness) section for comprehensive guidance. Quick fixes:
+
+1. Implement `waitForApp()` helper to verify data is loaded:
+   ```javascript
+   const { waitForApp } = require('./wait-for-app');
+   test.beforeEach(async ({ page }) => {
+     await page.goto('/');
+     await waitForApp(page);
+   });
+   ```
+
+2. Add global setup to pre-load data (see [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js))
+
+3. Use `waitForFunction` to check application state, not just DOM elements
 
 ### Issue: Browser crashes with "Target closed"
 
@@ -474,6 +655,8 @@ const { chromium } = require('@playwright/test');
 - [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search and filtering tests
 - [`tests/e2e/categories.spec.js`](/home/user/lima-catalog/tests/e2e/categories.spec.js) - Category and keyword tests
 - [`tests/e2e/modal.spec.js`](/home/user/lima-catalog/tests/e2e/modal.spec.js) - Modal interaction tests
+- [`tests/e2e/wait-for-app.js`](/home/user/lima-catalog/tests/e2e/wait-for-app.js) - Helper to ensure app and data are fully loaded
+- [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js) - Pre-loads data before tests run
 - [`tests/e2e/helpers.js`](/home/user/lima-catalog/tests/e2e/helpers.js) - Shared test utilities
 
 ---
