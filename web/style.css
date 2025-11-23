@@ -1183,23 +1183,35 @@ footer a:hover {
 /* WebKit scrollbar styling for similar templates list (Chrome, Safari, Edge) */
 /* Force non-overlay scrollbar that doesn't fade away on macOS */
 .similar-templates-list::-webkit-scrollbar {
-    -webkit-appearance: none;
-    width: 10px;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 12px;
+    height: 12px;
 }
 
 .similar-templates-list::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
-    border-radius: 0.25rem;
+    border-radius: 4px;
 }
 
 .similar-templates-list::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 0.25rem;
-    min-height: 30px;
+    background-color: var(--scrollbar-thumb);
+    border-radius: 4px;
+    border: 2px solid var(--scrollbar-track);
+    min-height: 40px;
 }
 
 .similar-templates-list::-webkit-scrollbar-thumb:hover {
-    background: var(--text-light);
+    background-color: var(--text-light);
+}
+
+/* Force scrollbar to always be visible on WebKit (macOS Safari/Chrome) */
+.similar-templates-list::-webkit-scrollbar-button {
+    display: none;
+}
+
+.similar-templates-list::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 .similar-template-item {
