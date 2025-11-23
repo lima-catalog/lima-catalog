@@ -558,7 +558,7 @@ Thousands of HTTP request logs appear in test output:
 **Solution:**
 Web server logs are automatically redirected to `test-results/webserver.log` (configured in `playwright.config.js`). This file is:
 - Created automatically when tests run
-- Included in CI artifacts on test failure (see `.github/workflows/ci.yml`)
+- Always included in CI artifacts, regardless of test outcome (see `.github/workflows/ci.yml`)
 - Available for debugging without cluttering console output
 
 **To view web server logs:**
