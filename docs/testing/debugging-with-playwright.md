@@ -245,48 +245,27 @@ await page.screenshot({ path: 'step2-filtered.png' });
 **Root Cause:**
 Tests run before async data (like `catalog.jsonl`) has finished loading. On retry, the data is cached by the browser, so it loads instantly and tests pass.
 
-### The waitForApp Pattern
+### Waiting for Data to Load
 
-**Problem:** Simply waiting for DOM elements with `waitForSelector` is insufficient. The page may render before JavaScript state is initialized or data is loaded.
+**Problem:** Simply waiting for DOM elements with `waitForSelector` may not be enough if the data hasn't loaded yet.
 
-**Solution:** Use `waitForFunction` to verify both DOM elements AND application state:
+**Solution:** Pre-load critical data in global setup (see below), then wait for template cards to appear:
 
 ```javascript
-// tests/e2e/wait-for-app.js
-async function waitForApp(page) {
-  // Wait for DOM elements to exist
-  await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
-
-  // Wait for app state to be initialized AND data to be loaded
-  await page.waitForFunction(() => {
-    // Check that core app functions are available
-    const hasAppActions = window.appActions &&
-           typeof window.appActions.applyFiltersAndRender === 'function';
-
-    // Check that templates data is actually loaded (not empty)
-    const hasTemplates = window.state &&
-                        window.state.getTemplates &&
-                        window.state.getTemplates().length > 0;
-
-    return hasAppActions && hasTemplates;
-  }, { timeout: 15000 });
-
-  // Small additional delay to ensure DOM updates have completed
-  await page.waitForTimeout(500);
-}
-
-module.exports = { waitForApp };
-```
-
-**Usage in tests:**
-```javascript
-const { waitForApp } = require('./wait-for-app');
-
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await waitForApp(page);  // Don't proceed until data is loaded
+
+  // Wait for initial templates to load and render
+  await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
 });
 ```
+
+This works because:
+1. Global setup pre-loads `catalog.jsonl` before any tests run
+2. The browser caches this data for subsequent test navigations
+3. Template cards only appear after data is loaded and rendered
+
+**Note:** The app uses ES modules, so don't try to check for `window.appActions` or `window.state` - these are never exposed globally.
 
 ### Global Setup for Data Pre-loading
 
@@ -439,18 +418,17 @@ All or most tests fail initially but pass when retried.
 **Solution:**
 This is almost always a data loading timing issue. See the [Debugging Test Flakiness](#debugging-test-flakiness) section for comprehensive guidance. Quick fixes:
 
-1. Implement `waitForApp()` helper to verify data is loaded:
+1. Add global setup to pre-load data (see [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js))
+
+2. Wait for template cards to appear in each test:
    ```javascript
-   const { waitForApp } = require('./wait-for-app');
    test.beforeEach(async ({ page }) => {
      await page.goto('/');
-     await waitForApp(page);
+     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
    });
    ```
 
-2. Add global setup to pre-load data (see [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js))
-
-3. Use `waitForFunction` to check application state, not just DOM elements
+3. Ensure templates only appear after data is loaded (check the rendering logic)
 
 ### Issue: Browser crashes with "Target closed"
 
@@ -655,7 +633,6 @@ const { chromium } = require('@playwright/test');
 - [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search and filtering tests
 - [`tests/e2e/categories.spec.js`](/home/user/lima-catalog/tests/e2e/categories.spec.js) - Category and keyword tests
 - [`tests/e2e/modal.spec.js`](/home/user/lima-catalog/tests/e2e/modal.spec.js) - Modal interaction tests
-- [`tests/e2e/wait-for-app.js`](/home/user/lima-catalog/tests/e2e/wait-for-app.js) - Helper to ensure app and data are fully loaded
 - [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js) - Pre-loads data before tests run
 - [`tests/e2e/helpers.js`](/home/user/lima-catalog/tests/e2e/helpers.js) - Shared test utilities
 
