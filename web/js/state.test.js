@@ -1,5 +1,18 @@
 /**
- * Tests for state.js - Application state management
+ * Unit Tests: Application State Management (state.js)
+ *
+ * High-level overview of what's being tested:
+ * - Setting and getting all templates
+ * - Setting and getting filtered templates
+ * - Toggling keyword selection (add/remove)
+ * - Managing multiple keyword selections
+ * - Clearing keyword selections
+ * - Setting and toggling category selection
+ * - Managing focused template state
+ * - Debug mode toggle functionality
+ * - Clearing all selections at once
+ * - State isolation and independence
+ * - Initial/default state values
  */
 
 import { runner, assert } from './test-framework.js';

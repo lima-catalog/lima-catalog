@@ -1,5 +1,16 @@
 /**
- * Tests for urlHelpers.js
+ * Unit Tests: URL Helpers (urlHelpers.js)
+ *
+ * High-level overview of what's being tested:
+ * - Converting raw GitHub URLs to display URLs (blob format)
+ * - Converting blob URLs to raw content URLs
+ * - Handling different branch names (main, master, commit SHAs)
+ * - Parsing and extracting components from GitHub URLs
+ * - Handling nested repository paths
+ * - Returning empty strings for invalid/missing URLs
+ *
+ * Note: GitHub scheme URL generation (lima://) is handled by backend
+ * and tested in pkg/combiner/combiner_test.go
  */
 
 import { runner, assert } from './test-framework.js';

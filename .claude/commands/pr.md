@@ -13,7 +13,52 @@ Then gather info (can run in parallel):
 - `git log --oneline origin/main..HEAD` - see all commits to include
 - `git diff origin/main...HEAD --stat` - summary of all changes
 
-## 2. Run Tests, Linting, and Rebase
+## 2. Check Test Coverage and Test Comments
+
+**IMPORTANT: Do this BEFORE running tests.**
+
+### 2.1 Verify Test Coverage for Code Changes
+
+For any code changes (non-test files), verify that corresponding tests exist:
+
+```bash
+git diff origin/main...HEAD --name-only --diff-filter=AM | grep -E '\.(js|go)$' | grep -v '\.test\.' | grep -v '\.spec\.' | grep -v '_test\.go'
+```
+
+For each changed code file, ask yourself:
+- Does this change require new test cases?
+- Are there existing tests that need to be updated?
+- If this is a new file, does it have corresponding test coverage?
+
+Common patterns:
+- `web/js/foo.js` → Should have tests in `web/js/foo.test.js`
+- `pkg/bar/baz.go` → Should have tests in `pkg/bar/baz_test.go`
+- New features → Need new test cases
+- Bug fixes → Should add regression tests
+- Refactoring → Existing tests should still pass and may need updates
+
+### 2.2 Verify Test Comment Headers
+
+For any changed test files, verify the overview comment at the top is up-to-date:
+
+```bash
+git diff origin/main...HEAD --name-only --diff-filter=AM | grep -E '(\.test\.|\.spec\.|_test\.go)'
+```
+
+For each changed test file:
+- Check if the overview comment block at the top accurately describes what's tested
+- E2E tests should have format: `E2E Tests: <Feature Name>`
+- Unit tests should have format: `Unit Tests: <Module Name>`
+- The bullet points should list all major test categories
+- Update the comment if tests were added, removed, or significantly changed
+
+Example patterns:
+- Added new test cases → Add bullet point to overview
+- Removed test cases → Remove or update bullet points
+- Changed test behavior → Update description to match
+- New test file → Must have comprehensive overview comment
+
+## 3. Run Tests, Linting, and Rebase
 Run the automated PR preparation workflow:
 
 ```bash
@@ -34,14 +79,14 @@ This will:
 
 If tests fail or conflicts occur, fix them and commit before running `make pr` again.
 
-## 3. Push Changes
+## 4. Push Changes
 If `make pr` succeeded, push your rebased branch:
 
 ```bash
 git push -f
 ```
 
-## 4. Check Documentation
+## 5. Check Documentation
 Review if any documentation needs updates based on the changes:
 - `docs/architecture/frontend-design.md` - for frontend changes
 - `docs/architecture/backend-design.md` - for backend changes
@@ -50,7 +95,7 @@ Review if any documentation needs updates based on the changes:
 
 If docs need updates, make the changes, commit, and run `make pr` again.
 
-## 5. Create PR Command
+## 6. Create PR Command
 Provide a copyable `gh pr create` command using HEREDOC format:
 
 ```bash
