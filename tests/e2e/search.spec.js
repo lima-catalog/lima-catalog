@@ -1,13 +1,9 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test } = require('./fixtures');
+const { expect } = require('@playwright/test');
 
 test.describe('Template Search and Filtering', () => {
   test.beforeEach(async ({ page }) => {
-    // Intercept GitHub catalog.jsonl request and serve local file instead
-    await page.route('**/raw.githubusercontent.com/**catalog.jsonl', route => {
-      route.fulfill({ path: 'web/catalog.jsonl' });
-    });
-
     // Navigate to the catalog
     await page.goto('/');
 

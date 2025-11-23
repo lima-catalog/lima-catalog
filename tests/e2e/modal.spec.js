@@ -1,5 +1,6 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test } = require('./fixtures');
+const { expect } = require('@playwright/test');
 
 test.describe('Template Preview Modal', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,11 +11,6 @@ test.describe('Template Preview Modal', () => {
         highlight: (code) => ({ value: code }),
         configure: () => {},
       };
-    });
-
-    // Intercept GitHub catalog.jsonl request and serve local file instead
-    await page.route('**/raw.githubusercontent.com/**catalog.jsonl', route => {
-      route.fulfill({ path: 'web/catalog.jsonl' });
     });
 
     // Navigate to the catalog
