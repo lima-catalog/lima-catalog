@@ -1,3 +1,22 @@
+// Unit Tests: Template Storage and File System Operations (storage package)
+//
+// High-level overview of what's being tested:
+// - Creating storage with directory initialization
+// - Saving templates to JSON Lines (.jsonl) format
+// - Loading templates from JSON Lines files
+// - Saving and loading repositories
+// - Saving and loading organizations
+// - Saving and loading discovery progress
+// - Pretty-printing progress JSON with indentation
+// - Handling empty files and non-existent files
+// - Default progress when file doesn't exist
+// - JSON Lines format validation (one object per line)
+// - Invalid JSON error handling
+// - Empty template lists
+// - File system abstraction and mocking
+// - Timestamp preservation during save/load
+// - Directory creation errors
+
 package storage
 
 import (

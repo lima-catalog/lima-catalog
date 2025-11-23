@@ -1,3 +1,23 @@
+// Unit Tests: Notability Scoring (discovery package)
+//
+// High-level overview of what's being tested:
+// - Identifying unusual image domains (non-official distributions)
+// - Calculating notability scores from template metrics
+// - Message length and line count scoring (high priority)
+// - Provision script scoring (count, substantial checks, line counts)
+// - Probe scoring (count and complexity)
+// - Parameter and environment variable scoring
+// - Comment scoring (unique, non-code comments)
+// - Unusual image domain bonus scoring
+// - Repository star count scoring (capped at 50 points)
+// - Remote image requirement (penalty for missing remote images)
+// - Custom image naming bonus (org/repo name in image URLs)
+// - Populating notability metrics from template info
+// - Official knowledge integration for known patterns
+// - Filtering known lines and code comments
+// - Word boundary detection for custom image scoring
+// - Domain extraction and top-level domain identification
+
 package discovery
 
 import (

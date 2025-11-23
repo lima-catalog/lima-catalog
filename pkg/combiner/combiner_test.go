@@ -1,3 +1,18 @@
+// Unit Tests: Data Combiner (combiner package)
+//
+// High-level overview of what's being tested:
+// - Combining templates, repositories, and organizations into unified output
+// - Blocklist filtering during combination (paths and repos)
+// - Template metadata transformation (display names, descriptions, raw URLs)
+// - Repository and organization data enrichment
+// - Handling templates without repository data (orphan detection)
+// - Official vs community template distinction
+// - Fallback strategies for missing metadata (display names, descriptions)
+// - Similar template association and duplicate handling
+// - Sorting and organization of combined output
+// - Date formatting and timestamp handling
+// - Score statistics calculation for notability metrics
+
 package combiner
 
 import (

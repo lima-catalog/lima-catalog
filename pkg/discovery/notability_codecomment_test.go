@@ -1,3 +1,20 @@
+// Unit Tests: Code Comment Detection (discovery package)
+//
+// High-level overview of what's being tested:
+// - Detecting shell code in template comments vs documentation
+// - Shell variable detection ($VAR, ${VAR}, $(cmd))
+// - Backtick command substitution detection
+// - Shell pipe operator detection (excluding markdown tables)
+// - Command chaining detection (&&, ||)
+// - I/O redirection detection (>, >>, <, 2>&1)
+// - Shell keyword detection (export, source, cd, mkdir, chmod)
+// - Variable assignment detection (VAR=value)
+// - File path detection (/etc, /usr, ~/)
+// - Distinguishing code from documentation mentions
+// - URL handling (allowing special chars in URLs)
+// - Multiple code indicator detection
+// - Edge cases: markdown syntax, normal prose, empty lines
+
 package discovery
 
 import (

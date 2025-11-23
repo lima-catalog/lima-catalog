@@ -1,3 +1,18 @@
+// Unit Tests: Template Naming (discovery package)
+//
+// High-level overview of what's being tested:
+// - Deriving template names from file paths and repository context
+// - Generic name detection (lima, template, config, default, etc.)
+// - Generic directory detection (templates, examples, configs, etc.)
+// - Fallback strategies: filename -> parent dir -> repo name
+// - Name sanitization (lowercase, hyphen conversion, trimming)
+// - Display name generation with smart capitalization
+// - Acronym handling (short words stay uppercase)
+// - Title case conversion for multi-word names
+// - Special character handling (dots, underscores, spaces to hyphens)
+// - Edge cases: empty paths, deep nesting, single-segment repos
+// - Idempotent sanitization (running twice produces same result)
+
 package discovery
 
 import (

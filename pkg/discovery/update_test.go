@@ -1,3 +1,21 @@
+// Unit Tests: Template Update Merging (discovery package)
+//
+// High-level overview of what's being tested:
+// - Merging existing and discovered templates
+// - Detecting new templates (not in existing collection)
+// - Detecting updated templates (SHA changed)
+// - Detecting unchanged templates (same SHA)
+// - Preserving templates not checked in current run
+// - Timestamp management (DiscoveredAt, LastChecked, LastUpdated, AnalyzedAt)
+// - LastChecked updates for unchanged templates
+// - LastUpdated only updates when content changes (SHA differs)
+// - AnalyzedAt preservation for skip logic optimization
+// - Zero discovered templates preserves all existing
+// - Mixed scenarios (new + updated + unchanged + not-checked)
+// - Repository merging and sorting (by owner, then name)
+// - Organization merging and sorting (by ID)
+// - Update result tracking (new, updated, unchanged, removed counts)
+
 package discovery
 
 import (

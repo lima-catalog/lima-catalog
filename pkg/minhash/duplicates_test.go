@@ -1,3 +1,19 @@
+// Unit Tests: Duplicate Detection (minhash package)
+//
+// High-level overview of what's being tested:
+// - DuplicateDetector creation with similarity thresholds
+// - Threshold validation (must be between 0.0 and 1.0)
+// - LSH configuration selection based on signature size and threshold
+// - Adding templates to the duplicate detector index
+// - Finding similar templates above the similarity threshold
+// - Exact duplicate detection (similarity > 0.9)
+// - Batch duplicate detection across template collections
+// - Handling templates with similar YAML content
+// - Skipping templates without MinHash signatures
+// - Clearing the detector index
+// - Performance benchmarks for duplicate detection
+// - Integration with MinHash and LSH components
+
 package minhash
 
 import (

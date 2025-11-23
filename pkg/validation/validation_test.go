@@ -1,3 +1,19 @@
+// Unit Tests: Input Validation (validation package)
+//
+// High-level overview of what's being tested:
+// - GitHub token format validation (empty, too short, classic ghp_ format, hex format)
+// - Rejecting tokens with invalid characters
+// - Template ID validation (owner/repo/path structure)
+// - File extension validation (.yaml/.yml)
+// - Path sanitization and directory traversal prevention
+// - Absolute path rejection
+// - Context lines validation (0-100 range)
+// - Max length validation for configuration parameters
+// - Max files count validation (0-1000 range)
+// - Repository identifier validation (owner/repo format with allowed characters)
+// - Parsing repository IDs (owner/repo splitting)
+// - Handling empty and malformed inputs
+
 package validation
 
 import (

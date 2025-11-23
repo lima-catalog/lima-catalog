@@ -1,3 +1,22 @@
+// Unit Tests: Template Analyzer (discovery package)
+//
+// High-level overview of what's being tested:
+// - Analyzer creation with default and custom configurations
+// - Force analyze mode for re-analyzing existing templates
+// - Category inference from template content and repository topics
+// - Use case determination (kubernetes, container-runtime, dev-environment, etc.)
+// - Description generation combining OS, category, and runtime info
+// - Repository description integration into template descriptions
+// - Architecture information inclusion in descriptions
+// - Skip logic based on AnalyzedAt vs LastUpdated timestamps
+// - Template analysis workflow (name, display name, category, use case)
+// - Official knowledge integration for image domain detection
+// - Duplicate detection with MinHash signatures
+// - Similarity threshold configuration and filtering
+// - Handling templates without signatures gracefully
+// - HTTP client mocking for template content fetching
+// - Clock mocking for timestamp testing
+
 package discovery
 
 import (

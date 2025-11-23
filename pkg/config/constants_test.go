@@ -1,3 +1,15 @@
+// Unit Tests: Configuration Constants (config package)
+//
+// High-level overview of what's being tested:
+// - Default notability weight values and ranges
+// - Verifying all weight fields are present (Message, ProvisionBase, ProvisionLine, etc.)
+// - Ensuring weights fall within reasonable ranges
+// - Validating non-zero values for key weights
+// - Consistency of weight values across multiple calls
+// - API rate limit constants (Core and Search API)
+// - API delay constants (query, pagination, metadata)
+// - Concurrency limits for metadata fetching
+
 package config
 
 import (

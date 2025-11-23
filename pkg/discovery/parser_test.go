@@ -1,3 +1,21 @@
+// Unit Tests: Template Parser (discovery package)
+//
+// High-level overview of what's being tested:
+// - Parsing Lima YAML template content and extracting metadata
+// - Image location extraction and validation
+// - Keyword extraction from provision scripts and configuration
+// - Category inference (containers, orchestration, development, database)
+// - Container runtime detection (Docker, Podman, Kubernetes, containerd)
+// - Provision and probe script analysis (count, lines, substantial checks)
+// - Parameter and environment variable counting
+// - Comment extraction and counting
+// - Architecture specification parsing
+// - OS detection from image URLs (Ubuntu, Alpine, Fedora, etc.)
+// - Validation of required fields (images must be present)
+// - Handling invalid YAML and non-template files
+// - Image name extraction from various cloud provider URLs
+// - Unique keyword and category deduplication
+
 package discovery
 
 import (

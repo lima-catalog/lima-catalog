@@ -1,3 +1,17 @@
+// Unit Tests: Template Discovery (discovery package)
+//
+// High-level overview of what's being tested:
+// - Finding newest template timestamp from collections
+// - Handling empty template lists and zero timestamps
+// - Discoverer creation with and without blocklists
+// - Context cancellation during discovery operations
+// - Large template collection timestamp finding
+// - Timestamp comparison for incremental discovery
+//
+// Note: Many discovery functions require GitHub API access and are tested
+// through integration tests. This file covers pure functions and basic
+// constructor validation. See inline comments for testing limitations.
+
 package discovery
 
 import (
