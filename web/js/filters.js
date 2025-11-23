@@ -299,6 +299,8 @@ export function sortTemplates(templates, sortBy) {
                 return (b.notability_score_breakdown?.validation_warnings || 0) - (a.notability_score_breakdown?.validation_warnings || 0);
             case 'breakdown-stars':
                 return (b.notability_score_breakdown?.stars || 0) - (a.notability_score_breakdown?.stars || 0);
+            case 'breakdown-custom_driver':
+                return (b.notability_score_breakdown?.custom_driver || 0) - (a.notability_score_breakdown?.custom_driver || 0);
 
             default:
                 return 0;

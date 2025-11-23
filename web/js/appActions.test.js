@@ -169,8 +169,8 @@ runner.test('appActions.js: updateSortDropdown shows debug options when debug mo
 
     updateSortDropdown();
 
-    // Should have 4 base + 8 debug = 12 total options
-    assert.equal(sortDropdown.children.length, 12, 'Should have 12 options with debug mode');
+    // Should have 4 base + 10 debug = 14 total options
+    assert.equal(sortDropdown.children.length, 14, 'Should have 14 options with debug mode');
 
     // Check some debug options are present
     const values = sortDropdown.children.map(c => c.value);
