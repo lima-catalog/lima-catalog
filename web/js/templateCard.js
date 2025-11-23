@@ -64,7 +64,8 @@ function getDebugBadgeText(template, sortBy) {
         'breakdown-image_name': { value: template.notability_score_breakdown.image_name, label: 'Image Name' },
         'breakdown-comments': { value: template.notability_score_breakdown.comments, label: 'Comments' },
         'breakdown-validation_warnings': { value: template.notability_score_breakdown.validation_warnings, label: 'Warnings' },
-        'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' }
+        'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' },
+        'breakdown-custom_driver': { value: template.notability_score_breakdown.custom_driver, label: 'Custom Driver' }
     };
 
     // If sorting by a specific breakdown component, show that score
@@ -148,6 +149,7 @@ function createDebugScorePopup(template) {
         comments: calculateRank(breakdown.comments, 'comments', allTemplates),
         validation_warnings: calculateRank(breakdown.validation_warnings || 0, 'validation_warnings', allTemplates),
         stars: calculateRank(breakdown.stars, 'stars', allTemplates),
+        custom_driver: calculateRank(breakdown.custom_driver, 'custom_driver', allTemplates),
         total: calculateRank(breakdown.total, 'total', allTemplates)
     };
 
@@ -200,6 +202,11 @@ function createDebugScorePopup(template) {
                 <span class="debug-popup-label">Stars:</span>
                 <span class="debug-popup-value">${breakdown.stars.toFixed(1)}</span>
                 <span class="debug-popup-rank">#${ranks.stars}</span>
+            </div>
+            <div class="debug-popup-item">
+                <span class="debug-popup-label">Custom Driver:</span>
+                <span class="debug-popup-value">${breakdown.custom_driver.toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.custom_driver}</span>
             </div>
             <div class="debug-popup-divider"></div>
             <div class="debug-popup-item debug-popup-total">

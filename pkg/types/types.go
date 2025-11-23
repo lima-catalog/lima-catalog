@@ -86,6 +86,7 @@ type NotabilityMetrics struct {
 	ValidationWarningMsgs    []string `json:"validation_warning_msgs,omitempty"`   // Actual warning messages from Lima validation
 	UnusualImages            []string `json:"unusual_images,omitempty"`            // Images not in official templates
 	AllImages                []string `json:"all_images,omitempty"`                // All image locations (for org/repo name matching)
+	VMType                   string   `json:"vm_type,omitempty"`                   // VM driver type (qemu, vz, wsl2, or custom)
 }
 
 // Repository represents a GitHub repository containing templates

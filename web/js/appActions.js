@@ -243,7 +243,8 @@ export function updateSortDropdown() {
         { value: 'breakdown-image_name', label: '[Debug] Image Name' },
         { value: 'breakdown-comments', label: '[Debug] YAML Comments' },
         { value: 'breakdown-validation_warnings', label: '[Debug] Validation Warnings' },
-        { value: 'breakdown-stars', label: '[Debug] Repository Stars' }
+        { value: 'breakdown-stars', label: '[Debug] Repository Stars' },
+        { value: 'breakdown-custom_driver', label: '[Debug] Custom Driver' }
     ];
 
     // Combine options based on debug mode

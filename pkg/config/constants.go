@@ -67,6 +67,9 @@ type NotabilityWeights struct {
 
 	// MaxStarsPoints maximum points from repository stars
 	MaxStarsPoints float64
+
+	// CustomDriver bonus for custom VM drivers
+	CustomDriver float64
 }
 
 // DefaultNotabilityWeights returns the default scoring weights
@@ -85,5 +88,6 @@ func DefaultNotabilityWeights() NotabilityWeights {
 		ValidationWarningExtraPenalty: 10.0, // Penalty per additional warning (subtracted from score)
 		StarsPerPoint:                 10.0, // 10 stars = 1 point
 		MaxStarsPoints:                50.0, // Cap star contribution
+		CustomDriver:                  70.0, // Custom VM driver bonus
 	}
 }

@@ -23,6 +23,7 @@ type TemplateInfo struct {
 	HasK8s       bool
 	HasPodman    bool
 	Categories   []string
+	VMType       string   // VM driver type (qemu, vz, wsl2, or custom)
 
 	// Notability metrics (raw data for scoring)
 	MessageLength          int
@@ -272,6 +273,11 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		if archStr != "" && archStr != "default" {
 			info.Arch = append(info.Arch, archStr)
 		}
+	}
+
+	// Extract VMType
+	if y.VMType != nil {
+		info.VMType = string(*y.VMType)
 	}
 
 	// Analyze provisioning scripts and collect metrics

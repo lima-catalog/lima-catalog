@@ -191,6 +191,7 @@ type NotabilityScoreBreakdown struct {
 	Comments            float64 `json:"comments"`             // 2 per comment line (capped at 100)
 	ValidationWarnings  float64 `json:"validation_warnings"`  // Penalty for validation warnings (negative)
 	Stars               float64 `json:"stars"`                // 1 per 10 stars (capped at 50)
+	CustomDriver        float64 `json:"custom_driver"`        // 70 if vmtype is not empty and not qemu/vz/wsl2
 	Total               float64 `json:"total"`                // Sum of all components
 }
 
@@ -207,6 +208,7 @@ type NotabilityScoreBreakdown struct {
 // - Comment lines: 2 points per comment line (capped at 100)
 // - Validation warnings: -50 points for first warning, -10 per additional warning (penalty)
 // - Repository stars: 1 point per 10 stars (capped at 50 points)
+// - Custom driver: 70 points if vmtype is not empty and not qemu/vz/wsl2
 func CalculateNotabilityScore(metrics *types.NotabilityMetrics, orgName, repoName string, repoStars int) float64 {
 	breakdown := CalculateNotabilityScoreWithBreakdown(metrics, orgName, repoName, repoStars)
 	return breakdown.Total
@@ -301,10 +303,20 @@ func CalculateNotabilityScoreWithBreakdown(metrics *types.NotabilityMetrics, org
 	}
 	breakdown.Stars = starsScore
 
+	// Custom VM driver bonus
+	// Award bonus if vmtype is not empty and not one of the standard drivers
+	if metrics.VMType != "" {
+		vmType := strings.ToLower(metrics.VMType)
+		isStandardDriver := vmType == "qemu" || vmType == "vz" || vmType == "wsl2"
+		if !isStandardDriver {
+			breakdown.CustomDriver = weights.CustomDriver
+		}
+	}
+
 	// Calculate total
 	breakdown.Total = breakdown.Message + breakdown.Provision + breakdown.Parameters +
 		breakdown.EnvVars + breakdown.Probes + breakdown.ImageName +
-		breakdown.Comments + breakdown.ValidationWarnings + breakdown.Stars
+		breakdown.Comments + breakdown.ValidationWarnings + breakdown.Stars + breakdown.CustomDriver
 
 	return breakdown
 }
@@ -506,6 +518,7 @@ func PopulateNotabilityMetrics(info *TemplateInfo, ok *OfficialKnowledge) *types
 		ValidationWarningMsgs: info.ValidationWarningMsgs,
 		UnusualImages:         IdentifyUnusualImages(info.Images, officialImages),
 		AllImages:             info.Images,
+		VMType:                info.VMType,
 	}
 }
 
