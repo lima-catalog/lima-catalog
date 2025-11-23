@@ -12,6 +12,11 @@ test.describe('Template Preview Modal', () => {
       };
     });
 
+    // Intercept GitHub catalog.jsonl request and serve local file instead
+    await page.route('**/raw.githubusercontent.com/**catalog.jsonl', route => {
+      route.fulfill({ path: 'web/catalog.jsonl' });
+    });
+
     // Navigate to the catalog
     await page.goto('/');
 

@@ -17,7 +17,8 @@ async function globalSetup() {
       const response = await fetch(baseURL);
       if (response.ok) {
         console.log('Web server is ready!');
-        break;
+        console.log('Global setup complete');
+        return;
       }
     } catch (error) {
       if (i === maxRetries - 1) {
@@ -26,22 +27,6 @@ async function globalSetup() {
       await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
   }
-
-  // Pre-load catalog.jsonl to warm up the cache/server
-  console.log('Pre-loading catalog data...');
-  try {
-    const catalogResponse = await fetch(`${baseURL}/js/catalog.jsonl`);
-    if (!catalogResponse.ok) {
-      console.warn('Warning: Could not pre-load catalog.jsonl');
-    } else {
-      await catalogResponse.text(); // Actually read the response
-      console.log('Catalog data pre-loaded successfully');
-    }
-  } catch (error) {
-    console.warn('Warning: Error pre-loading catalog:', error.message);
-  }
-
-  console.log('Global setup complete');
 }
 
 module.exports = globalSetup;
