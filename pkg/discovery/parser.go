@@ -9,47 +9,8 @@ import (
 
 	"github.com/lima-catalog/lima-catalog/pkg/interfaces"
 	limatmpl "github.com/lima-vm/lima/v2/pkg/limatmpl"
-	"gopkg.in/yaml.v3"
+	"github.com/lima-vm/lima/v2/pkg/limayaml"
 )
-
-// LimaTemplate represents the structure of a Lima YAML template
-type LimaTemplate struct {
-	Message string                 `yaml:"message"` // Message displayed to user (indicates reusability)
-	Param   map[string]interface{} `yaml:"param"`   // Configurable parameters
-	Env     map[string]string      `yaml:"env"`     // Environment variables
-	Images  []struct {
-		Location string `yaml:"location"`
-		Arch     string `yaml:"arch"`
-	} `yaml:"images"`
-	Arch        interface{} `yaml:"arch"` // Can be string or []string
-	CPUs        interface{} `yaml:"cpus"`
-	Memory      string      `yaml:"memory"`
-	Disk        string      `yaml:"disk"`
-	Mounts      []struct {
-		Location string `yaml:"location"`
-		Writable bool   `yaml:"writable"`
-	} `yaml:"mounts"`
-	Provision []struct {
-		Mode   string `yaml:"mode"`
-		Script string `yaml:"script"`
-	} `yaml:"provision"`
-	Probes []struct {
-		Mode   string `yaml:"mode"`
-		Script string `yaml:"script"`
-	} `yaml:"probes"`
-	PortForwards []struct {
-		GuestPort int    `yaml:"guestPort"`
-		HostPort  int    `yaml:"hostPort"`
-		Proto     string `yaml:"proto"`
-	} `yaml:"portForwards"`
-	Containerd struct {
-		System bool `yaml:"system"`
-		User   bool `yaml:"user"`
-	} `yaml:"containerd"`
-	Video struct {
-		Display string `yaml:"display"`
-	} `yaml:"video"`
-}
 
 // TemplateInfo contains extracted information from a Lima template
 type TemplateInfo struct {
@@ -210,14 +171,14 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 
 // ParseTemplateContent parses Lima template YAML content
 func ParseTemplateContent(content string) (*TemplateInfo, error) {
-	var template LimaTemplate
-	if err := yaml.Unmarshal([]byte(content), &template); err != nil {
-		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+	// Use Lima's validation to ensure the template is valid
+	ctx := context.Background()
+	y, err := limayaml.Load(ctx, []byte(content), "template.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load YAML: %w", err)
 	}
-
-	// Validate required fields: images must be a non-empty list
-	if len(template.Images) == 0 {
-		return nil, fmt.Errorf("invalid Lima template: missing required 'images' field")
+	if err := limayaml.Validate(y, false); err != nil {
+		return nil, fmt.Errorf("failed to validate YAML: %w", err)
 	}
 
 	info := &TemplateInfo{
@@ -234,13 +195,13 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	// Extract notability metrics
-	info.MessageLength = len(strings.TrimSpace(template.Message))
-	info.ParamCount = len(template.Param)
-	info.EnvCount = len(template.Env)
+	info.MessageLength = len(strings.TrimSpace(y.Message))
+	info.ParamCount = len(y.Param)
+	info.EnvCount = len(y.Env)
 
 	// Extract and normalize message lines
-	if template.Message != "" {
-		messageLines := strings.Split(template.Message, "\n")
+	if y.Message != "" {
+		messageLines := strings.Split(y.Message, "\n")
 		for _, line := range messageLines {
 			normalized := normalizeLine(line)
 			if normalized != "" {
@@ -266,7 +227,7 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	// Extract images
-	for _, img := range template.Images {
+	for _, img := range y.Images {
 		if img.Location != "" {
 			// Store full location for unusual image detection
 			info.Images = append(info.Images, img.Location)
@@ -280,43 +241,41 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	// Extract architecture
-	switch arch := template.Arch.(type) {
-	case string:
-		if arch != "" && arch != "default" {
-			info.Arch = append(info.Arch, arch)
-		}
-	case []interface{}:
-		for _, a := range arch {
-			if str, ok := a.(string); ok && str != "" && str != "default" {
-				info.Arch = append(info.Arch, str)
-			}
+	if y.Arch != nil {
+		archStr := string(*y.Arch)
+		if archStr != "" && archStr != "default" {
+			info.Arch = append(info.Arch, archStr)
 		}
 	}
 
 	// Analyze provisioning scripts and collect metrics
 	provisioningText := ""
-	info.ProvisionCount = len(template.Provision)
-	for _, prov := range template.Provision {
-		provisioningText += " " + prov.Script
+	info.ProvisionCount = len(y.Provision)
+	for _, prov := range y.Provision {
+		if prov.Script != nil {
+			provisioningText += " " + *prov.Script
 
-		// Extract non-comment lines from provision script
-		scriptLines := extractNonCommentLines(prov.Script)
-		info.ProvisionLines = append(info.ProvisionLines, scriptLines...)
-		info.ProvisionTotalLines += len(scriptLines)
-		// Track line count per script for notability scoring
-		info.ProvisionScriptLines = append(info.ProvisionScriptLines, len(scriptLines))
+			// Extract non-comment lines from provision script
+			scriptLines := extractNonCommentLines(*prov.Script)
+			info.ProvisionLines = append(info.ProvisionLines, scriptLines...)
+			info.ProvisionTotalLines += len(scriptLines)
+			// Track line count per script for notability scoring
+			info.ProvisionScriptLines = append(info.ProvisionScriptLines, len(scriptLines))
+		}
 	}
 	provisioningText = strings.ToLower(provisioningText)
 
 	// Collect probe metrics
-	info.ProbeCount = len(template.Probes)
-	for _, probe := range template.Probes {
-		// Extract non-comment lines from probe script
-		scriptLines := extractNonCommentLines(probe.Script)
-		info.ProbeLines = append(info.ProbeLines, scriptLines...)
-		info.ProbeTotalLines += len(scriptLines)
-		// Track line count per script for notability scoring
-		info.ProbeScriptLines = append(info.ProbeScriptLines, len(scriptLines))
+	info.ProbeCount = len(y.Probes)
+	for _, probe := range y.Probes {
+		if probe.Script != nil {
+			// Extract non-comment lines from probe script
+			scriptLines := extractNonCommentLines(*probe.Script)
+			info.ProbeLines = append(info.ProbeLines, scriptLines...)
+			info.ProbeTotalLines += len(scriptLines)
+			// Track line count per script for notability scoring
+			info.ProbeScriptLines = append(info.ProbeScriptLines, len(scriptLines))
+		}
 	}
 
 	// Detect technologies from provisioning scripts
@@ -349,7 +308,7 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	}
 
 	// Check for containerd
-	if template.Containerd.System || template.Containerd.User {
+	if (y.Containerd.System != nil && *y.Containerd.System) || (y.Containerd.User != nil && *y.Containerd.User) {
 		info.Keywords = appendUnique(info.Keywords, "containerd")
 	}
 

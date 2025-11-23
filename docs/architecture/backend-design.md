@@ -453,7 +453,7 @@ export ANALYZE=true
 **Steps:**
 1. Load progress and existing templates
 2. Discover new/changed templates
-3. Validate content (check `images:` field)
+3. Validate content (Lima's comprehensive validation)
 4. Analyze templates (keywords, categories, duplicates)
 5. Refresh stale metadata (5% per run)
 6. Generate frontend data (`catalog.jsonl`)

@@ -131,7 +131,7 @@ Uses Lima's native template parsing to properly handle:
 
 **Implementation**:
 - `pkg/discovery/parser.go:ParseTemplate()` - Uses Lima's `Read()` and `Embed()`
-- `pkg/discovery/parser.go:ParseTemplateContent()` - Extracts structured information
+- `pkg/discovery/parser.go:ParseTemplateContent()` - Validates with Lima's `limayaml.Validate()` and extracts structured information from Lima's parsed `LimaYAML` struct
 
 **Extracts**:
 - Images and architectures (after base template embedding)
