@@ -24,7 +24,9 @@ module.exports = defineConfig({
   globalSetup: require.resolve('./tests/e2e/global-setup.js'),
 
   // Reporter to use
-  reporter: process.env.CI ? 'github' : 'list',
+  // 'dot' reporter shows one character per test (compact progress indicator)
+  // 'github' reporter adds annotations to GitHub Actions
+  reporter: process.env.CI ? [['dot'], ['github']] : 'list',
 
   // Shared settings for all the projects below
   use: {
@@ -91,7 +93,9 @@ module.exports = defineConfig({
 
   // Run local dev server before starting tests
   webServer: {
-    command: 'cd web && python3 -m http.server 8000',
+    // Redirect web server logs to file to avoid flooding CI output
+    // Logs are saved to test-results/webserver.log for debugging
+    command: 'mkdir -p test-results && cd web && python3 -m http.server 8000 2> ../test-results/webserver.log',
     url: 'http://localhost:8000',
     reuseExistingServer: !process.env.CI,
     timeout: 30 * 1000, // Increased timeout for web server startup
