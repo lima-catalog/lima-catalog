@@ -120,9 +120,26 @@ npx playwright test --debug
 
 ### Current Test Status (as of 2025-11-23)
 
-- ✅ 25 tests total
-- All tests passing after implementing proper data loading synchronization
-- Tests include category filtering, keyword filtering, modal functionality, search, and checkbox filters
+**Phase 2 Complete: 125 total tests**
+
+- ✅ **search.spec.js** - 17 tests (search, filtering, sorting, URL parameters)
+- ✅ **categories.spec.js** - 24 tests (category/keyword filtering, URL state)
+- ✅ **modal.spec.js** - 22 tests (modal open/close, content loading, navigation)
+- ✅ **keyboard.spec.js** - 22 tests (arrow keys, shortcuts, focus management)
+- ✅ **theme.spec.js** - 15 tests (light/dark/auto theme switching)
+- ⏭️ **visual.spec.js** - 25 tests (SKIPPED - visual regression baselines not yet stable)
+
+**Critical Setup Required:**
+```bash
+# Create temp directory for Chromium shared memory
+mkdir -p /root/tmp
+```
+
+Without this directory, all tests fail with browser crash errors.
+
+**Known Issues:**
+- Visual regression tests are skipped until UI is more stable
+- Some tests may be flaky due to timing - increase timeouts if needed
 
 ---
 
@@ -639,10 +656,19 @@ const { chromium } = require('@playwright/test');
 - [Playwright Codegen](https://playwright.dev/docs/codegen) - Generate test code by recording actions
 
 ### Test Files Reference
+<<<<<<< HEAD
 - [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search and filtering tests
 - [`tests/e2e/categories.spec.js`](/home/user/lima-catalog/tests/e2e/categories.spec.js) - Category and keyword tests
 - [`tests/e2e/modal.spec.js`](/home/user/lima-catalog/tests/e2e/modal.spec.js) - Modal interaction tests
 - [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js) - Pre-loads data before tests run
+=======
+- [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search, filtering, and sorting tests (17 tests)
+- [`tests/e2e/categories.spec.js`](/home/user/lima-catalog/tests/e2e/categories.spec.js) - Category and keyword filtering tests (24 tests)
+- [`tests/e2e/modal.spec.js`](/home/user/lima-catalog/tests/e2e/modal.spec.js) - Modal interaction and navigation tests (22 tests)
+- [`tests/e2e/keyboard.spec.js`](/home/user/lima-catalog/tests/e2e/keyboard.spec.js) - Keyboard navigation and shortcuts (22 tests)
+- [`tests/e2e/theme.spec.js`](/home/user/lima-catalog/tests/e2e/theme.spec.js) - Theme switching and persistence (15 tests)
+- [`tests/e2e/visual.spec.js`](/home/user/lima-catalog/tests/e2e/visual.spec.js) - Visual regression tests (25 tests, currently skipped)
+>>>>>>> 3918140 (Skip visual regression tests and reorganize documentation)
 - [`tests/e2e/helpers.js`](/home/user/lima-catalog/tests/e2e/helpers.js) - Shared test utilities
 
 ---
