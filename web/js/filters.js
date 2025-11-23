@@ -295,6 +295,8 @@ export function sortTemplates(templates, sortBy) {
                 return (b.notability_score_breakdown?.image_name || 0) - (a.notability_score_breakdown?.image_name || 0);
             case 'breakdown-comments':
                 return (b.notability_score_breakdown?.comments || 0) - (a.notability_score_breakdown?.comments || 0);
+            case 'breakdown-validation_warnings':
+                return (b.notability_score_breakdown?.validation_warnings || 0) - (a.notability_score_breakdown?.validation_warnings || 0);
             case 'breakdown-stars':
                 return (b.notability_score_breakdown?.stars || 0) - (a.notability_score_breakdown?.stars || 0);
 

@@ -63,6 +63,7 @@ function getDebugBadgeText(template, sortBy) {
         'breakdown-probes': { value: template.notability_score_breakdown.probes, label: 'Probes' },
         'breakdown-image_name': { value: template.notability_score_breakdown.image_name, label: 'Image Name' },
         'breakdown-comments': { value: template.notability_score_breakdown.comments, label: 'Comments' },
+        'breakdown-validation_warnings': { value: template.notability_score_breakdown.validation_warnings, label: 'Warnings' },
         'breakdown-stars': { value: template.notability_score_breakdown.stars, label: 'Stars' }
     };
 
@@ -145,6 +146,7 @@ function createDebugScorePopup(template) {
         probes: calculateRank(breakdown.probes, 'probes', allTemplates),
         image_name: calculateRank(breakdown.image_name, 'image_name', allTemplates),
         comments: calculateRank(breakdown.comments, 'comments', allTemplates),
+        validation_warnings: calculateRank(breakdown.validation_warnings || 0, 'validation_warnings', allTemplates),
         stars: calculateRank(breakdown.stars, 'stars', allTemplates),
         total: calculateRank(breakdown.total, 'total', allTemplates)
     };
@@ -188,6 +190,11 @@ function createDebugScorePopup(template) {
                 <span class="debug-popup-label">Comments:</span>
                 <span class="debug-popup-value">${breakdown.comments.toFixed(1)}</span>
                 <span class="debug-popup-rank">#${ranks.comments}</span>
+            </div>
+            <div class="debug-popup-item${(breakdown.validation_warnings || 0) < 0 ? ' debug-popup-penalty' : ''}">
+                <span class="debug-popup-label">Validation Warnings:</span>
+                <span class="debug-popup-value">${(breakdown.validation_warnings || 0).toFixed(1)}</span>
+                <span class="debug-popup-rank">#${ranks.validation_warnings}</span>
             </div>
             <div class="debug-popup-item">
                 <span class="debug-popup-label">Stars:</span>

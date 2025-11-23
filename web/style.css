@@ -1740,6 +1740,10 @@ footer a:hover {
     margin: 0.5rem 0;
 }
 
+.debug-popup-penalty .debug-popup-value {
+    color: #ef4444; /* Red color for negative penalties */
+}
+
 .debug-popup-total {
     font-weight: 600;
     font-size: 0.75rem;
