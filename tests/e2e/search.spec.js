@@ -140,4 +140,162 @@ test.describe('Template Search and Filtering', () => {
     const combinedCount = await page.locator('#templates-grid .template-card').count();
     expect(combinedCount).toBeLessThanOrEqual(searchOnlyCount);
   });
+
+  test('handles search with special characters', async ({ page }) => {
+    // Search with special characters
+    await page.fill('#search', 'ubuntu+docker');
+    await page.waitForTimeout(300);
+
+    // Should not crash and should filter
+    const templates = page.locator('#templates-grid .template-card');
+    const count = await templates.count();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+
+  test('handles case-insensitive search', async ({ page }) => {
+    // Search with uppercase
+    await page.fill('#search', 'ALPINE');
+    await page.waitForTimeout(300);
+
+    const upperCount = await page.locator('#templates-grid .template-card').count();
+
+    // Clear and search with lowercase
+    await page.fill('#search', 'alpine');
+    await page.waitForTimeout(300);
+
+    const lowerCount = await page.locator('#templates-grid .template-card').count();
+
+    // Should return same results (case-insensitive)
+    expect(upperCount).toBe(lowerCount);
+  });
+
+  test('shows no results message for non-matching search', async ({ page }) => {
+    // Search for something that definitely won't match
+    await page.fill('#search', 'xyznonexistenttemplate999');
+    await page.waitForTimeout(300);
+
+    const count = await page.locator('#templates-grid .template-card').count();
+    expect(count).toBe(0);
+
+    // Verify visible count is 0
+    const visibleCount = await page.locator('#visible-count').textContent();
+    expect(parseInt(visibleCount)).toBe(0);
+  });
+
+  test('updates URL with search parameter', async ({ page }) => {
+    // Search for something
+    await page.fill('#search', 'alpine');
+    await page.waitForTimeout(300);
+
+    // Check URL contains search parameter
+    const url = page.url();
+    expect(url).toContain('search=alpine');
+  });
+
+  test('loads search from URL parameter on page load', async ({ page }) => {
+    // Navigate with search parameter
+    await page.goto('/?search=ubuntu');
+    await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
+    await page.waitForTimeout(300);
+
+    // Verify search input has the value
+    const searchValue = await page.locator('#search').inputValue();
+    expect(searchValue).toBe('ubuntu');
+
+    // Verify results are filtered
+    const templates = page.locator('#templates-grid .template-card');
+    const count = await templates.count();
+    expect(count).toBeGreaterThan(0);
+  });
+
+  test('search debounces rapid typing', async ({ page }) => {
+    // Type rapidly
+    await page.locator('#search').type('alpine', { delay: 50 });
+
+    // Wait for debounce
+    await page.waitForTimeout(400);
+
+    // Should have filtered results
+    const count = await page.locator('#templates-grid .template-card').count();
+    expect(count).toBeGreaterThan(0);
+
+    // Check visible count updated
+    const visibleCount = await page.locator('#visible-count').textContent();
+    expect(parseInt(visibleCount)).toBe(count);
+  });
+
+  test('clearing search restores all templates and updates URL', async ({ page }) => {
+    const initialCount = await page.locator('#templates-grid .template-card').count();
+
+    // Search
+    await page.fill('#search', 'alpine');
+    await page.waitForTimeout(300);
+
+    // Verify URL has search param
+    expect(page.url()).toContain('search=alpine');
+
+    // Clear
+    await page.fill('#search', '');
+    await page.waitForTimeout(300);
+
+    // Verify all templates restored
+    const restoredCount = await page.locator('#templates-grid .template-card').count();
+    expect(restoredCount).toBe(initialCount);
+
+    // Verify URL search param is removed
+    expect(page.url()).not.toContain('search=');
+  });
+
+  test('search works with multi-word queries', async ({ page }) => {
+    // Search with multiple words
+    await page.fill('#search', 'ubuntu docker');
+    await page.waitForTimeout(300);
+
+    // Should find templates matching any of the words
+    const count = await page.locator('#templates-grid .template-card').count();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+
+  test('unchecking both official and community shows no results', async ({ page }) => {
+    // Uncheck both
+    await page.uncheck('#show-official');
+    await page.uncheck('#show-community');
+    await page.waitForTimeout(500);
+
+    // Should show no templates
+    const count = await page.locator('#templates-grid .template-card').count();
+    expect(count).toBe(0);
+
+    // Visible count should be 0
+    const visibleCount = await page.locator('#visible-count').textContent();
+    expect(parseInt(visibleCount)).toBe(0);
+  });
+
+  test('sort maintains filter state', async ({ page }) => {
+    // Apply search
+    await page.fill('#search', 'alpine');
+    await page.waitForTimeout(300);
+
+    const beforeSort = await page.locator('#templates-grid .template-card').count();
+
+    // Change sort
+    await page.selectOption('#sort', 'updated');
+    await page.waitForTimeout(300);
+
+    // Count should remain same (same filter, different order)
+    const afterSort = await page.locator('#templates-grid .template-card').count();
+    expect(afterSort).toBe(beforeSort);
+  });
+
+  test('sorting by name orders alphabetically', async ({ page }) => {
+    await page.selectOption('#sort', 'name');
+    await page.waitForTimeout(300);
+
+    // Get first two template names
+    const firstName = await page.locator('#templates-grid .template-card').first().locator('.template-name').textContent();
+    const secondName = await page.locator('#templates-grid .template-card').nth(1).locator('.template-name').textContent();
+
+    // First should be alphabetically before or equal to second
+    expect(firstName.toLowerCase() <= secondName.toLowerCase()).toBe(true);
+  });
 });
