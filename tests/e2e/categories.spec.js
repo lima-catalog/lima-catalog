@@ -292,7 +292,7 @@ test.describe('Category and Keyword Filtering', () => {
 
   test('loads multiple keywords from URL parameter', async ({ page }) => {
     // Navigate with multiple keywords (comma-separated)
-    await page.goto('/?keywords=docker,linux');
+    await page.goto('/?keywords=docker,ubuntu');
     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
     await page.waitForTimeout(300);
 
