@@ -19,11 +19,16 @@
 1. [Executive Summary](#executive-summary)
 2. [Environment Setup](#environment-setup)
 3. [Running Tests](#running-tests)
-4. [Interactive Debugging](#interactive-debugging)
-5. [Debugging Test Flakiness](#debugging-test-flakiness)
-6. [Playwright MCP Limitations](#playwright-mcp-limitations)
-7. [Common Issues and Solutions](#common-issues-and-solutions)
-8. [Writing Debug Scripts](#writing-debug-scripts)
+4. [Modern Debugging Methods](#modern-debugging-methods)
+   - [UI Mode (Recommended)](#ui-mode-recommended)
+   - [Trace Viewer](#trace-viewer)
+   - [Playwright Agents (v1.56+)](#playwright-agents-v156)
+   - [Inspector and Debug Mode](#inspector-and-debug-mode)
+5. [Interactive Debugging with Scripts](#interactive-debugging-with-scripts)
+6. [Debugging Test Flakiness](#debugging-test-flakiness)
+7. [Playwright MCP Limitations](#playwright-mcp-limitations)
+8. [Common Issues and Solutions](#common-issues-and-solutions)
+9. [Writing Debug Scripts](#writing-debug-scripts)
 
 ---
 
@@ -31,12 +36,17 @@
 
 Playwright is fully functional in the lima-catalog VM environment and can be used for:
 - ✅ Running automated E2E tests
+- ✅ **UI Mode** for visual debugging with time-travel (Playwright 1.32+)
+- ✅ **Trace Viewer** for post-mortem test debugging
+- ✅ **Playwright Agents** (v1.56+) for AI-powered test healing
 - ✅ Interactive UI debugging via custom scripts
 - ✅ Taking screenshots and videos of UI states
 - ✅ Programmatic browser automation for investigation
 - ❌ **NOT available:** Playwright MCP tools (see [limitations](#playwright-mcp-limitations))
 
-**Key Finding:** While Playwright MCP doesn't work in this environment due to session initialization constraints, Playwright itself works perfectly via npm scripts and custom Node.js scripts, providing full programmatic browser control.
+**Current Version:** Playwright 1.56.1 with AI Agents support
+
+**Key Finding:** While Playwright MCP doesn't work in this environment due to session initialization constraints, Playwright itself works perfectly via npm scripts and custom Node.js scripts, providing full programmatic browser control plus modern visual debugging tools like UI Mode and Trace Viewer.
 
 ---
 
@@ -113,11 +123,20 @@ npm run test:e2e:headed
 npx playwright test tests/e2e/modal.spec.js --headed
 ```
 
-### Run with Debug Mode
+### Run with Debugging Tools
 
 ```bash
+# UI Mode - Visual debugging with time-travel (recommended)
+npx playwright test --ui
+
+# Inspector - Step-by-step debugging
 npx playwright test --debug
+
+# With trace recording for later analysis
+npx playwright test --trace on
 ```
+
+See the [Modern Debugging Methods](#modern-debugging-methods) section for detailed guidance on each debugging approach.
 
 ### Current Test Status (as of 2025-11-23)
 
@@ -178,9 +197,396 @@ This enables comprehensive modal content testing without external dependencies.
 
 ---
 
-## Interactive Debugging
+## Modern Debugging Methods
 
-Since Playwright MCP tools are not available, use custom Node.js scripts for interactive debugging.
+Playwright provides several powerful debugging tools. This section covers the recommended modern approaches for debugging tests in 2025.
+
+### UI Mode (Recommended)
+
+**UI Mode** is the most powerful debugging tool for Playwright, providing a visual interface with time-travel debugging capabilities.
+
+#### What is UI Mode?
+
+UI Mode lets you:
+- 👁️ **Watch tests run** in real-time with live browser preview
+- ⏮️ **Time-travel** through each action using the timeline
+- 🔍 **Inspect DOM snapshots** at any point in test execution
+- 🎯 **Pick locators** visually by clicking on elements
+- 🔄 **Re-run tests** instantly with watch mode
+- 📊 **See all test results** in an organized view
+
+#### Running UI Mode
+
+```bash
+# Run all tests in UI Mode
+npx playwright test --ui
+
+# Run specific test file in UI Mode
+npx playwright test tests/e2e/modal.spec.js --ui
+
+# Note: UI Mode may not work in headless VM environments
+# In this case, use headed mode or trace viewer instead
+```
+
+#### UI Mode Features
+
+**Timeline View:**
+- Visual timeline of all actions with color-coded navigation and interactions
+- Hover over any point to see a snapshot of the page at that moment
+- Click to jump to any action instantly
+
+**Actions Tab:**
+- See every action taken during the test
+- View the exact locator used for each action
+- See timing information for each step
+- Hover to highlight the element in the DOM snapshot
+
+**Pick Locator:**
+- Click "Pick Locator" button in the toolbar
+- Click on any element in the browser preview
+- Get the recommended Playwright locator instantly
+- Great for writing new tests or debugging selectors
+
+**Watch Mode:**
+- Tests automatically re-run when code changes
+- Instant feedback during development
+- See test results update in real-time
+
+#### UI Mode Limitations in VM Environments
+
+**Note:** UI Mode requires a graphical environment and may not work in headless VMs or SSH sessions. If UI Mode fails to start:
+
+1. Use **Trace Viewer** for post-mortem debugging (see below)
+2. Enable **trace recording** in playwright.config.js
+3. View traces after test completion: `npx playwright show-trace trace.zip`
+
+---
+
+### Trace Viewer
+
+**Trace Viewer** provides time-travel debugging for completed test runs, perfect for CI/CD debugging and post-mortem analysis.
+
+#### What is Trace Viewer?
+
+Trace Viewer is a GUI tool that lets you explore recorded Playwright traces after tests have run. It provides the same time-travel capabilities as UI Mode, but works with pre-recorded traces.
+
+#### Recording Traces
+
+**Configure in playwright.config.js:**
+
+```javascript
+module.exports = defineConfig({
+  use: {
+    // Record trace on first retry of failed tests
+    trace: 'on-first-retry',
+
+    // Or always record traces (larger file size)
+    // trace: 'on',
+
+    // Or record on CI only
+    // trace: process.env.CI ? 'on-first-retry' : 'off',
+  },
+});
+```
+
+**Trace options:**
+- `'on'` - Record trace for every test (large files)
+- `'on-first-retry'` - Only record for failed tests (recommended)
+- `'retain-on-failure'` - Keep traces only for failed tests
+- `'off'` - Don't record traces
+
+#### Viewing Traces
+
+**After test run:**
+
+```bash
+# View trace from test results
+npx playwright show-trace test-results/example-test/trace.zip
+
+# Or open trace viewer and load files manually
+npx playwright show-trace
+```
+
+**Trace Viewer features:**
+- Full timeline of test execution
+- DOM snapshots at each step
+- Network activity and console logs
+- Screenshots and videos
+- Action metadata and timing
+- Pop-out DOM snapshot for detailed inspection
+
+#### Using Traces for Debugging
+
+**Common debugging workflow:**
+
+1. Run tests with trace enabled
+2. Test fails in CI or locally
+3. Download trace.zip from test-results
+4. Open in Trace Viewer: `npx playwright show-trace trace.zip`
+5. Scrub through timeline to find where it failed
+6. Inspect DOM state, network requests, console
+7. Identify root cause and fix
+
+**Example:**
+
+```bash
+# Run tests with trace on failure
+npx playwright test --trace on-first-retry
+
+# If test fails, open the trace
+npx playwright show-trace test-results/modal-should-open-Modal/trace.zip
+```
+
+---
+
+### Playwright Agents (v1.56+)
+
+**Playwright Agents** are AI-powered tools introduced in v1.56 for automated test generation, planning, and healing.
+
+#### The Healer Agent
+
+The **Healer Agent** automatically debugs and fixes failing tests:
+
+**What it does:**
+- 🔍 Analyzes test failures by examining console logs, network requests, and DOM snapshots
+- 🧠 Identifies root causes using AI analysis of execution flow
+- 🔧 Suggests multiple fixes following best practices
+- 🔄 Iteratively attempts fixes until tests pass
+- ⏭️ Skips tests if actual functionality is broken (not test code)
+
+**How it works:**
+1. Runs tests in debug mode
+2. Captures all execution data (DOM, network, console)
+3. Uses AI to analyze failure patterns
+4. Generates fix suggestions
+5. Applies fixes and re-runs tests
+6. Repeats until success or determines app is broken
+
+#### Setting Up Playwright Agents
+
+**Initialize agents:**
+
+```bash
+# For VS Code integration
+npx playwright init-agents --loop=vscode
+
+# For Claude Code integration
+npx playwright init-agents --loop=claude
+
+# For other editors
+npx playwright init-agents --loop=opencode
+```
+
+This creates agent configuration files in your project.
+
+#### The Three Agents
+
+**Planner Agent:**
+- Explores your application
+- Produces a Markdown test plan
+- Identifies key user flows to test
+
+**Generator Agent:**
+- Transforms test plans into Playwright test files
+- Writes idiomatic Playwright code
+- Follows best practices automatically
+
+**Healer Agent:**
+- Executes test suite
+- Identifies failures
+- Automatically repairs broken tests
+- Reduces debugging time from hours to minutes
+
+#### Benefits of Playwright Agents
+
+- **Self-healing tests:** Automatically adapt to UI changes
+- **Faster debugging:** AI identifies root causes instantly
+- **Best practices:** Agents follow Playwright conventions
+- **Reduced maintenance:** Less time fixing flaky tests
+
+#### Limitations
+
+**Note:** Playwright Agents require:
+- Playwright 1.56.0 or higher ✅ (you have 1.56.1)
+- AI model API access (OpenAI, Anthropic, etc.)
+- Configuration in your development environment
+
+For this VM environment, agents may require additional setup for AI API access.
+
+---
+
+### Inspector and Debug Mode
+
+**Playwright Inspector** provides step-by-step debugging with a visual interface.
+
+#### Running Inspector
+
+```bash
+# Run tests with inspector
+npx playwright test --debug
+
+# Run specific test with inspector
+npx playwright test tests/e2e/modal.spec.js --debug
+
+# Run from specific line
+npx playwright test tests/e2e/modal.spec.js:25 --debug
+```
+
+#### Inspector Features
+
+**Debugger controls:**
+- ▶️ Step over actions one at a time
+- ⏸️ Pause execution
+- ▶️ Resume test execution
+- 🔄 Re-run test
+
+**Code view:**
+- See current test code
+- Highlighted current action
+- View source maps
+
+**Locator picker:**
+- Click "Record" to explore the page
+- Click elements to generate locators
+- Copy locators for use in tests
+
+#### Debug Mode in Tests
+
+**Add explicit breakpoints:**
+
+```javascript
+test('debug specific interaction', async ({ page }) => {
+  await page.goto('/');
+
+  // Pause here - inspector will open
+  await page.pause();
+
+  await page.click('.template-card');
+
+  // Continue normally
+  await expect(page.locator('#preview-modal')).toBeVisible();
+});
+```
+
+#### When to Use Inspector
+
+**Use Inspector when:**
+- Writing new tests and exploring the app
+- Debugging specific user interactions
+- Need to step through tests manually
+- Want to experiment with locators
+
+**Use Trace Viewer instead when:**
+- Debugging failed CI runs
+- Analyzing test flakiness
+- Need to review entire test execution
+- Working in headless environment
+
+---
+
+### Recommended Debugging Workflow
+
+Choose the right debugging approach based on your situation:
+
+#### 🎯 Quick Decision Guide
+
+| Situation | Recommended Tool | Why |
+|-----------|------------------|-----|
+| **Writing new tests** | UI Mode `--ui` | Live preview, pick locators, instant feedback |
+| **Local test failure** | UI Mode `--ui` or Inspector `--debug` | Step through execution, see what's happening |
+| **CI test failure** | Trace Viewer | Download trace.zip from artifacts, time-travel debug |
+| **Flaky tests** | Trace Viewer with `trace: 'on-first-retry'` | Capture only failures, analyze patterns |
+| **Headless VM/SSH** | Custom scripts | No GUI available, programmatic control |
+| **Multiple test failures** | Healer Agent | Let AI identify patterns and suggest fixes |
+| **Understanding app flow** | Planner Agent | AI explores app and documents flows |
+
+#### 🔄 Debugging Process
+
+**For local development:**
+
+1. **First attempt:** Run with UI Mode
+   ```bash
+   npx playwright test --ui
+   ```
+   - Watch test execute
+   - Use timeline to find failure point
+   - Pick locators to fix selectors
+
+2. **If UI Mode unavailable:** Use Inspector
+   ```bash
+   npx playwright test --debug
+   ```
+   - Step through test line by line
+   - Pause at failure point
+   - Experiment with fixes
+
+3. **For headless environments:** Use custom scripts
+   ```javascript
+   // Quick debug script
+   const { chromium } = require('@playwright/test');
+   // ... see examples below
+   ```
+
+**For CI/CD debugging:**
+
+1. **Enable traces in config:**
+   ```javascript
+   use: { trace: 'on-first-retry' }
+   ```
+
+2. **Download test artifacts** from CI run
+
+3. **Open trace locally:**
+   ```bash
+   npx playwright show-trace trace.zip
+   ```
+
+4. **Analyze:**
+   - Timeline shows exact failure point
+   - DOM snapshot shows page state
+   - Console logs show JavaScript errors
+   - Network tab shows failed requests
+
+**For recurring issues:**
+
+1. **Use Healer Agent** to automatically fix
+2. **Review AI suggestions** for patterns
+3. **Apply best practice fixes**
+4. **Let agent validate fixes**
+
+#### 🛠️ Debugging Toolkit
+
+**Essential commands:**
+
+```bash
+# Interactive debugging
+npx playwright test --ui                    # Best: UI Mode with time-travel
+npx playwright test --debug                 # Good: Step-by-step inspector
+npx playwright test --headed                # See browser but no controls
+
+# Recording and playback
+npx playwright test --trace on              # Record all traces
+npx playwright show-trace trace.zip         # View recorded trace
+
+# Codegen - generate tests by recording
+npx playwright codegen http://localhost:8000
+
+# AI Agents (v1.56+)
+npx playwright init-agents --loop=claude    # Set up agents
+```
+
+**Pro tips:**
+
+- Use `page.pause()` to add breakpoints in test code
+- Add `trace: 'on'` temporarily for specific debugging sessions
+- Use Codegen to experiment with locators interactively
+- Check console logs: `page.on('console', msg => console.log(msg.text()))`
+
+---
+
+## Interactive Debugging with Scripts
+
+For environments where UI Mode and Inspector don't work (headless VMs, SSH sessions), use custom Node.js scripts for interactive debugging.
 
 ### Basic Debug Script Template
 
@@ -714,10 +1120,26 @@ const { chromium } = require('@playwright/test');
 - [UI/UX Guidelines](../guides/ui-ux-guidelines.md) - Design patterns to test
 
 ### External Resources
+
+**Official Playwright Documentation:**
 - [Playwright Best Practices](https://playwright.dev/docs/best-practices)
-- [Playwright Debugging Guide](https://playwright.dev/docs/debug)
-- [Playwright Trace Viewer](https://playwright.dev/docs/trace-viewer)
+- [Debugging Tests](https://playwright.dev/docs/debug) - Official debugging guide
+- [UI Mode](https://playwright.dev/docs/test-ui-mode) - Visual debugging interface
+- [Trace Viewer](https://playwright.dev/docs/trace-viewer) - Time-travel debugging
+- [Running and Debugging Tests](https://playwright.dev/docs/running-tests)
 - [Playwright Codegen](https://playwright.dev/docs/codegen) - Generate test code by recording actions
+- [Playwright API Reference](https://playwright.dev/docs/api/class-playwright)
+
+**Playwright 1.56 Features (2025):**
+- [Playwright Agents Announcement](https://medium.com/@umitozdemirf/playwright-1-59-playwright-agents-at-a-glance-76aef05cbcee) - Overview of AI-powered testing
+- [Playwright Agents in Action](https://dev.to/playwright/playwright-agents-planner-generator-and-healer-in-action-5ajh) - Practical examples
+- [Playwright v1.56 – When AI Agents Meets Testing](https://medium.com/@lakindudesilva007/playwright-v1-56-when-ai-agents-meets-testing-144ca6973390)
+
+**Advanced Debugging Resources:**
+- [UI Mode for Running and Debugging Tests](https://www.lambdatest.com/blog/playwright-ui-mode/)
+- [Debugging & Tracing Features](https://testomat.io/blog/debugging-tracing-playwright-features-tips-techniques-to-running-and-debugging-tests/)
+- [The Ultimate Guide to Playwright Trace Viewer](https://momentic.ai/blog/the-ultimate-guide-to-playwright-trace-viewer-master-time-travel-debugging)
+- [Playwright Debug: A Complete Guide](https://autify.com/blog/playwright-debug)
 
 ### Test Files Reference
 - [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search, filtering, and sorting tests (17 tests)
