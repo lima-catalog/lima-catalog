@@ -75,8 +75,17 @@ The project uses special configuration for sandbox environments in [`playwright.
 **Key settings:**
 - `--no-sandbox` - Required for VM environments
 - `--disable-setuid-sandbox` - Disables sandbox isolation
-- `--single-process` - Runs browser in single process to avoid IPC permission issues
-- `TMPDIR: process.env.HOME + '/tmp'` - Sets custom temp directory
+- `--disable-gpu` - Required for headless mode
+- `--disable-dev-shm-usage` - Avoids /dev/shm issues
+- `TMPDIR` - Set via environment variable in CI workflow
+
+**Important:** Browser flags differ between environments:
+- **Local development VM:** Uses `--single-process` to avoid IPC permission issues
+- **GitHub CI:** Skips `--single-process` to prevent resource exhaustion crashes
+- Detection: Uses `process.env.GITHUB_ACTIONS` to determine environment
+
+**Why this matters:**
+The `--single-process` flag is necessary in local VMs due to IPC permission restrictions, but causes browser crashes in GitHub CI after several tests due to resource exhaustion. The configuration automatically selects the appropriate flags based on the environment.
 
 ---
 

@@ -65,27 +65,11 @@ module.exports = defineConfig({
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-web-security',
-            '--disable-features=IsolateOrigins,site-per-process',
             '--disable-gpu',
             '--disable-dev-shm-usage',
-            '--disable-software-rasterizer',
-            '--single-process',  // Run everything in one process to avoid IPC permission issues
-            '--disable-accelerated-2d-canvas',
-            '--disable-extensions',
-            '--no-zygote', // Additional process isolation flags
-            '--disable-background-networking',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-breakpad',
-            '--disable-component-extensions-with-background-pages',
-            '--disable-features=TranslateUI',
-            '--disable-ipc-flooding-protection',
-            '--disable-renderer-backgrounding',
-            '--metrics-recording-only',
-            '--mute-audio',
-            '--no-first-run',
-            '--enable-features=NetworkService,NetworkServiceInProcess',
+            // Use --single-process only in local development VM (not in GitHub CI)
+            // GitHub CI has better IPC support but --single-process causes resource exhaustion
+            ...(process.env.GITHUB_ACTIONS ? [] : ['--single-process']),
           ],
           // TMPDIR is set via environment variable in CI workflow
         },
