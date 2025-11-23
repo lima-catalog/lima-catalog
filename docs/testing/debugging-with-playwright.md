@@ -656,19 +656,13 @@ const { chromium } = require('@playwright/test');
 - [Playwright Codegen](https://playwright.dev/docs/codegen) - Generate test code by recording actions
 
 ### Test Files Reference
-<<<<<<< HEAD
-- [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search and filtering tests
-- [`tests/e2e/categories.spec.js`](/home/user/lima-catalog/tests/e2e/categories.spec.js) - Category and keyword tests
-- [`tests/e2e/modal.spec.js`](/home/user/lima-catalog/tests/e2e/modal.spec.js) - Modal interaction tests
-- [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js) - Pre-loads data before tests run
-=======
 - [`tests/e2e/search.spec.js`](/home/user/lima-catalog/tests/e2e/search.spec.js) - Search, filtering, and sorting tests (17 tests)
 - [`tests/e2e/categories.spec.js`](/home/user/lima-catalog/tests/e2e/categories.spec.js) - Category and keyword filtering tests (24 tests)
 - [`tests/e2e/modal.spec.js`](/home/user/lima-catalog/tests/e2e/modal.spec.js) - Modal interaction and navigation tests (22 tests)
 - [`tests/e2e/keyboard.spec.js`](/home/user/lima-catalog/tests/e2e/keyboard.spec.js) - Keyboard navigation and shortcuts (22 tests)
 - [`tests/e2e/theme.spec.js`](/home/user/lima-catalog/tests/e2e/theme.spec.js) - Theme switching and persistence (15 tests)
 - [`tests/e2e/visual.spec.js`](/home/user/lima-catalog/tests/e2e/visual.spec.js) - Visual regression tests (25 tests, currently skipped)
->>>>>>> 3918140 (Skip visual regression tests and reorganize documentation)
+- [`tests/e2e/global-setup.js`](/home/user/lima-catalog/tests/e2e/global-setup.js) - Pre-loads data before tests run
 - [`tests/e2e/helpers.js`](/home/user/lima-catalog/tests/e2e/helpers.js) - Shared test utilities
 
 ---
