@@ -333,7 +333,9 @@ export function updateSidebar(state, onKeywordToggle, onCategoryToggle, options 
 
     renderSelectedKeywords(state.selectedKeywords, selectedKeywordsEl, onKeywordToggle, options.focusFirstUnselected);
     renderKeywordCloud(state.filteredTemplates, state.selectedKeywords, keywordCloudEl, onKeywordToggle, options.focusFirstKeyword);
-    renderCategoryList(state.filteredTemplates, state.selectedCategory, categoryListEl, onCategoryToggle);
+    // Use filteredTemplatesForCategories if available (allows switching between categories)
+    const templatesForCategories = state.filteredTemplatesForCategories || state.filteredTemplates;
+    renderCategoryList(templatesForCategories, state.selectedCategory, categoryListEl, onCategoryToggle);
 }
 
 /**
