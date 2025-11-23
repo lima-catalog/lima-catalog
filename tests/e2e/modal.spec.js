@@ -2,6 +2,23 @@
 const { test } = require('./fixtures');
 const { expect } = require('@playwright/test');
 
+/**
+ * E2E Tests: Template Preview Modal
+ *
+ * High-level overview of what's being tested:
+ * - Opening modal by clicking template card
+ * - Closing modal via close button, Escape key, or overlay click
+ * - Displaying template metadata (title, GitHub URL)
+ * - Loading and displaying YAML template content with syntax highlighting
+ * - Copy-to-clipboard functionality for GitHub URLs
+ * - Navigation between different templates while modal is open
+ * - Similar templates section (when available)
+ * - Focus trap to keep keyboard navigation inside modal
+ * - Body scroll prevention when modal is open
+ * - Error handling for network failures during content fetch
+ * - Modal state persistence and proper cleanup
+ */
+
 test.describe('Template Preview Modal', () => {
   test.beforeEach(async ({ page }) => {
     // Mock highlight.js before navigation (it's loaded from CDN which we block)

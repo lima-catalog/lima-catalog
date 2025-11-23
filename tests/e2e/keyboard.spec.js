@@ -1,6 +1,21 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+/**
+ * E2E Tests: Keyboard Navigation
+ *
+ * High-level overview of what's being tested:
+ * - Arrow key navigation (Up/Down/Left/Right) through template cards
+ * - Enter/Space keys to open template preview modals
+ * - Escape key to close modals, clear search, and clear keyword filters
+ * - "/" key to focus the search box
+ * - Tab/Shift+Tab for sequential focus navigation
+ * - Home/End keys for page scrolling
+ * - PageUp/PageDown for viewport scrolling
+ * - Focus management and visibility (focus outlines, focus trap in modals)
+ * - Keyboard shortcuts with modifier keys (Ctrl+K, Cmd+K)
+ */
+
 test.describe('Keyboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the catalog

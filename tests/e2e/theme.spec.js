@@ -1,6 +1,21 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+/**
+ * E2E Tests: Theme Switching and Persistence
+ *
+ * High-level overview of what's being tested:
+ * - Theme switcher UI with three options (light, dark, auto)
+ * - Default theme based on system preference detection
+ * - Manual theme switching between light and dark modes
+ * - Theme persistence in localStorage (lima-catalog-theme key)
+ * - Saved theme preference overriding system preference
+ * - Theme persistence across page navigation and reloads
+ * - Active state indication on theme toggle buttons
+ * - Proper styling application across all components (body, cards, modal, sidebar)
+ * - Visual consistency in both light and dark modes
+ */
+
 test.describe('Theme Switching and Persistence', () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage before each test

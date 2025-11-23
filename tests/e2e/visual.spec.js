@@ -1,6 +1,22 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+/**
+ * E2E Tests: Visual Regression
+ *
+ * High-level overview of what's being tested:
+ * - Screenshot comparisons for the entire homepage (light and dark modes)
+ * - Individual component rendering (cards, sidebar, keyword cloud, category list)
+ * - Interactive states (hover, focus, selected) for visual consistency
+ * - Modal appearance in both themes with syntax-highlighted content
+ * - Responsive design across viewports (mobile 375px, tablet 768px, desktop 1920px)
+ * - UI elements: search bar, filters, sort dropdown, theme toggle, badges
+ * - Empty states and edge cases (no results, filtered views)
+ *
+ * NOTE: These tests are currently SKIPPED (.skip) until the UI is more stable.
+ * To enable: remove .skip and run: npx playwright test visual.spec.js --update-snapshots
+ */
+
 // Visual regression tests are skipped until the UI is more stable
 // These tests require baseline screenshots to be generated and reviewed
 // To enable: remove .skip and run: npx playwright test visual.spec.js --update-snapshots
