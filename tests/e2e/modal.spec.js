@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { waitForApp } = require('./wait-for-app');
 
 test.describe('Template Preview Modal', () => {
   test.beforeEach(async ({ page }) => {
@@ -15,8 +16,8 @@ test.describe('Template Preview Modal', () => {
     // Navigate to the catalog
     await page.goto('/');
 
-    // Wait for templates to load
-    await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
+    // Wait for app to be fully initialized
+    await waitForApp(page);
   });
 
   test('opens modal when clicking template card', async ({ page }) => {
