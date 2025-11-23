@@ -119,7 +119,7 @@ jobs:
           TMPDIR: ${{ runner.temp }}
 
       - name: Upload test results and web server logs
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: playwright-report
