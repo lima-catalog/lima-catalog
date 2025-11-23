@@ -230,14 +230,16 @@ test.describe('Template Search and Filtering', () => {
 
     // Search
     await page.fill('#search', 'alpine');
-    await page.waitForTimeout(300);
+    // Wait for debounce (300ms) plus extra time for URL update
+    await page.waitForTimeout(500);
 
     // Verify URL has search param
     expect(page.url()).toContain('search=alpine');
 
     // Clear
     await page.fill('#search', '');
-    await page.waitForTimeout(300);
+    // Wait for debounce (300ms) plus extra time for URL update
+    await page.waitForTimeout(500);
 
     // Verify all templates restored
     const restoredCount = await page.locator('#templates-grid .template-card').count();

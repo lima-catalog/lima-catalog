@@ -252,11 +252,11 @@ test.describe('Theme Switching and Persistence', () => {
     await page.waitForSelector('#keyword-cloud', { timeout: 5000 });
 
     // Check sidebar in initial theme
-    const sidebar = page.locator('#sidebar');
+    const sidebar = page.locator('.sidebar');
     await expect(sidebar).toBeVisible();
 
-    // Toggle theme
-    await page.click('#theme-toggle');
+    // Toggle theme (switch to dark)
+    await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(200);
 
     // Verify sidebar still visible
