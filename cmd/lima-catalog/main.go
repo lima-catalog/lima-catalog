@@ -1,3 +1,48 @@
+// Command lima-catalog discovers, analyzes, and catalogs Lima VM templates from GitHub.
+//
+// This is the main data collection tool that:
+//
+//  1. Discovers Lima templates from GitHub using Code Search API
+//  2. Collects repository and organization metadata
+//  3. Analyzes templates for keywords, categories, and notability scoring
+//  4. Combines all data into frontend-ready JSON Lines format
+//
+// Environment Variables:
+//
+//	GITHUB_TOKEN     - GitHub API token (required)
+//	DATA_DIR         - Output directory for data files (default: ./data)
+//	INCREMENTAL      - Enable incremental updates (only fetch new/changed templates)
+//	ANALYZE          - Enable template analysis phase
+//	FORCE_ANALYZE    - Force re-analysis of all templates
+//	LIMA_REPO_PATH   - Path to lima-vm/lima repo for official knowledge extraction
+//
+// Phases:
+//
+//	1. Discovery: Search GitHub for templates using multiple query strategies
+//	2. Metadata: Fetch repository and organization information
+//	3. Analysis: Extract keywords, categories, and calculate notability scores
+//	4. Combine: Generate catalog.jsonl for frontend consumption
+//
+// Examples:
+//
+//	# Full discovery and collection
+//	export GITHUB_TOKEN=ghp_xxxx
+//	lima-catalog
+//
+//	# Incremental update (only fetch new/changed templates)
+//	INCREMENTAL=1 lima-catalog
+//
+//	# With template analysis
+//	ANALYZE=1 LIMA_REPO_PATH=/path/to/lima lima-catalog
+//
+// Output files (in DATA_DIR):
+//
+//	templates.jsonl  - All discovered templates with metadata
+//	repos.jsonl      - Repository information
+//	orgs.jsonl       - Organization information
+//	catalog.jsonl    - Frontend-optimized combined data
+//	progress.json    - Collection progress and state
+//	official.json    - Known content from official templates (for notability scoring)
 package main
 
 import (

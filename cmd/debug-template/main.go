@@ -1,3 +1,20 @@
+// Command debug-template analyzes a Lima template and shows unique content not found in official templates.
+//
+// The tool compares a template against official templates from lima-vm/lima to identify
+// unique comments, provision scripts, probes, messages, and unusual image domains.
+// This helps evaluate template notability and discover interesting customizations.
+//
+// Usage:
+//
+//	debug-template -url <template-url> [-official <path-to-official.json>]
+//
+// Example:
+//
+//	debug-template -url github:lima-vm/lima/templates/ubuntu.yaml
+//	debug-template -url https://raw.githubusercontent.com/owner/repo/main/lima.yaml
+//
+// The official.json file contains known lines extracted from official templates.
+// Generate it using the lima-catalog tool with ANALYZE=1 LIMA_REPO_PATH=/path/to/lima.
 package main
 
 import (

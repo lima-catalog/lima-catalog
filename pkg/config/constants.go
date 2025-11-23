@@ -1,3 +1,18 @@
+// Package config provides configuration constants and default values for the Lima catalog.
+//
+// The package defines:
+//
+//   - API rate limiting thresholds for GitHub API calls
+//   - Delay constants for search and metadata API operations
+//   - Concurrency limits for parallel operations
+//   - Notability scoring weights for template ranking
+//
+// Notability Scoring:
+//
+// Templates are ranked using weighted scores based on features like provisioning scripts,
+// documentation, repository stars, and validation warnings. Higher scores indicate more
+// notable/interesting templates. Use DefaultNotabilityWeights() to get the standard
+// configuration.
 package config
 
 import "time"

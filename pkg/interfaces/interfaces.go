@@ -1,3 +1,28 @@
+// Package interfaces defines abstractions for external dependencies to enable testing.
+//
+// The package provides interfaces for:
+//
+//   - HTTP operations (HTTPClient)
+//   - File system operations (FileSystem)
+//   - Time operations (Clock)
+//   - URL transformation (URLTransformer for Lima's github: URLs)
+//
+// Each interface has a corresponding default implementation that wraps the standard
+// library or external dependencies. Tests can provide mock implementations to avoid
+// I/O operations and control time.
+//
+// Example usage in production code:
+//
+//	fs := interfaces.NewDefaultFileSystem()
+//	storage, err := storage.NewStorageWithFS(dataDir, fs)
+//
+// Example usage in tests:
+//
+//	// Provide mock file system
+//	mockFS := &MockFileSystem{
+//	    files: make(map[string][]byte),
+//	}
+//	storage, err := storage.NewStorageWithFS("/test", mockFS)
 package interfaces
 
 import (

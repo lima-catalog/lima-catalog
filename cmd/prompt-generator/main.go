@@ -1,3 +1,29 @@
+// Command prompt-generator creates structured prompts for Large Language Model analysis of Lima templates.
+//
+// The tool generates comprehensive context documents including template content,
+// repository metadata, code references, and documentation for LLM consumption.
+//
+// Usage:
+//
+//	prompt-generator <owner/repo/path> [options]
+//	prompt-generator -owner=<owner> -repo=<repo> -path=<path> [options]
+//
+// Examples:
+//
+//	# Basic usage with full path
+//	export GITHUB_TOKEN=your_token
+//	prompt-generator lima-vm/lima/templates/ubuntu.yaml
+//
+//	# Save to file
+//	prompt-generator lima-vm/lima/templates/ubuntu.yaml -output=prompt.txt
+//
+//	# Minimal prompt (no references, no README)
+//	prompt-generator lima-vm/lima/templates/ubuntu.yaml -no-references -no-readme
+//
+//	# Custom context lines
+//	prompt-generator lima-vm/lima/templates/ubuntu.yaml -context=20
+//
+// The generated prompt can be sent to an LLM API for template analysis.
 package main
 
 import (

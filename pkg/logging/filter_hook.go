@@ -1,3 +1,20 @@
+// Package logging provides log filtering utilities for suppressing specific log messages.
+//
+// The package implements a FilterWriter that intercepts log output and suppresses lines
+// containing specified keywords. This is useful for reducing noise from third-party
+// libraries or filtering out experimental/deprecated feature warnings.
+//
+// Example usage:
+//
+//	// Filter out Lima's experimental feature warnings
+//	logging.SetupLogrusFilter("EXPERIMENTAL", "DEPRECATED")
+//
+//	// Or create a custom filter writer
+//	filtered := logging.NewFilterWriter(os.Stderr, "EXPERIMENTAL")
+//	logger.SetOutput(filtered)
+//
+// The filtering is case-sensitive and works by checking if log lines contain
+// any of the specified keywords. Matching lines are suppressed entirely.
 package logging
 
 import (
