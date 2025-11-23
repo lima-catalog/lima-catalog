@@ -1,0 +1,54 @@
+{
+  "components": [
+    {
+      "Key": "message",
+      "DisplayName": "Message",
+      "Description": "50 base + 1 per line (capped at 100)"
+    },
+    {
+      "Key": "provision",
+      "DisplayName": "Provision Scripts",
+      "Description": "10 per script + 0.1 per line"
+    },
+    {
+      "Key": "parameters",
+      "DisplayName": "Parameters",
+      "Description": "20 per param (capped at 100)"
+    },
+    {
+      "Key": "env_vars",
+      "DisplayName": "Environment Variables",
+      "Description": "10 per var (capped at 100)"
+    },
+    {
+      "Key": "probes",
+      "DisplayName": "Probes",
+      "Description": "5 per probe + 0.1 per line"
+    },
+    {
+      "Key": "image_name",
+      "DisplayName": "Image Name",
+      "Description": "-100 if no remote images, 30 if unusual, +0-70 if custom names"
+    },
+    {
+      "Key": "comments",
+      "DisplayName": "YAML Comments",
+      "Description": "2 per comment line (capped at 100)"
+    },
+    {
+      "Key": "validation_warnings",
+      "DisplayName": "Validation Warnings",
+      "Description": "Penalty for validation warnings (negative)"
+    },
+    {
+      "Key": "stars",
+      "DisplayName": "Repository Stars",
+      "Description": "1 per 10 stars (capped at 50)"
+    },
+    {
+      "Key": "custom_driver",
+      "DisplayName": "Custom VM Driver",
+      "Description": "70 if vmtype is not empty and not qemu/vz/wsl2"
+    }
+  ]
+}
