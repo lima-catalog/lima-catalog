@@ -65,8 +65,47 @@ EOF
 )"
 ```
 
+### ⚠️ WARNING: Do NOT Use Triple Backticks in PR Body
+
+The entire `gh pr create` command is wrapped in a code block. If you use triple backticks (```) inside the HEREDOC body, it will terminate the outer code block prematurely and break the command.
+
+**WRONG:**
+```bash
+gh pr create --body "$(cat <<'EOF'
+Summary here
+
+```javascript
+// This breaks the outer code block!
+const foo = 'bar';
+```
+EOF
+)"
+```
+
+**CORRECT - Use 4-space indentation instead:**
+```bash
+gh pr create --body "$(cat <<'EOF'
+Summary here
+
+    // 4-space indentation for code
+    const foo = 'bar';
+EOF
+)"
+```
+
+**CORRECT - Use inline backticks for short snippets:**
+```bash
+gh pr create --body "$(cat <<'EOF'
+Summary here
+
+Updated the `foo()` function to handle edge cases.
+EOF
+)"
+```
+
 ## Important
 - Always provide the `gh pr create` command for the user to copy/paste
 - Use HEREDOC format for the body to preserve formatting
 - Include a test plan with checkboxes
 - Keep summary concise (3-5 bullet points)
+- **NEVER use triple backticks (```) inside the PR body** - use 4-space indentation or inline backticks instead
