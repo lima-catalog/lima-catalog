@@ -158,7 +158,7 @@ test.describe('Template Preview Modal', () => {
     expect(secondTitle).not.toBe(firstTitle);
   });
 
-  test.skip('displays similar templates section when available', async ({ page }) => {
+  test('displays similar templates section when available', async ({ page }) => {
     // Click first template name
     await page.locator('#templates-grid .template-card .template-name').first().click();
     await expect(page.locator('#preview-modal')).toBeVisible();
