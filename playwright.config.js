@@ -17,6 +17,12 @@ module.exports = defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
 
+  // Global timeout for the entire test suite
+  globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined, // 15 minutes max in CI
+
+  // Global setup to run before all tests
+  globalSetup: require.resolve('./tests/e2e/global-setup.js'),
+
   // Reporter to use
   reporter: process.env.CI ? 'github' : 'list',
 
@@ -65,6 +71,21 @@ module.exports = defineConfig({
             '--disable-dev-shm-usage',
             '--disable-software-rasterizer',
             '--single-process',  // Run everything in one process to avoid IPC permission issues
+            '--disable-accelerated-2d-canvas',
+            '--disable-extensions',
+            '--no-zygote', // Additional process isolation flags
+            '--disable-background-networking',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-breakpad',
+            '--disable-component-extensions-with-background-pages',
+            '--disable-features=TranslateUI',
+            '--disable-ipc-flooding-protection',
+            '--disable-renderer-backgrounding',
+            '--metrics-recording-only',
+            '--mute-audio',
+            '--no-first-run',
+            '--enable-features=NetworkService,NetworkServiceInProcess',
           ],
           // TMPDIR is set via environment variable in CI workflow
         },
