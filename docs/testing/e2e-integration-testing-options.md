@@ -1,7 +1,7 @@
 # End-to-End and Integration Testing Options
 
-**Last Updated:** 2025-11-22
-**Status:** Analysis and Recommendations
+**Last Updated:** 2025-11-23
+**Status:** ✅ IMPLEMENTED - Playwright E2E Testing Fully Operational
 
 ## Executive Summary
 
@@ -42,27 +42,58 @@ This document analyzes available options for implementing end-to-end (e2e) and i
 - Integration tests: `scripts/test-integration.sh` (CLI tool testing with real GitHub API)
 
 **JavaScript Frontend:**
+
+*Unit Tests (226 tests):*
 - Custom lightweight test framework (no external dependencies)
 - Tests run in both Node.js and browser environments
 - Test files: `web/js/*.test.js`
 - Test runner: `test.js` (Node.js) or `web/tests.html` (browser)
+- Coverage: 82% of modules (7 fully tested, 4 partially tested)
+
+*E2E Tests (125 tests, 100 active):*
+- **Playwright** for browser automation and E2E testing
+- Test files: `tests/e2e/*.spec.js`
+- Local fixture system for template YAML files (20 representative templates)
+- Global setup for data pre-loading to prevent flaky tests
+- Runs in both local VM and GitHub Actions CI
 
 **CI Pipeline (`.github/workflows/ci.yml`):**
 - Go tests with race detection
 - Go vet and golangci-lint
 - Build verification
-- No frontend e2e tests currently
+- ✅ **Frontend E2E tests with Playwright** (125 tests)
 
-### Testing Gap
+### Current E2E Test Coverage
 
-**Missing:** End-to-end tests for the web UI that verify:
-- Template search and filtering work correctly
-- Template preview modal functions properly
-- URL helpers generate correct GitHub URLs
-- Keyboard navigation works as expected
-- Theme switching persists across page loads
-- Data loading and parsing from JSONL files
-- Integration between all frontend components
+**✅ Implemented:** All critical user journeys now have comprehensive E2E test coverage:
+
+- ✅ **Template search and filtering** (`search.spec.js` - 17 tests)
+  - Search input, URL parameters, sort options, filter toggles
+
+- ✅ **Category and keyword filtering** (`categories.spec.js` - 24 tests)
+  - Category selection, multi-keyword filtering, URL state persistence
+
+- ✅ **Template preview modal** (`modal.spec.js` - 22 tests)
+  - Modal open/close, YAML content loading, template navigation, keyboard shortcuts
+
+- ✅ **Keyboard navigation** (`keyboard.spec.js` - 22 tests)
+  - Arrow keys, Enter/Tab navigation, keyboard shortcuts, focus management
+
+- ✅ **Theme switching** (`theme.spec.js` - 15 tests)
+  - Light/dark/auto modes, localStorage persistence, system preferences
+
+- ⏭️ **Visual regression testing** (`visual.spec.js` - 25 tests, currently skipped)
+  - Layout snapshots for homepage, search results, modal, themes
+  - *Note: Tests written but skipped until UI baselines are stable*
+
+**Test Infrastructure:**
+- Playwright configuration optimized for both local VM and CI environments
+- Local fixture system for template YAML files (see `tests/e2e/fixtures/README.md`)
+- Global setup for data pre-loading to prevent flaky tests
+- Web server logs redirected to `test-results/webserver.log` to prevent console flooding
+- Automatic browser flag detection (different for local VM vs CI)
+
+**Total E2E Coverage:** 125 tests (100 active + 25 skipped for visual regression)
 
 ---
 
