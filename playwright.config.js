@@ -12,7 +12,7 @@ module.exports = defineConfig({
   timeout: 30 * 1000,
 
   // Test execution settings
-  fullyParallel: true,
+  fullyParallel: !process.env.CI, // Disable parallel execution in CI due to resource constraints
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
