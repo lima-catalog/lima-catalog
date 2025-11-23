@@ -9,7 +9,7 @@ module.exports = defineConfig({
   testDir: './tests/e2e',
 
   // Maximum time one test can run for
-  timeout: 30 * 1000,
+  timeout: process.env.CI ? 60 * 1000 : 30 * 1000, // Longer timeout in CI for stability
 
   // Test execution settings
   fullyParallel: !process.env.CI, // Disable parallel execution in CI due to resource constraints
@@ -36,6 +36,12 @@ module.exports = defineConfig({
 
     // Run in headless mode
     headless: true,
+
+    // Timeout for each action (click, fill, etc.)
+    actionTimeout: process.env.CI ? 15 * 1000 : 10 * 1000,
+
+    // Timeout for navigation
+    navigationTimeout: process.env.CI ? 30 * 1000 : 15 * 1000,
   },
 
   // Configure projects for major browsers
@@ -49,6 +55,7 @@ module.exports = defineConfig({
         // Use new headless mode (doesn't require X11)
         launchOptions: {
           headless: true,
+          timeout: 60000, // Browser launch timeout
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -59,10 +66,7 @@ module.exports = defineConfig({
             '--disable-software-rasterizer',
             '--single-process',  // Run everything in one process to avoid IPC permission issues
           ],
-          env: {
-            ...process.env,
-            TMPDIR: process.env.HOME + '/tmp',
-          },
+          // TMPDIR is set via environment variable in CI workflow
         },
       },
     },
@@ -85,6 +89,6 @@ module.exports = defineConfig({
     command: 'cd web && python3 -m http.server 8000',
     url: 'http://localhost:8000',
     reuseExistingServer: !process.env.CI,
-    timeout: 10 * 1000,
+    timeout: 30 * 1000, // Increased timeout for web server startup
   },
 });
