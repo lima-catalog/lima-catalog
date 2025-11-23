@@ -1,3 +1,14 @@
+// Unit Tests: Log Filtering (logging package)
+//
+// High-level overview of what's being tested:
+// - Filtering log messages by keyword (e.g., "EXPERIMENTAL")
+// - Supporting multiple filter keywords simultaneously
+// - Passing through non-filtered messages
+// - Case-sensitive keyword matching
+// - Filter working across all log levels (Trace, Debug, Info, Warn, Error)
+// - Integration with logrus logger
+// - Preserving normal log output while filtering specific keywords
+
 package logging
 
 import (

@@ -1,5 +1,13 @@
 /**
- * Tests for theme management
+ * Unit Tests: Theme Management (theme.js)
+ *
+ * High-level overview of what's being tested:
+ * - Getting current theme preference from localStorage
+ * - Resolving "auto" theme to system preference (light/dark)
+ * - Setting and persisting theme preference (light/dark/auto)
+ * - Default theme behavior when no preference is set
+ * - Handling system dark mode preference via matchMedia
+ * - Theme storage and retrieval across page loads
  */
 
 import { runner, assert } from './test-framework.js';

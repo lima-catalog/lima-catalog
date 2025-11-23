@@ -1,5 +1,27 @@
 /**
- * Tests for templateCard.js
+ * Unit Tests: Template Card Rendering (templateCard.js)
+ *
+ * High-level overview of what's being tested:
+ * - escapeHtml() function for XSS prevention
+ *   - Escaping HTML special characters (<, >, &, ", ')
+ *   - Handling empty and null values
+ *   - Preserving safe text content
+ *
+ * - formatName() function:
+ *   - Formatting hyphenated and underscored names
+ *   - Capitalizing each word
+ *   - Handling mixed separators
+ *
+ * - formatCategoryName() function:
+ *   - Formatting category names with proper capitalization
+ *
+ * - deriveDisplayName() function:
+ *   - Using display_name field when available
+ *   - Deriving from template name or path
+ *   - Removing file extensions (.yaml, .yml)
+ *   - Handling generic filenames (lima, template, config, default)
+ *   - Using parent directory for generic filenames
+ *   - Falling back to repo name when needed
  */
 
 import { runner, assert } from './test-framework.js';

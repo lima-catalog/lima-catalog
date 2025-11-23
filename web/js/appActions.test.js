@@ -1,5 +1,15 @@
 /**
- * Tests for appActions.js - Application actions and orchestration
+ * Unit Tests: Application Actions (appActions.js)
+ *
+ * High-level overview of what's being tested:
+ * - Setting and clearing popstate handling state (for browser back/forward)
+ * - Updating sort dropdown selection to reflect current state
+ * - Showing/hiding debug mode options in sort dropdown
+ * - Showing debug mode notification banner with proper styling
+ * - Clearing search input and resetting related UI state
+ * - Search focus management after clearing
+ * - Applying filters from URL parameters to UI elements
+ * - Proper state synchronization across multiple UI components
  */
 
 import { runner, assert } from './test-framework.js';

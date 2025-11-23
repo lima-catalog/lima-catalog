@@ -1,3 +1,21 @@
+// Unit Tests: Blocklist Filtering (discovery package)
+//
+// High-level overview of what's being tested:
+// - Path pattern matching (GitHub workflows, CI configs, test directories)
+// - Repository pattern matching (blocking entire orgs or specific repos)
+// - Regex pattern compilation and validation
+// - Specific path blocking (lima.REJECTED.yaml, Rancher Desktop configs)
+// - Directory-level blocking (tests/, kubernetes/, .github/workflows/)
+// - Whole organization blocking
+// - Individual repository blocking
+// - Subdirectory blocking within repositories
+// - Loading blocklist from YAML files
+// - Handling missing, invalid, and empty blocklist files
+// - Compiled pattern caching for performance
+// - Error handling for invalid regex patterns
+// - Permission errors and file access issues
+// - Nil blocklist handling (allow everything)
+
 package discovery
 
 import (

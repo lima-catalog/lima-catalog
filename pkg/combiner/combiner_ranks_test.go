@@ -1,3 +1,14 @@
+// Unit Tests: Template Ranking (combiner package)
+//
+// High-level overview of what's being tested:
+// - Calculating relative ranks for templates across notability score components
+// - Rank assignment for message, provision, parameters, and other score dimensions
+// - Handling tied scores (templates with equal values get same rank)
+// - Empty template list handling
+// - Inclusion of all score components from the registry in ranking
+// - Rank calculation for total notability scores
+// - Verification that all components are ranked consistently
+
 package combiner
 
 import (

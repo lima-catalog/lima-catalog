@@ -1,3 +1,18 @@
+// Unit Tests: Retry Logic with Exponential Backoff (retry package)
+//
+// High-level overview of what's being tested:
+// - Successful execution on first attempt (no retries needed)
+// - Retrying failed operations with exponential backoff
+// - Respecting maximum retry limits
+// - Returning error after max retries exceeded
+// - Context cancellation during retries
+// - Exponential backoff timing and delay calculations
+// - Custom backoff configuration (initial delay, max delay, multiplier)
+// - Non-retryable error handling (short-circuit on first failure)
+// - Generic Do() function for returning values
+// - Error propagation and wrapping
+// - Default configuration values
+
 package retry
 
 import (

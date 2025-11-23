@@ -1,5 +1,17 @@
 /**
- * Tests for filters.js
+ * Unit Tests: Template Filtering and Sorting (filters.js)
+ *
+ * High-level overview of what's being tested:
+ * - Counting keyword occurrences across templates
+ * - Counting category occurrences
+ * - Counting checkbox filter states (official/community/duplicates/similars)
+ * - Filtering templates by search text, keywords, category
+ * - Filtering by official vs community templates
+ * - Showing/hiding duplicate and similar templates
+ * - Sorting templates by name, stars, updated date, notability score
+ * - Debug mode sorting options (breakdown metrics)
+ * - Extracting dynamic keywords (org:, repo:, org/repo:)
+ * - Case-insensitive search and filtering
  */
 
 import { runner, assert } from './test-framework.js';

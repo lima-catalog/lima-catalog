@@ -1,3 +1,14 @@
+// Unit Tests: Debug Template Tool (main package)
+//
+// High-level overview of what's being tested:
+// - Consistency between debug tool and notability scoring
+// - Correct usage of IsCodeComment function from discovery package
+// - Code comment detection in various scenarios
+// - Comment filtering logic (empty lines, known lines, code comments)
+// - Unique comment counting after filtering
+// - Known lines lookup and exclusion
+// - Integration with discovery package's code detection
+
 package main
 
 import (

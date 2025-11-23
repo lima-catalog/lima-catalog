@@ -1,3 +1,20 @@
+// Unit Tests: In-Memory Cache (cache package)
+//
+// High-level overview of what's being tested:
+// - Setting and retrieving cached values
+// - Handling non-existent keys
+// - Time-based expiration of cached entries
+// - Custom TTL per cache entry
+// - Deleting specific cache entries
+// - Clearing entire cache
+// - Cache size tracking
+// - Manual and automatic cleanup of expired entries
+// - Cleanup timer with multiple cycles
+// - Concurrent access patterns and thread safety
+// - Overwriting existing values
+// - Storing different data types (string, int, bool, slice)
+// - Preventing goroutine leaks when stopping timers
+
 package cache
 
 import (

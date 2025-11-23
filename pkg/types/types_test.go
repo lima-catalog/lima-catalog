@@ -1,3 +1,13 @@
+// Unit Tests: Core Types and Data Structures (types package)
+//
+// High-level overview of what's being tested:
+// - SimilarTemplate.IsExactDuplicate() logic
+// - Similarity threshold detection (90%+ is exact duplicate)
+// - Template similarity score calculations
+// - Edge cases around similarity thresholds
+// - Type conversions and serialization
+// - Data structure integrity
+
 package types
 
 import (

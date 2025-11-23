@@ -1,5 +1,22 @@
 /**
- * Tests for utils.js - Utility functions
+ * Unit Tests: Utility Functions (utils.js)
+ *
+ * High-level overview of what's being tested:
+ * - debounce() function:
+ *   - Delaying function execution until after wait period
+ *   - Canceling previous calls on rapid invocations
+ *   - Executing with latest arguments after settling
+ *   - Handling custom and default wait times
+ *   - Passing multiple arguments correctly
+ *
+ * - trapFocus() function:
+ *   - Focusing first element on initialization
+ *   - Wrapping Tab navigation at last element
+ *   - Wrapping Shift+Tab at first element
+ *   - Allowing normal Tab in middle of elements
+ *   - Ignoring non-Tab keys
+ *   - Handling single or no focusable elements
+ *   - Cleanup and event listener removal
  */
 
 import { runner, assert } from './test-framework.js';

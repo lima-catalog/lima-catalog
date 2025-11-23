@@ -1,3 +1,19 @@
+// Unit Tests: Locality-Sensitive Hashing (minhash package)
+//
+// High-level overview of what's being tested:
+// - LSH instance creation with various band/row configurations
+// - Validation of LSH parameters (positive bands and rows)
+// - Adding signatures to LSH index
+// - Querying LSH for candidate similar templates
+// - Band matching for identical and similar signatures
+// - Threshold estimation for different LSH configurations
+// - LSH index size tracking and clearing
+// - Error handling for mismatched signature lengths
+// - Similarity detection with real Lima template YAML content
+// - Band hashing consistency and collision behavior
+// - Performance benchmarks for indexing and querying
+// - Configuration tuning for different similarity thresholds
+
 package minhash
 
 import (

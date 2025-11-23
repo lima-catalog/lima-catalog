@@ -1,5 +1,13 @@
 /**
- * Tests for data.js
+ * Unit Tests: Data Parsing (data.js)
+ *
+ * High-level overview of what's being tested:
+ * - Parsing JSON Lines format (newline-delimited JSON)
+ * - Handling single and multiple JSON objects
+ * - Trimming whitespace and empty lines
+ * - Parsing complex nested objects with arrays
+ * - Error handling for invalid JSON syntax
+ * - Returning empty arrays for empty input
  */
 
 import { runner, assert } from './test-framework.js';

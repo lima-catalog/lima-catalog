@@ -1,9 +1,21 @@
 /**
- * Tests for sidebar.js - Sidebar rendering and interaction
+ * Unit Tests: Sidebar Rendering and Interaction (sidebar.js)
+ *
+ * High-level overview of what's being tested:
+ * - Rendering keyword cloud with counts
+ * - Rendering selected keywords section
+ * - Rendering category list with counts
+ * - Marking selected keywords and categories
+ * - Showing empty states when no keywords/categories available
+ * - Distinguishing dynamic keywords (org:, repo:, org/repo:)
+ * - Updating sidebar when filters change
+ * - Proper HTML structure and CSS classes
+ * - ARIA attributes for accessibility
  *
  * Note: sidebar.js has extensive keyboard navigation logic that relies on
  * DOM offsetTop calculations and complex focus management. These tests focus
- * on core rendering logic that innerHTML is being set with content.
+ * on core rendering logic. Full keyboard navigation testing would benefit
+ * from integration testing.
  */
 
 import { runner, assert } from './test-framework.js';

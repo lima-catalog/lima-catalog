@@ -1,5 +1,31 @@
 /**
- * Tests for modal.js
+ * Unit Tests: Modal and URL Management (modal.js)
+ *
+ * High-level overview of what's being tested:
+ * - URL parameter parsing (filters, keywords, categories, sort, etc.)
+ * - URL encoding/decoding of special characters in keywords
+ * - Updating URL with filter state changes
+ * - Using pushState vs replaceState for history management
+ * - Updating URL when template is selected/deselected
+ * - Opening template modal from URL parameter
+ * - Modal event listener setup
+ *
+ * - Similarity badge generation:
+ *   - "Original" badge for 100% similarity with isOriginal=true
+ *   - "Exact" badge for 100% duplicates
+ *   - "Near" badge for 90-99% similarity
+ *   - "Similar" badge for <90% similarity
+ *
+ * - Diff generation:
+ *   - Computing longest common subsequence (LCS) for diff algorithm
+ *   - Generating unified diff format with +/- prefixes
+ *   - Counting additions and deletions
+ *   - Handling empty/identical texts
+ *   - Hunk headers with line numbers
+ *
+ * - XSS prevention:
+ *   - Escaping HTML special characters in user input
+ *   - Preventing script injection in modal content
  */
 
 import { runner, assert } from './test-framework.js';

@@ -1,3 +1,21 @@
+// Unit Tests: LLM Prompt Generation (prompt package)
+//
+// High-level overview of what's being tested:
+// - Extracting YAML comments from template content
+// - Filtering out divider lines (===, ---, empty lines)
+// - Ignoring inline comments (only extracting line-start comments)
+// - Default prompt configuration values
+// - Building formatted markdown prompts for LLM consumption
+// - Including/excluding optional sections (comments, references, README)
+// - Template file path and repository context
+// - Template YAML content display
+// - Reference context with before/after lines
+// - Parsing grep output for file references
+// - Prompt configuration validation (context lines, max lengths)
+// - Builder creation with token validation
+// - Converting GitHub API objects to internal types
+// - Handling nil config (defaults to default config)
+
 package prompt
 
 import (

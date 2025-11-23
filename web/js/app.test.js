@@ -1,5 +1,15 @@
 /**
- * Tests for app.js - Main application orchestration
+ * Unit Tests: Main Application Orchestration (app.js)
+ *
+ * High-level overview of what's being tested:
+ * - Application initialization and DOM setup
+ * - Event listener registration for UI interactions
+ * - Coordinating between data loading, filtering, and rendering
+ * - Browser history management (popstate events)
+ * - Keyboard shortcut handling
+ * - Search, sort, and filter UI synchronization
+ * - Template grid rendering and updates
+ * - Error handling and loading states
  *
  * Note: app.js has many dependencies on other modules (data, keyboard, modal, sidebar)
  * that make full integration testing complex. These tests focus on isolated testable logic.

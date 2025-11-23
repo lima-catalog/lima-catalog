@@ -1,3 +1,14 @@
+// Example Tests: MinHash Usage (minhash package)
+//
+// High-level overview of what's being tested:
+// - Basic MinHash workflow with Lima template examples
+// - Comparing Ubuntu Docker templates (near duplicates)
+// - Comparing Ubuntu vs Alpine templates (different)
+// - Similarity classification (exact, near, similar, different)
+// - Simple text similarity comparison
+// - Custom MinHash configuration (hash count, shingle size)
+// - Practical usage patterns for duplicate detection
+
 package minhash_test
 
 import (

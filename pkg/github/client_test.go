@@ -1,3 +1,24 @@
+// Unit Tests: GitHub API Client (github package)
+//
+// High-level overview of what's being tested:
+// - GitHub client creation and initialization
+// - Repository fetching with caching
+// - User/organization fetching with caching
+// - Cache hit behavior (avoiding redundant API calls)
+// - Rate limit checking and threshold enforcement
+// - Rate limit error handling and waiting
+// - Different rate limit types (core, search)
+// - API error handling (404, 403, 500, etc.)
+// - Code search functionality
+// - Repository contents listing
+// - Single file content retrieval
+// - Content decoding (base64)
+// - Cache key uniqueness for different resources
+// - Mock HTTP server testing
+// - Rate limit reset time handling
+// - Edge cases: nil responses, zero reset times, negative wait durations
+// - Unknown limit type handling
+
 package github
 
 import (

@@ -1,3 +1,16 @@
+// Unit Tests: Metadata Refresh Selection (discovery package)
+//
+// High-level overview of what's being tested:
+// - Selecting repositories to refresh based on staleness
+// - Selecting organizations to refresh based on staleness
+// - Always including repositories/orgs from new templates
+// - Refreshing 5% of stale items (older than 30 days)
+// - Prioritizing oldest items first (not random selection)
+// - Deduplication of repositories and organizations
+// - Handling empty lists and zero new templates
+// - Owner extraction from repository full names
+// - Preventing duplicate refreshes for same repo/org
+
 package discovery
 
 import (

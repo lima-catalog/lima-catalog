@@ -1,3 +1,19 @@
+// Unit Tests: MinHash Implementation (minhash package)
+//
+// High-level overview of what's being tested:
+// - MinHash instance creation with default and custom configurations
+// - Text tokenization (word extraction with punctuation handling)
+// - Shingle extraction (n-gram generation from tokens)
+// - Signature generation from text content
+// - Signature determinism (same input produces same signature)
+// - Similarity calculation between signatures
+// - Similarity detection with real template YAML content
+// - Hash function behavior with different seeds
+// - Edge cases: empty text, short text, duplicate shingles
+// - Case normalization in text processing
+// - Performance benchmarks for signature generation and similarity
+// - YAML template similarity scenarios (Ubuntu vs Alpine examples)
+
 package minhash
 
 import (

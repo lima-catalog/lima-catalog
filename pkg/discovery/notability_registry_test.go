@@ -1,3 +1,16 @@
+// Unit Tests: Notability Score Registry (discovery package)
+//
+// High-level overview of what's being tested:
+// - Score component registry completeness and structure
+// - Unique key validation across all components
+// - Component metadata (display names, descriptions)
+// - Getting list of score component keys in order
+// - Converting score breakdown to map representation
+// - Validating breakdown completeness against registry
+// - Total score calculation from component sum
+// - All components included in breakdown (message, provision, parameters, etc.)
+// - Registry-driven score component iteration
+
 package discovery
 
 import (
