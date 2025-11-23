@@ -112,7 +112,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: npx playwright test
+        run: |
+          mkdir -p test-results
+          npx playwright test 2>&1 | tee test-results/test-output.txt
         env:
           TMPDIR: ${{ runner.temp }}
 
@@ -123,4 +125,5 @@ jobs:
           name: playwright-report
           path: test-results/
           retention-days: 7
-        # Includes: traces, screenshots, videos, and webserver.log for debugging
+        # Includes: test-output.txt (console output), results.json (structured test data),
+        # traces, screenshots, videos, and webserver.log for debugging
