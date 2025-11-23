@@ -1,5 +1,6 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test } = require('./fixtures');
+const { expect } = require('@playwright/test');
 
 test.describe('Template Preview Modal', () => {
   test.beforeEach(async ({ page }) => {
@@ -15,7 +16,7 @@ test.describe('Template Preview Modal', () => {
     // Navigate to the catalog
     await page.goto('/');
 
-    // Wait for templates to load
+    // Wait for initial templates to load
     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
   });
 

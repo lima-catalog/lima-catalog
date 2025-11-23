@@ -1,12 +1,13 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test } = require('./fixtures');
+const { expect } = require('@playwright/test');
 
 test.describe('Category and Keyword Filtering', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the catalog
     await page.goto('/');
 
-    // Wait for templates to load
+    // Wait for initial templates to load
     await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
   });
 

@@ -422,6 +422,68 @@ function scrollToTemplate(card) { ... }
 
 ---
 
+### Phase 6: E2E Test Data Management 📋 PLANNED
+**Timeline:** TBD | **Priority:** MEDIUM (Enables comprehensive modal testing)
+
+#### 6.1 Create Test Data Fixture System
+**Goal:** Extract and freeze a meaningful subset of catalog data for reliable E2E testing
+
+**Current Issue:**
+- E2E tests intercept GitHub requests for `catalog.jsonl` successfully
+- Modal tests that load individual template YAML files fail (requests aborted to prevent hanging)
+- Cannot test modal content loading functionality without template data
+
+**Proposed Solution:**
+Create a test fixture system that:
+1. Extracts a representative subset of templates from the data branch
+2. Includes actual YAML files for those templates
+3. Automatically updates when data schema changes
+4. Serves these fixtures during E2E tests
+
+#### 6.2 Implementation Tasks
+- [ ] **Create extraction tool** (`scripts/create-test-fixtures.js`)
+  - Analyze current catalog.jsonl from data branch
+  - Select diverse template samples (official/community, different categories)
+  - Extract ~5-10 representative templates with their YAML files
+  - Store in `tests/e2e/fixtures/` directory
+
+- [ ] **Define fixture selection criteria**
+  - Include templates from different sources (lima-vm/lima, community repos)
+  - Cover different template types (Linux, macOS, specialized)
+  - Include edge cases (long descriptions, special characters, etc.)
+  - Keep total fixture size reasonable (<100KB)
+
+- [ ] **Update test fixture routing**
+  - Modify `tests/e2e/fixtures.js` to serve local YAML files
+  - Map template URLs to local fixture files
+  - Handle missing templates gracefully (return 404 or mock data)
+
+- [ ] **Create schema validation**
+  - Add validation to detect catalog schema changes
+  - Warn when fixtures need regeneration
+  - Document fixture update process
+
+- [ ] **Re-enable modal content tests**
+  - Un-skip or fix the 1 failing modal test
+  - Add additional modal content tests with known fixture data
+  - Test YAML parsing, syntax highlighting, error handling
+
+#### 6.3 Maintenance Strategy
+- Run extraction tool when catalog schema changes
+- Include fixture generation in CI/CD pipeline (optional)
+- Document which templates are included and why
+- Keep fixtures in sync with production data structure
+
+**Phase 6 Benefits:**
+- Enables comprehensive modal testing without external dependencies
+- Provides stable, predictable test data
+- Reduces test flakiness from network issues
+- Documents expected data format through examples
+
+**Phase 6 Total:** ~4-6 hours, fixture infrastructure + 1 test fix, **complete E2E coverage**
+
+---
+
 ## Alternative Approaches
 
 ### Option A: Incremental (Recommended)
