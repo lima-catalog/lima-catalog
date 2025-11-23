@@ -773,6 +773,14 @@ function populateSimilarTemplates(template) {
         similarTitle.textContent = `Similar Templates (${sortedSimilarTemplates.length})`;
     }
 
+    // Hide scrollbar if 4 or fewer items (nothing to scroll)
+    // Max height shows 4 items, so only need scrollbar for 5+
+    if (sortedSimilarTemplates.length <= 4) {
+        similarList.classList.add('no-scroll');
+    } else {
+        similarList.classList.remove('no-scroll');
+    }
+
     sortedSimilarTemplates.forEach((similar, index) => {
         const similarTemplate = templateMap.get(similar.id);
         const similarityPercent = Math.round(similar.similarity * 100);

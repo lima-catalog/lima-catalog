@@ -1209,6 +1209,11 @@ footer a:hover {
     background: transparent;
 }
 
+/* Hide scrollbar when there are 4 or fewer items (no overflow) */
+.similar-templates-list.no-scroll {
+    overflow-y: hidden;
+}
+
 .similar-template-item {
     display: flex;
     align-items: center;
