@@ -5,7 +5,7 @@
 import { isDebugMode } from './state.js';
 import * as State from './state.js';
 import { updateSidebarOnly } from './appActions.js';
-import { updateURLForTemplateSelection } from './modal.js';
+import { updateURLForTemplateSelection, getTemplateFromURL } from './modal.js';
 
 /**
  * Escape HTML to prevent XSS
@@ -292,9 +292,12 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
 
         ${template.keywords && template.keywords.length > 0 ? `
             <div class="template-keywords">
-                ${template.keywords.slice(0, 6).map(kw =>
-                    `<span class="keyword">${escapeHtml(kw)}</span>`
-                ).join('')}
+                ${template.keywords.slice(0, 6).map(kw => {
+                    const selectedTemplateId = getTemplateFromURL();
+                    const isHighlighted = selectedTemplateId === template.id;
+                    const highlightClass = isHighlighted ? ' keyword-highlighted' : '';
+                    return `<span class="keyword${highlightClass}">${escapeHtml(kw)}</span>`;
+                }).join('')}
             </div>
         ` : ''}
 

@@ -4,6 +4,7 @@
 
 import { escapeHtml, formatCategoryName } from './templateCard.js';
 import { getKeywordCounts, getCategoryCounts, getDynamicKeywords } from './filters.js';
+import { getTemplateFromURL } from './modal.js';
 import * as State from './state.js';
 
 /**
@@ -40,9 +41,20 @@ export function renderKeywordCloud(filteredTemplates, selectedKeywords, cloudEle
         return;
     }
 
+    // Get selected template's keywords for highlighting
+    const selectedTemplateId = getTemplateFromURL();
+    let selectedTemplateKeywords = new Set();
+    if (selectedTemplateId) {
+        const selectedTemplate = allTemplates.find(t => t.id === selectedTemplateId);
+        if (selectedTemplate && selectedTemplate.keywords) {
+            selectedTemplateKeywords = new Set(selectedTemplate.keywords);
+        }
+    }
+
     cloudElement.innerHTML = allKeywords.map(([keyword, count, isDynamic]) => {
         const dynamicClass = isDynamic ? ' keyword-tag-dynamic' : '';
-        return `<div class="keyword-tag${dynamicClass}" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
+        const highlightClass = selectedTemplateKeywords.has(keyword) ? ' keyword-tag-highlighted' : '';
+        return `<div class="keyword-tag${dynamicClass}${highlightClass}" data-keyword="${escapeHtml(keyword)}" tabindex="0" role="button" aria-label="Filter by keyword: ${escapeHtml(keyword)}">
             <span>${escapeHtml(keyword)}</span>
             <span class="keyword-count">${count}</span>
         </div>`;

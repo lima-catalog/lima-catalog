@@ -200,7 +200,7 @@ function buildUnifiedDiff(originalLines, newLines, lcs, originalName, newName) {
  * Get template ID from URL parameters
  * @returns {string|null} Template ID if present in URL
  */
-function getTemplateFromURL() {
+export function getTemplateFromURL() {
     const params = new URLSearchParams(window.location.search);
     return params.get('template');
 }
