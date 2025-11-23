@@ -2,6 +2,18 @@
 const { test } = require('./fixtures');
 const { expect } = require('@playwright/test');
 
+/**
+ * E2E Tests: Category and Keyword Filtering
+ *
+ * High-level overview of what's being tested:
+ * - Category list display and selection (single category at a time)
+ * - Keyword cloud display and multi-keyword selection (AND logic)
+ * - Combining category and keyword filters together
+ * - URL parameter handling for preserving filter state (category=X, keywords=Y,Z)
+ * - Filter interactions (toggling, clearing, counts updating dynamically)
+ * - UI state management (active states, visible counts, clear buttons)
+ */
+
 test.describe('Category and Keyword Filtering', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the catalog

@@ -2,6 +2,20 @@
 const { test } = require('./fixtures');
 const { expect } = require('@playwright/test');
 
+/**
+ * E2E Tests: Template Search and Filtering
+ *
+ * High-level overview of what's being tested:
+ * - Initial template loading and display
+ * - Text search with debouncing and case-insensitive matching
+ * - Official/Community checkbox filters (can combine with search)
+ * - Sort options (name, updated, stars/popularity) that maintain filter state
+ * - URL parameter handling for search persistence (search=X)
+ * - Template count updates (total vs visible count)
+ * - Edge cases: special characters, empty results, multi-word queries
+ * - Filter combinations and state preservation across sort changes
+ */
+
 test.describe('Template Search and Filtering', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the catalog
