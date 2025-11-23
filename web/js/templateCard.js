@@ -307,10 +307,7 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
         ${template.keywords && template.keywords.length > 0 ? `
             <div class="template-keywords">
                 ${template.keywords.slice(0, 6).map(kw => {
-                    const selectedTemplateId = getTemplateFromURL();
-                    const isHighlighted = selectedTemplateId === template.id;
-                    const highlightClass = isHighlighted ? ' keyword-highlighted' : '';
-                    return `<span class="keyword${highlightClass}">${escapeHtml(kw)}</span>`;
+                    return `<span class="keyword">${escapeHtml(kw)}</span>`;
                 }).join('')}
             </div>
         ` : ''}
@@ -502,12 +499,42 @@ export function createTemplateCard(template, onCardClick, sortBy = 'name') {
     card.addEventListener('focus', () => {
         console.log('[templateCard] Setting focused template:', template.id);
         State.setFocusedTemplate(template);
-        updateSidebarOnly();
         // Update URL to reflect selected template (for sharing/deep linking)
         updateURLForTemplateSelection(template.id);
+        // Update keyword highlighting on all cards to reflect new selection
+        updateCardKeywordHighlighting();
+        // Update sidebar to show selected keywords and dynamic keywords
+        updateSidebarOnly();
     });
 
     return card;
+}
+
+/**
+ * Update keyword highlighting on all existing cards based on current URL selection
+ * This is called when selection changes without re-rendering the entire grid
+ */
+export function updateCardKeywordHighlighting() {
+    const selectedTemplateId = getTemplateFromURL();
+
+    // Find all template cards in the DOM
+    const allCards = document.querySelectorAll('.template-card');
+
+    allCards.forEach(card => {
+        const cardTemplateId = card.getAttribute('data-template-id');
+        const keywordElements = card.querySelectorAll('.keyword');
+
+        // Add or remove highlighting class based on whether this card is selected
+        const shouldHighlight = cardTemplateId === selectedTemplateId;
+
+        keywordElements.forEach(keyword => {
+            if (shouldHighlight) {
+                keyword.classList.add('keyword-highlighted');
+            } else {
+                keyword.classList.remove('keyword-highlighted');
+            }
+        });
+    });
 }
 
 /**
@@ -532,4 +559,7 @@ export function renderTemplateGrid(templates, gridElement, onCardClick, sortBy =
         const card = createTemplateCard(template, onCardClick, sortBy);
         gridElement.appendChild(card);
     });
+
+    // Apply keyword highlighting based on current URL selection
+    updateCardKeywordHighlighting();
 }
