@@ -102,6 +102,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Fetch catalog data for tests
+        run: |
+          curl -L -o web/catalog.jsonl https://raw.githubusercontent.com/lima-catalog/lima-catalog/data/data/catalog.jsonl
+
       - name: Run E2E tests
         run: npx playwright test
         env:
