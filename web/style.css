@@ -1169,10 +1169,6 @@ footer a:hover {
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     background: var(--bg-secondary);
-    /* Force scrollbar to always be visible */
-    scrollbar-gutter: stable;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-    scrollbar-width: thin;
 }
 
 .similar-templates-list:focus {
