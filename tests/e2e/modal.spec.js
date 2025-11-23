@@ -400,6 +400,10 @@ test.describe('Template Preview Modal', () => {
     await page.locator('#templates-grid .template-card .template-name').first().click();
     await expect(page.locator('#preview-modal')).toBeVisible();
 
+    // Wait for focus trap to be set up (happens after 100ms timeout in modal.js)
+    // by waiting for a focusable element to be focused
+    await page.waitForTimeout(150);
+
     // Tab through modal elements
     await page.keyboard.press('Tab');
     await page.waitForTimeout(50);

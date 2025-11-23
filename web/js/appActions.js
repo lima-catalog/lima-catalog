@@ -29,8 +29,34 @@ export function updateSidebarOnly() {
     const selectedCategory = State.getSelectedCategory();
     const filteredTemplates = State.getFilteredTemplates();
 
+    // Get filter values from UI
+    const searchTerm = document.getElementById('search').value;
+    const showOfficial = document.getElementById('show-official').checked;
+    const showCommunity = document.getElementById('show-community').checked;
+    const showDuplicates = document.getElementById('show-duplicates').checked;
+    const showSimilars = document.getElementById('show-similars').checked;
+
+    // Determine type filter based on checkboxes
+    let typeFilter = '';
+    if (showOfficial && !showCommunity) {
+        typeFilter = 'official';
+    } else if (!showOfficial && showCommunity) {
+        typeFilter = 'community';
+    }
+
+    // Apply filters WITHOUT category for category list
+    let filteredForCategories = applyFilters(templates, {
+        searchTerm,
+        typeFilter,
+        selectedCategory: null,
+        selectedKeywords,
+        showDuplicates,
+        showSimilars
+    });
+
     updateSidebar({
         filteredTemplates,
+        filteredTemplatesForCategories: filteredForCategories,
         selectedKeywords,
         selectedCategory
     }, handleKeywordToggle, handleCategoryToggle, {});
@@ -103,11 +129,21 @@ export function filterAndRender(options = {}) {
     }
     // If both or neither checked, typeFilter remains '' (show all)
 
-    // Apply filters
+    // Apply filters WITH category for main template grid
     let filtered = applyFilters(templates, {
         searchTerm,
         typeFilter,
         selectedCategory,
+        selectedKeywords,
+        showDuplicates,
+        showSimilars
+    });
+
+    // Apply filters WITHOUT category for category list (so users can switch categories)
+    let filteredForCategories = applyFilters(templates, {
+        searchTerm,
+        typeFilter,
+        selectedCategory: null, // Don't filter by category
         selectedKeywords,
         showDuplicates,
         showSimilars
@@ -139,6 +175,7 @@ export function filterAndRender(options = {}) {
     updateStats();
     updateSidebar({
         filteredTemplates: filtered,
+        filteredTemplatesForCategories: filteredForCategories,
         selectedKeywords,
         selectedCategory
     }, handleKeywordToggle, handleCategoryToggle, options);

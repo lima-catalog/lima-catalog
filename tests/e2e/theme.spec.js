@@ -34,9 +34,10 @@ test.describe('Theme Switching and Persistence', () => {
     await page.goto('/');
     await page.waitForTimeout(100);
 
-    // Verify light theme is applied
+    // Verify light theme is applied (no data-theme attribute for light)
     const html = page.locator('html');
-    await expect(html).toHaveAttribute('data-theme', 'light');
+    const theme = await html.getAttribute('data-theme');
+    expect(theme).toBeNull();
   });
 
   test('switches from light to dark theme', async ({ page }) => {
@@ -48,9 +49,10 @@ test.describe('Theme Switching and Persistence', () => {
     await page.click('.theme-option[data-theme="light"]');
     await page.waitForTimeout(100);
 
-    // Verify light theme is active
+    // Verify light theme is active (no data-theme attribute for light)
     const html = page.locator('html');
-    await expect(html).toHaveAttribute('data-theme', 'light');
+    let theme = await html.getAttribute('data-theme');
+    expect(theme).toBeNull();
 
     // Click dark theme button
     await page.click('.theme-option[data-theme="dark"]');
@@ -77,8 +79,9 @@ test.describe('Theme Switching and Persistence', () => {
     await page.click('.theme-option[data-theme="light"]');
     await page.waitForTimeout(100);
 
-    // Verify switched to light mode
-    await expect(html).toHaveAttribute('data-theme', 'light');
+    // Verify switched to light mode (no data-theme attribute for light)
+    const theme = await html.getAttribute('data-theme');
+    expect(theme).toBeNull();
   });
 
   test('persists theme selection in localStorage', async ({ page }) => {
@@ -89,15 +92,15 @@ test.describe('Theme Switching and Persistence', () => {
     await page.click('.theme-option[data-theme="dark"]');
     await page.waitForTimeout(100);
 
-    // Verify localStorage has the theme saved
-    const savedTheme = await page.evaluate(() => localStorage.getItem('theme'));
+    // Verify localStorage has the theme saved (using correct key)
+    const savedTheme = await page.evaluate(() => localStorage.getItem('lima-catalog-theme'));
     expect(savedTheme).toBe('dark');
   });
 
   test('loads saved theme from localStorage on page load', async ({ page }) => {
-    // Set theme in localStorage
+    // Set theme in localStorage (using correct key)
     await page.goto('/');
-    await page.evaluate(() => localStorage.setItem('theme', 'dark'));
+    await page.evaluate(() => localStorage.setItem('lima-catalog-theme', 'dark'));
 
     // Reload page
     await page.reload();
@@ -109,10 +112,10 @@ test.describe('Theme Switching and Persistence', () => {
   });
 
   test('saved theme overrides system preference', async ({ page }) => {
-    // Set system to light, but save dark in localStorage
+    // Set system to light, but save dark in localStorage (using correct key)
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/');
-    await page.evaluate(() => localStorage.setItem('theme', 'dark'));
+    await page.evaluate(() => localStorage.setItem('lima-catalog-theme', 'dark'));
 
     // Reload page
     await page.reload();
