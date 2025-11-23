@@ -1,14 +1,13 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { waitForApp } = require('./wait-for-app');
 
 test.describe('Template Search and Filtering', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the catalog
     await page.goto('/');
 
-    // Wait for app to be fully initialized
-    await waitForApp(page);
+    // Wait for initial templates to load
+    await page.waitForSelector('#templates-grid .template-card', { timeout: 10000 });
   });
 
   test('loads and displays templates', async ({ page }) => {
