@@ -1,5 +1,20 @@
 # Create Pull Request
 
+**IMPORTANT: Use TodoWrite to track progress through ALL steps below.**
+
+Before starting, create a todo list with ALL of the following items:
+1. Gather information (fetch, status, log, diff)
+2. Check test coverage for code changes
+3. Verify test comment headers are up-to-date
+4. Run `make pr` (tests, lint, rebase)
+5. Push changes with `git push -f`
+6. Check if documentation needs updates
+7. Generate `gh pr create` command for user
+
+Mark each todo as `in_progress` when you start it and `completed` when done. Do NOT skip any steps.
+
+---
+
 Follow these steps exactly when creating a PR:
 
 ## 1. Gather Information
