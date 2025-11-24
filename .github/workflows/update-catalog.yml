@@ -69,7 +69,7 @@ jobs:
           ./lima-catalog 2>&1 | tee lima-catalog-output.txt
 
       - name: Upload tool output as artifact
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: lima-catalog-output
           path: lima-catalog-output.txt
