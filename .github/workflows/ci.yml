@@ -93,8 +93,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Run unit tests
-        run: make test-js
+      - name: Run unit tests with coverage
+        run: make test-js-coverage
 
   e2e:
     name: E2E Tests

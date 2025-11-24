@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Lima VM template catalog",
   "devDependencies": {
-    "@playwright/test": "^1.56.1"
+    "@playwright/test": "^1.56.1",
+    "c8": "^10.1.3"
   }
 }
