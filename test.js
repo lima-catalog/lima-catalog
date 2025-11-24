@@ -10,6 +10,7 @@ import { runner } from './web/js/test-framework.js';
 // Mimics browser behavior: textContent escapes <, >, & but not quotes
 global.document = {
     activeElement: null,
+    title: 'Lima Template Catalog',
     createElement: (tag) => {
         let _innerHTML = '';
         let _textContent = '';

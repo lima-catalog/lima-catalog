@@ -18,6 +18,28 @@ let isHandlingPopState = false; // Flag to prevent duplicate popstate handling
 let onYamlLoadedCallback = null; // Callback for when YAML content is loaded
 let isDebugMode = false; // Debug mode for showing template object as JSON
 
+// Page title management
+const ORIGINAL_TITLE = 'Lima Template Catalog';
+
+/**
+ * Update page title to show template ID
+ * @param {string} templateId - Template ID (org/repo/path)
+ */
+function updatePageTitle(templateId) {
+    if (templateId) {
+        document.title = `${templateId} - ${ORIGINAL_TITLE}`;
+    } else {
+        document.title = ORIGINAL_TITLE;
+    }
+}
+
+/**
+ * Restore original page title
+ */
+function restorePageTitle() {
+    document.title = ORIGINAL_TITLE;
+}
+
 /**
  * Get similarity badge HTML based on similarity percentage
  * Thresholds: 100% = exact/original, 90-99% = near, <90% = similar
@@ -347,6 +369,8 @@ export function updateURLForTemplateSelection(templateId) {
     const currentTemplateId = getTemplateFromURL();
     if (currentTemplateId !== templateId) {
         updateURLWithTemplate(templateId, false);
+        // Also update page title when navigating with keyboard
+        updatePageTitle(templateId);
     }
 }
 
@@ -433,6 +457,9 @@ export function openPreviewModal(template, preserveDebugMode = false) {
         updateURLWithTemplate(template.id, true);
     }
 
+    // Update page title to show template ID
+    updatePageTitle(template.id);
+
     // Fetch and display template content
     fetchTemplateContent(template);
 }
@@ -463,14 +490,20 @@ export function closePreviewModal() {
     // Focus the template card if there's a template in the URL
     const templateId = getTemplateFromURL();
     if (templateId) {
+        // Update page title to show template ID (modal closed but template selected)
+        updatePageTitle(templateId);
         // Use requestAnimationFrame to ensure modal is fully closed before focusing
         requestAnimationFrame(() => {
             focusTemplateCard(templateId);
         });
-    } else if (previouslyFocusedElement && previouslyFocusedElement.focus) {
-        // Otherwise restore focus to the element that opened the modal
-        previouslyFocusedElement.focus();
-        previouslyFocusedElement = null;
+    } else {
+        // No template in URL, restore original title
+        restorePageTitle();
+        if (previouslyFocusedElement && previouslyFocusedElement.focus) {
+            // Restore focus to the element that opened the modal
+            previouslyFocusedElement.focus();
+            previouslyFocusedElement = null;
+        }
     }
 }
 
@@ -1017,10 +1050,12 @@ export function openTemplateFromURL() {
 
         if (template) {
             if (shouldOpenModal) {
-                // Open modal if modal=open in URL
+                // Open modal if modal=open in URL (openPreviewModal will update title)
                 openPreviewModal(template);
             } else {
                 // Just set focus on the template card without opening modal
+                // Update page title to show template ID
+                updatePageTitle(templateId);
                 // Use requestAnimationFrame to ensure DOM is ready
                 requestAnimationFrame(() => {
                     focusTemplateCard(templateId);
@@ -1030,6 +1065,8 @@ export function openTemplateFromURL() {
             console.warn(`Template not found: ${templateId}`);
             // Clear invalid template from URL
             clearTemplateFromURL();
+            // Restore original title since template not found
+            restorePageTitle();
         }
     }
 }
@@ -1057,11 +1094,14 @@ async function handlePopState() {
             if (!currentTemplate || currentTemplate.id !== templateId) {
                 openTemplateFromURL();
             }
+            // Update title for modal open state (will be set by openPreviewModal)
         } else {
             // URL has template without modal=open - close modal if open, focus card
             if (currentTemplate) {
                 closePreviewModal();
             }
+            // Update page title to show template ID (modal closed but template selected)
+            updatePageTitle(templateId);
             // Focus the template card
             requestAnimationFrame(() => {
                 focusTemplateCard(templateId);
@@ -1072,6 +1112,8 @@ async function handlePopState() {
         if (currentTemplate) {
             closePreviewModal();
         }
+        // Restore original title
+        restorePageTitle();
     }
 
     // Reset flags after a short delay
