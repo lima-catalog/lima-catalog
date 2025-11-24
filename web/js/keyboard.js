@@ -793,6 +793,9 @@ function showKeyboardHelp(returnFocusToSearch = false, initialTab = 'help') {
                         Lima Catalog is a searchable directory of Lima VM templates from across GitHub.
                         It helps you discover and explore community-contributed templates for creating Linux virtual machines with Lima.
                     </p>
+                    <p style="margin-top: 1rem; padding: 0.75rem; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107; border-radius: 0.25rem; font-size: 0.875rem;">
+                        <strong>Note:</strong> This catalog is under construction. Template descriptions are not yet being generated, limiting the usefulness of the catalog data.
+                    </p>
                     <div class="warning-box" role="alert">
                         <h4>⚠️ Important Notice</h4>
                         <p>

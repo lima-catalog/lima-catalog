@@ -4,6 +4,8 @@ Discover and browse 700+ [Lima VM](https://lima-vm.io/) templates from across Gi
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lima-catalog/lima-catalog)
 
+> **⚠️ Under Construction:** This catalog is in early development. Template descriptions are not yet being generated, so the catalog data is currently limited in usefulness. The collection and categorization systems are functional, but detailed metadata extraction is still being implemented.
+
 ## 🌐 Browse the Catalog
 
 **[lima-catalog.github.io/lima-catalog](https://lima-catalog.github.io/lima-catalog/)**

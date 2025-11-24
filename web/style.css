@@ -301,6 +301,30 @@ header {
     color: var(--primary);
 }
 
+/* Construction Warning Banner */
+.construction-warning {
+    max-width: 1600px;
+    margin: 1.5rem auto;
+    padding: 1rem 1.5rem;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-left: 4px solid #ffc107;
+    border-radius: 0.375rem;
+    color: #856404;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+.construction-warning strong {
+    font-weight: 600;
+}
+
+:root[data-theme="dark"] .construction-warning {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: #ffc107;
+    color: rgba(255, 193, 7, 0.95);
+}
+
 /* Main Layout - Sidebar + Content */
 .main-layout {
     max-width: 1600px;
