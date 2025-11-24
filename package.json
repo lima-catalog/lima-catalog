@@ -4,12 +4,6 @@
   "private": true,
   "type": "module",
   "description": "Lima VM template catalog",
-  "scripts": {
-    "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "node web/run-tests.js",
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
-  },
   "devDependencies": {
     "@playwright/test": "^1.56.1"
   }

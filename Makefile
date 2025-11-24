@@ -17,13 +17,13 @@ test-go: ## Run Go unit tests
 	@echo "🧪 Running Go tests..."
 	@go test ./... -v
 
-test-js: ## Run JavaScript tests (requires Node.js)
-	@echo "🧪 Running JavaScript tests..."
+test-js: ## Run JavaScript unit tests (requires Node.js)
+	@echo "🧪 Running JavaScript unit tests..."
 	@if ! command -v node >/dev/null 2>&1; then \
 		echo "❌ Error: Node.js is not installed. Please install Node.js to run JavaScript tests."; \
 		exit 1; \
 	fi
-	@node test.js
+	@node web/run-tests.js
 
 test-e2e-setup: ## Install Playwright and browsers (idempotent)
 	@if ! command -v npm >/dev/null 2>&1; then \

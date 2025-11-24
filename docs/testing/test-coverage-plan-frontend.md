@@ -628,22 +628,22 @@ During the 2025-11-24 review, a critical gap was discovered:
 - [x] Outputs TAP-compatible results for CI parsing
 - [x] Returns proper exit codes (0 = pass, 1 = fail)
 
-##### Added NPM Scripts
-- [x] Added `test:unit` script to `package.json`
-- [x] Tests can now run via `npm run test:unit`
+##### Updated Makefile
+- [x] Updated `make test-js` target to run `web/run-tests.js`
+- [x] Tests run via `make test-js` (consistent with other make targets)
 
 ##### Updated CI Workflow
 - [x] Added `unit-tests` job to `.github/workflows/ci.yml`
 - [x] Runs on Node.js 22 (matches E2E job)
-- [x] Executes after lint job, before E2E tests
+- [x] Uses `make test-js` for consistency
 - [x] Fails the build if any unit test fails
 
 #### 7.3 Benefits
 
 1. **Regression Prevention:** 226 tests now run on every PR
 2. **Fast Feedback:** Unit tests complete in seconds vs minutes for E2E
-3. **Consistency:** All tests (Go, JS unit, E2E) now run in CI
-4. **Developer Experience:** `npm run test:unit` for local testing
+3. **Consistency:** All tests (Go, JS unit, E2E) run via make in CI
+4. **Developer Experience:** `make test-js` or `make test` for local testing
 
 **Phase 7 Total:** ~2 hours, CI integration complete
 
