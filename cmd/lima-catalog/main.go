@@ -9,12 +9,13 @@
 //
 // Environment Variables:
 //
-//	GITHUB_TOKEN     - GitHub API token (required)
-//	DATA_DIR         - Output directory for data files (default: ./data)
-//	INCREMENTAL      - Enable incremental updates (only fetch new/changed templates)
-//	ANALYZE          - Enable template analysis phase
-//	FORCE_ANALYZE    - Force re-analysis of all templates
-//	LIMA_REPO_PATH   - Path to lima-vm/lima repo for official knowledge extraction
+//	GITHUB_TOKEN          - GitHub API token (required)
+//	DATA_DIR              - Output directory for data files (default: ./data)
+//	INCREMENTAL           - Enable incremental updates (only fetch new/changed templates)
+//	ANALYZE               - Enable template analysis phase
+//	FORCE_ANALYZE         - Force re-analysis of all templates
+//	FORCE_FULL_DISCOVERY  - Force complete re-discovery of all templates (bypasses all incremental logic)
+//	LIMA_REPO_PATH        - Path to lima-vm/lima repo for official knowledge extraction
 //
 // Phases:
 //
@@ -75,11 +76,12 @@ func main() {
 
 // appConfig holds environment configuration
 type appConfig struct {
-	token        string
-	dataDir      string
-	incremental  bool
-	analyze      bool
-	forceAnalyze bool
+	token             string
+	dataDir           string
+	incremental       bool
+	analyze           bool
+	forceAnalyze      bool
+	forceFullDiscovery bool
 }
 
 // setupEnvironment reads and validates environment variables
@@ -94,12 +96,15 @@ func setupEnvironment() (*appConfig, error) {
 		dataDir = "./data"
 	}
 
+	forceFullDiscovery := os.Getenv("FORCE_FULL_DISCOVERY") != ""
+
 	cfg := &appConfig{
-		token:        token,
-		dataDir:      dataDir,
-		incremental:  os.Getenv("INCREMENTAL") != "",
-		analyze:      os.Getenv("ANALYZE") != "",
-		forceAnalyze: os.Getenv("FORCE_ANALYZE") != "",
+		token:             token,
+		dataDir:           dataDir,
+		incremental:       os.Getenv("INCREMENTAL") != "" && !forceFullDiscovery, // Force full discovery overrides incremental
+		analyze:           os.Getenv("ANALYZE") != "",
+		forceAnalyze:      os.Getenv("FORCE_ANALYZE") != "",
+		forceFullDiscovery: forceFullDiscovery,
 	}
 
 	return cfg, nil
@@ -113,6 +118,9 @@ func printConfig(cfg *appConfig) {
 	fmt.Println()
 	fmt.Printf("Data directory: %s\n", cfg.dataDir)
 	fmt.Printf("Incremental mode: %v\n", cfg.incremental)
+	if cfg.forceFullDiscovery {
+		fmt.Printf("Force full discovery: %v (will RE-DISCOVER ALL templates from scratch)\n", cfg.forceFullDiscovery)
+	}
 	fmt.Printf("Analysis mode: %v\n", cfg.analyze)
 	if cfg.forceAnalyze {
 		fmt.Printf("Force re-analyze: %v (will re-analyze ALL templates)\n", cfg.forceAnalyze)
@@ -448,13 +456,14 @@ func runMetadataPhase(ctx context.Context, client *github.Client, store *storage
 }
 
 // runDiscoveryPhase discovers templates (either full or incremental)
-func runDiscoveryPhase(ctx context.Context, client *github.Client, store *storage.Storage, progress *types.Progress, incremental bool) ([]types.Template, discovery.UpdateResult, error) {
+func runDiscoveryPhase(ctx context.Context, client *github.Client, store *storage.Storage, progress *types.Progress, incremental bool, forceFullDiscovery bool) ([]types.Template, discovery.UpdateResult, error) {
 	var templates []types.Template
 	var updateResult discovery.UpdateResult
 
 	// In incremental mode, always check for new/updated templates
 	// In non-incremental mode, only run if phase is "discovery"
-	shouldDiscover := incremental || progress.Phase == "discovery"
+	// Force full discovery overrides everything and always runs discovery
+	shouldDiscover := incremental || progress.Phase == "discovery" || forceFullDiscovery
 
 	if shouldDiscover {
 		fmt.Printf("=== Phase 1: Template Discovery === [%s]\n", time.Now().Format("15:04:05"))
@@ -597,7 +606,7 @@ func run() error {
 	}
 
 	// Phase 1: Discovery
-	templates, updateResult, err := runDiscoveryPhase(ctx, client, store, progress, cfg.incremental)
+	templates, updateResult, err := runDiscoveryPhase(ctx, client, store, progress, cfg.incremental, cfg.forceFullDiscovery)
 	if err != nil {
 		return err
 	}

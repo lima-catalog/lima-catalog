@@ -11,6 +11,11 @@ on:
         required: false
         type: boolean
         default: false
+      force_full_discovery:
+        description: 'Force FULL re-discovery of ALL templates (fixes missing templates)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -49,9 +54,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CATALOG_TOKEN }}
           DATA_DIR: ./catalog-data
-          INCREMENTAL: "true"
+          INCREMENTAL: ${{ inputs.force_full_discovery == true && '' || 'true' }}
           ANALYZE: "true"
           FORCE_ANALYZE: ${{ inputs.force_analyze == true && 'true' || '' }}
+          FORCE_FULL_DISCOVERY: ${{ inputs.force_full_discovery == true && 'true' || '' }}
           LIMA_REPO_PATH: ./lima-repo
           LIMA_TEMPLATES_PATH: ./lima-repo/templates
         run: |
