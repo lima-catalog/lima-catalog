@@ -369,6 +369,8 @@ export function updateURLForTemplateSelection(templateId) {
     const currentTemplateId = getTemplateFromURL();
     if (currentTemplateId !== templateId) {
         updateURLWithTemplate(templateId, false);
+        // Also update page title when navigating with keyboard
+        updatePageTitle(templateId);
     }
 }
 
