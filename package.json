@@ -2,8 +2,11 @@
   "name": "lima-catalog",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Lima VM template catalog",
   "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node web/run-tests.js",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed"
   },
