@@ -154,11 +154,10 @@ func TestNewDiscoverer(t *testing.T) {
 // The tests below cover what we CAN test:
 // 1. ✅ FindNewestTemplateTimestamp - Pure function, fully tested above
 // 2. ✅ NewDiscoverer - Constructor, fully tested above
-// 3. ⚠️ isLimaTemplate - Requires GitHub API client (not easily mockable)
-// 4. ⚠️ searchWithQuery - Requires GitHub API client
-// 5. ⚠️ DiscoverCommunityTemplates - Requires GitHub API client
-// 6. ⚠️ DiscoverOfficialTemplates - Requires GitHub API client
-// 7. ⚠️ DiscoverAll - Requires GitHub API client
+// 3. ⚠️ searchWithQuery - Requires GitHub API client (not easily mockable)
+// 4. ⚠️ DiscoverCommunityTemplates - Requires GitHub API client
+// 5. ⚠️ DiscoverOfficialTemplates - Requires GitHub API client
+// 6. ⚠️ DiscoverAll - Requires GitHub API client
 //
 // Current test coverage: ~49.6% (primarily from analyzer, parser, and other helper functions)
 //

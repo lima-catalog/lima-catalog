@@ -10,8 +10,9 @@
 // Discovery Process:
 //
 // Templates are discovered through GitHub Code Search using multiple query strategies.
-// The discoverer validates templates by checking for the "images:" key and applies
-// blocklist filtering to exclude unwanted templates (CI configs, test files, etc.).
+// The discoverer applies blocklist filtering to exclude unwanted templates (CI configs,
+// test files, etc.). Validation of template content (e.g., checking for required "images:"
+// key) is deferred to the analysis phase to avoid fetching each file twice.
 //
 // Analysis Process:
 //
@@ -72,34 +73,9 @@ func FindNewestTemplateTimestamp(templates []types.Template) time.Time {
 	return newest
 }
 
-// isLimaTemplate checks if a file is a valid Lima template by checking for the required "images:" top-level key
-func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
-	content, err := d.client.GetRepositoryContent(owner, repo, path)
-	if err != nil {
-		return false // If we can't fetch it, exclude it
-	}
-
-	// Decode the content (it's base64 encoded)
-	contentStr, err := content.GetContent()
-	if err != nil {
-		return false
-	}
-
-	// Check for "images:" as a top-level YAML key (at the start of a line)
-	lines := strings.Split(contentStr, "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "images:") {
-			return true
-		}
-	}
-
-	return false
-}
-
 // searchWithQuery performs a GitHub code search with pagination
 func (d *Discoverer) searchWithQuery(ctx context.Context, query string) ([]types.Template, error) {
 	var templates []types.Template
-	excludedCount := 0
 	blocklistedCount := 0
 
 	page := 1
@@ -144,11 +120,9 @@ func (d *Discoverer) searchWithQuery(ctx context.Context, query string) ([]types
 				continue
 			}
 
-			// Check if this is actually a Lima template by verifying it has "images:" key
-			if !d.isLimaTemplate(owner, repo, path) {
-				excludedCount++
-				continue
-			}
+			// Note: We don't check for "images:" key here anymore. Files without it
+			// will fail Lima validation during the analysis phase. This avoids
+			// fetching each file twice (once here and once during analysis).
 
 			template := types.Template{
 				ID:           fmt.Sprintf("%s/%s", repoFullName, path),
@@ -177,9 +151,6 @@ func (d *Discoverer) searchWithQuery(ctx context.Context, query string) ([]types
 
 	if blocklistedCount > 0 {
 		fmt.Printf("  Blocklisted %d files (matched blocklist rules)\n", blocklistedCount)
-	}
-	if excludedCount > 0 {
-		fmt.Printf("  Excluded %d files that don't have 'images:' top-level key\n", excludedCount)
 	}
 
 	return templates, nil
