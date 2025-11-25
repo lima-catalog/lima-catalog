@@ -48,7 +48,7 @@ Last Updated: 2025-11-22
   - Added comprehensive FindNewestTemplateTimestamp tests (empty, single, multiple, zero times, large lists)
   - Added NewDiscoverer tests (nil blocklist, with blocklist)
   - Added DiscoverAll context cancellation test
-  - Main discovery functions (isLimaTemplate, searchWithQuery, DiscoverCommunityTemplates, DiscoverOfficialTemplates) blocked by architecture
+  - Main discovery functions (searchWithQuery, DiscoverCommunityTemplates, DiscoverOfficialTemplates) blocked by architecture
   - Added extensive documentation explaining testing limitations (see pkg/discovery/discovery_test.go lines 134-162)
 
 **Overall Impact:** +3.8 percentage points (45.9% → 49.7%)
@@ -119,7 +119,6 @@ This is a significant architectural change beyond quick wins.
 #### Test Coverage Status
 - [x] `NewDiscoverer` - Constructor ✅
 - [x] `FindNewestTemplateTimestamp` - Utility function ✅
-- [ ] `isLimaTemplate` - Template validation logic (architecture limitation - requires GitHub API)
 - [ ] `searchWithQuery` - GitHub search with pagination (architecture limitation - requires GitHub API)
 - [ ] `DiscoverCommunityTemplates` - Community template discovery (architecture limitation - requires GitHub API)
 - [ ] `DiscoverOfficialTemplates` - Official template discovery (architecture limitation - requires GitHub API)
@@ -136,7 +135,7 @@ This is a significant architectural change beyond quick wins.
 - [x] Test DiscoverAll handles context cancellation
 
 #### Remaining Work
-Functions like `isLimaTemplate`, `searchWithQuery`, `DiscoverCommunityTemplates`, and `DiscoverOfficialTemplates` use a concrete `*github.Client` type rather than an interface. To achieve 80%+ coverage would require:
+Functions like `searchWithQuery`, `DiscoverCommunityTemplates`, and `DiscoverOfficialTemplates` use a concrete `*github.Client` type rather than an interface. To achieve 80%+ coverage would require:
 - Refactoring to use interface-based dependency injection (e.g., `GitHubClient` interface)
 - Or integration tests with actual GitHub API (slow, requires token, flaky)
 
