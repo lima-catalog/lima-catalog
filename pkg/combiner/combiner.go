@@ -47,24 +47,25 @@ import (
 
 // CombinedTemplate represents the optimized template data for the frontend
 type CombinedTemplate struct {
-	ID                       string                                 `json:"id"`
-	Name                     string                                 `json:"name"`
-	Description              string                                 `json:"description"`
-	Keywords                 []string                               `json:"keywords"`
-	Category                 string                                 `json:"category"`
-	Repo                     string                                 `json:"repo"`
-	Org                      string                                 `json:"org"`
-	Path                     string                                 `json:"path"`
-	Stars                    int                                    `json:"stars"`
-	UpdatedAt                string                                 `json:"updated_at"`
-	Official                 bool                                   `json:"official"`
-	GithubURL                string                                 `json:"github_url"`  // github: scheme URL
-	RawURL                   string                                 `json:"raw_url"`     // https: raw.githubusercontent.com URL
-	NotabilityScore          float64                                `json:"notability_score"`           // Weighted score for sorting by "interestingness"
-	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown    `json:"notability_score_breakdown,omitempty"` // Debug: score components
-	NotabilityScoreRanks     map[string]int                         `json:"notability_score_ranks,omitempty"`     // Rank for each component (1-based, with ties)
-	SimilarTemplates         []types.SimilarTemplate                `json:"similar_templates,omitempty"` // Similar/duplicate templates detected by MinHash+LSH
-	OriginalID               string                                 `json:"original_id,omitempty"`      // If this is a copy, the ID of the original template
+	ID                       string                              `json:"id"`
+	Name                     string                              `json:"name"`
+	Description              string                              `json:"description"`
+	Keywords                 []string                            `json:"keywords"`
+	Category                 string                              `json:"category"`
+	Repo                     string                              `json:"repo"`
+	Org                      string                              `json:"org"`
+	Path                     string                              `json:"path"`
+	Stars                    int                                 `json:"stars"`
+	UpdatedAt                string                              `json:"updated_at"`
+	Official                 bool                                `json:"official"`
+	GithubURL                string                              `json:"github_url"`                           // github: scheme URL
+	RawURL                   string                              `json:"raw_url"`                              // https: raw.githubusercontent.com URL
+	NotabilityScore          float64                             `json:"notability_score"`                     // Weighted score for sorting by "interestingness"
+	NotabilityScoreBreakdown *discovery.NotabilityScoreBreakdown `json:"notability_score_breakdown,omitempty"` // Debug: score components
+	NotabilityScoreRanks     map[string]int                      `json:"notability_score_ranks,omitempty"`     // Rank for each component (1-based, with ties)
+	SimilarTemplates         []types.SimilarTemplate             `json:"similar_templates,omitempty"`          // Similar/duplicate templates detected by MinHash+LSH
+	OriginalID               string                              `json:"original_id,omitempty"`                // If this is a copy, the ID of the original template
+	ValidationWarnings       []string                            `json:"validation_warnings,omitempty"`        // Validation warnings (macOS-specific settings, deprecated syntax, etc.)
 }
 
 // Combiner combines templates with repo/org metadata for frontend consumption
@@ -245,24 +246,31 @@ func (c *Combiner) CombineData(ctx context.Context, templates []types.Template, 
 		}
 
 		// Create combined record
+		// Get validation warnings from notability metrics
+		var validationWarnings []string
+		if template.Notability != nil && len(template.Notability.ValidationWarningMsgs) > 0 {
+			validationWarnings = template.Notability.ValidationWarningMsgs
+		}
+
 		combined = append(combined, CombinedTemplate{
-			ID:                      template.ID,
-			Name:                    c.getDisplayName(template),
-			Description:             c.getDescription(template),
-			Keywords:                template.Keywords,
-			Category:                template.Category,
-			Repo:                    template.Repo,
-			Org:                     owner,
-			Path:                    template.Path,
-			Stars:                   repo.Stars,
-			UpdatedAt:               c.formatDate(repo.UpdatedAt),
-			Official:                template.IsOfficial,
-			GithubURL:               githubURL,
-			RawURL:                  rawURL,
-			NotabilityScore:         breakdown.Total,
+			ID:                       template.ID,
+			Name:                     c.getDisplayName(template),
+			Description:              c.getDescription(template),
+			Keywords:                 template.Keywords,
+			Category:                 template.Category,
+			Repo:                     template.Repo,
+			Org:                      owner,
+			Path:                     template.Path,
+			Stars:                    repo.Stars,
+			UpdatedAt:                c.formatDate(repo.UpdatedAt),
+			Official:                 template.IsOfficial,
+			GithubURL:                githubURL,
+			RawURL:                   rawURL,
+			NotabilityScore:          breakdown.Total,
 			NotabilityScoreBreakdown: &breakdown,
-			SimilarTemplates:        template.SimilarTemplates,
-			OriginalID:              template.OriginalID,
+			SimilarTemplates:         template.SimilarTemplates,
+			OriginalID:               template.OriginalID,
+			ValidationWarnings:       validationWarnings,
 		})
 	}
 
@@ -408,13 +416,13 @@ func (c *Combiner) formatDate(t time.Time) string {
 
 // ScoreStatistics holds statistical information for a score field
 type ScoreStatistics struct {
-	Name           string
-	Min            float64
-	Max            float64
-	Median         float64
-	Average        float64
-	StdDeviation   float64
-	ZeroPercent    float64
+	Name         string
+	Min          float64
+	Max          float64
+	Median       float64
+	Average      float64
+	StdDeviation float64
+	ZeroPercent  float64
 }
 
 // calculateScoreStatistics computes statistics for a slice of score values
