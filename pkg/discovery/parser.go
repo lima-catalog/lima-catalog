@@ -198,7 +198,8 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 
 	// Use Lima's validation to ensure the template is valid
 	ctx := context.Background()
-	y, err := limayaml.Load(ctx, []byte(content), "template.yaml")
+	// The third argument must be an absolute path
+	y, err := limayaml.Load(ctx, []byte(content), "/template.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load YAML: %w", err)
 	}
