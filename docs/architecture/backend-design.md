@@ -118,6 +118,8 @@ Weighted sum of metrics:
 
 **Goal**: Identify similar/duplicate templates to help users discover alternatives and understand template relationships.
 
+**Note**: This is **content-based similarity detection** using MinHash + LSH, which identifies templates with similar content across different repositories. This is different from the simple map-based deduplication during discovery (Stage 1), which only prevents processing the same search result twice when multiple queries return overlapping results. See [Data Pipeline - Search Result Deduplication](data-pipeline.md#search-result-deduplication) for details on the Stage 1 deduplication.
+
 ### Algorithm: MinHash + LSH
 
 - **MinHash**: Generates 128-hash signature from 5-word shingles (YAML content)

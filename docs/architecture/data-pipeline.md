@@ -34,6 +34,21 @@ Four queries to maximize template discovery:
 
 **Incremental mode**: Add `pushed:>DATE` qualifier to each query (uses last discovery timestamp)
 
+### Search Result Deduplication
+
+The four search queries often return overlapping results (the same template matching multiple queries). A simple map-based deduplication prevents adding the same template ID twice:
+
+```go
+templateMap := make(map[string]types.Template)
+for _, t := range templates {
+    if _, exists := templateMap[t.ID]; !exists {
+        templateMap[t.ID] = t
+    }
+}
+```
+
+**Important**: This is **not** content-based duplicate detection. It only prevents the same search result (same `owner/repo/path`) from being processed multiple times within a single discovery run. Content-based similarity detection (finding templates with similar content across different repositories) happens in Stage 3 using MinHash + LSH.
+
 ### Official Templates
 
 Separately enumerates `lima-vm/lima/templates/` directory to get official templates.
@@ -169,9 +184,11 @@ Uses Lima's native template parsing to properly handle:
 
 **Implementation**: `pkg/discovery/analyzer.go:inferCategory()`
 
-### Duplicate Detection
+### Duplicate Detection (Content-Based)
 
 **Algorithm**: MinHash + LSH
+
+This is **content-based similarity detection** that identifies templates with similar content across different repositories. This is distinct from the [search result deduplication](#search-result-deduplication) in Stage 1, which only prevents processing the same search result twice.
 
 1. Generate 128-hash MinHash signature from 5-word shingles
 2. Build LSH index (32 bands × 4 rows)
