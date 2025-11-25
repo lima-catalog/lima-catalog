@@ -6,9 +6,9 @@ Before starting, create a todo list with ALL of the following items:
 1. Gather information (fetch, status, log, diff)
 2. Check test coverage for code changes
 3. Verify test comment headers are up-to-date
-4. Run `make pr` (tests, lint, rebase)
-5. Push changes with `git push -f`
-6. Check if documentation needs updates
+4. Check if documentation needs updates
+5. Run `make pr` (tests, lint, rebase)
+6. Push changes with `git push -f`
 7. Generate `gh pr create` command for user
 
 Mark each todo as `in_progress` when you start it and `completed` when done. Do NOT skip any steps.
@@ -73,7 +73,16 @@ Example patterns:
 - Changed test behavior → Update description to match
 - New test file → Must have comprehensive overview comment
 
-## 3. Run Tests, Linting, and Rebase
+## 3. Check Documentation
+Review if any documentation needs updates based on the changes:
+- `docs/architecture/frontend-design.md` - for frontend changes
+- `docs/architecture/backend-design.md` - for backend changes
+- `docs/guides/ui-ux-guidelines.md` - for UI/UX changes
+- Other relevant docs in `docs/`
+
+If docs need updates, make the changes and commit before proceeding.
+
+## 4. Run Tests, Linting, and Rebase
 Run the automated PR preparation workflow:
 
 ```bash
@@ -94,21 +103,12 @@ This will:
 
 If tests fail or conflicts occur, fix them and commit before running `make pr` again.
 
-## 4. Push Changes
+## 5. Push Changes
 If `make pr` succeeded, push your rebased branch:
 
 ```bash
 git push -f
 ```
-
-## 5. Check Documentation
-Review if any documentation needs updates based on the changes:
-- `docs/architecture/frontend-design.md` - for frontend changes
-- `docs/architecture/backend-design.md` - for backend changes
-- `docs/guides/ui-ux-guidelines.md` - for UI/UX changes
-- Other relevant docs in `docs/`
-
-If docs need updates, make the changes, commit, and run `make pr` again.
 
 ## 6. Create PR Command
 Provide a copyable `gh pr create` command using HEREDOC format:
