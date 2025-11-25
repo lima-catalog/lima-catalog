@@ -68,9 +68,9 @@ Separately enumerates `lima-vm/lima/templates/` directory to get official templa
 
 ---
 
-## Stage 2: Content Validation
+## Stage 2: Blocklist Filtering
 
-**Goal**: Eliminate false positives from GitHub Code Search
+**Goal**: Eliminate obvious false positives from GitHub Code Search before analysis
 
 ### Why Needed?
 
@@ -81,33 +81,15 @@ GitHub Code Search returns files that match keywords but aren't Lima templates:
 
 **False positive rate**: ~31% without validation
 
-### Validation Logic
+### Validation Approach
 
-Downloads each file and checks for `images:` as a top-level YAML key:
+Validation is deferred to the analysis phase (Stage 3) where Lima's native YAML
+parser validates templates. This avoids fetching each file twice:
+- Discovery phase: Only applies blocklist filtering (no file content fetch)
+- Analysis phase: Fetches content and validates with `limayaml.Validate()`
 
-```go
-// Simplified pseudocode - actual implementation includes error handling
-func (d *Discoverer) isLimaTemplate(owner, repo, path string) bool {
-    content, err := d.client.GetRepositoryContent(owner, repo, path)
-    if err != nil {
-        return false
-    }
-
-    // Decode base64 content and check for "images:" line
-    contentStr, err := content.GetContent()
-    if err != nil {
-        return false
-    }
-
-    lines := strings.Split(contentStr, "\n")
-    for _, line := range lines {
-        if strings.HasPrefix(line, "images:") {
-            return true
-        }
-    }
-    return false
-}
-```
+Files without the required `images:` key fail Lima validation and are excluded
+during analysis.
 
 ### Blocklist Filtering
 
