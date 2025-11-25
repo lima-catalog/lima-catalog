@@ -13,8 +13,9 @@
 //	DATA_DIR              - Output directory for data files (default: ./data)
 //	INCREMENTAL           - Enable incremental updates (only fetch new/changed templates)
 //	ANALYZE               - Enable template analysis phase
-//	FORCE_ANALYZE         - Force re-analysis of all templates
-//	FORCE_FULL_DISCOVERY  - Force complete re-discovery of all templates (bypasses all incremental logic)
+//	FORCE_ANALYZE         - Force re-analysis of existing templates (for new metrics/algorithms)
+//	FORCE_FULL_DISCOVERY  - Force complete re-discovery of all templates (bypasses all incremental logic).
+//	                        Note: This implies full re-analysis since templates are treated as new.
 //	LIMA_REPO_PATH        - Path to lima-vm/lima repo for official knowledge extraction
 //
 // Phases:

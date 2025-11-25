@@ -7,12 +7,12 @@ on:
   workflow_dispatch: # Allow manual trigger
     inputs:
       force_analyze:
-        description: 'Force re-analysis of ALL templates (populates new metrics)'
+        description: 'Force re-analysis of ALL templates WITHOUT re-discovery (for new metrics/algorithms)'
         required: false
         type: boolean
         default: false
       force_full_discovery:
-        description: 'Force FULL re-discovery of ALL templates (fixes missing templates)'
+        description: 'Force FULL re-discovery AND re-analysis of ALL templates (fixes missing templates). Note: This automatically re-analyzes everything, so force_analyze is not needed.'
         required: false
         type: boolean
         default: false
@@ -54,9 +54,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CATALOG_TOKEN }}
           DATA_DIR: ./catalog-data
+          # When force_full_discovery is enabled, disable incremental mode to force complete re-discovery
           INCREMENTAL: ${{ inputs.force_full_discovery == true && '' || 'true' }}
           ANALYZE: "true"
           FORCE_ANALYZE: ${{ inputs.force_analyze == true && 'true' || '' }}
+          # Note: FORCE_FULL_DISCOVERY implies full re-analysis because templates are treated as new
           FORCE_FULL_DISCOVERY: ${{ inputs.force_full_discovery == true && 'true' || '' }}
           LIMA_REPO_PATH: ./lima-repo
           LIMA_TEMPLATES_PATH: ./lima-repo/templates
