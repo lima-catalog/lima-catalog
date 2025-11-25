@@ -15,6 +15,7 @@
 // - Handling invalid YAML and non-template files
 // - Image name extraction from various cloud provider URLs
 // - Unique keyword and category deduplication
+// - Validation error handling (non-images errors become warnings, missing images rejected)
 
 package discovery
 
@@ -114,10 +115,10 @@ probes:
       systemctl is-active docker
 `,
 			want: &TemplateInfo{
-				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:            []string{"ubuntu", "containerd"}, // containerd enabled by Lima defaults
-				ProbeCount:          1,
-				ProbeTotalLines:     1, // Changed from 2: only non-empty lines count now
+				Images:          []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
+				Keywords:        []string{"ubuntu", "containerd"}, // containerd enabled by Lima defaults
+				ProbeCount:      1,
+				ProbeTotalLines: 1, // Changed from 2: only non-empty lines count now
 			},
 			wantErr: false,
 		},
@@ -132,11 +133,11 @@ provision:
       apt-get install -y git python3 pip nodejs npm go rust cargo
 `,
 			want: &TemplateInfo{
-				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:            []string{"ubuntu", "containerd", "git", "python", "pip", "node", "npm", "go", "rust", "cargo"}, // containerd by Lima defaults
-				Categories:          []string{"development"},
-				HasDocker:           false,
-				HasK8s:              false,
+				Images:     []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
+				Keywords:   []string{"ubuntu", "containerd", "git", "python", "pip", "node", "npm", "go", "rust", "cargo"}, // containerd by Lima defaults
+				Categories: []string{"development"},
+				HasDocker:  false,
+				HasK8s:     false,
 			},
 			wantErr: false,
 		},
@@ -151,9 +152,9 @@ provision:
       apt-get install -y postgresql mysql redis mongodb
 `,
 			want: &TemplateInfo{
-				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:            []string{"ubuntu", "containerd", "go", "postgres", "mysql", "mongodb", "redis"}, // "go" from "mongodb", containerd by Lima defaults
-				Categories:          []string{"development", "database"},                                             // "development" from "go"
+				Images:     []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
+				Keywords:   []string{"ubuntu", "containerd", "go", "postgres", "mysql", "mongodb", "redis"}, // "go" from "mongodb", containerd by Lima defaults
+				Categories: []string{"development", "database"},                                             // "development" from "go"
 			},
 			wantErr: false,
 		},
@@ -167,7 +168,7 @@ containerd:
   user: false
 `,
 			want: &TemplateInfo{
-				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
+				Images:   []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
 				Keywords: []string{"ubuntu", "containerd"},
 			},
 			wantErr: false,
@@ -180,9 +181,9 @@ images:
 arch: "x86_64"
 `,
 			want: &TemplateInfo{
-				Images:              []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
-				Keywords:            []string{"ubuntu", "containerd"}, // containerd by Lima defaults
-				Arch:                []string{"x86_64"},
+				Images:   []string{"https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img"},
+				Keywords: []string{"ubuntu", "containerd"}, // containerd by Lima defaults
+				Arch:     []string{"x86_64"},
 			},
 			wantErr: false,
 		},
@@ -509,5 +510,108 @@ provision:
 		if i < len(info.CommentLines) && !strings.Contains(info.CommentLines[i], strings.TrimPrefix(expected, "# ")) {
 			t.Errorf("CommentLines[%d] = %v, should contain %v", i, info.CommentLines[i], expected)
 		}
+	}
+}
+
+func TestParseTemplateContent_ValidationWarnings(t *testing.T) {
+	tests := []struct {
+		name               string
+		content            string
+		wantErr            bool
+		wantErrContains    string
+		wantWarningCount   int
+		wantWarningContain string
+	}{
+		{
+			name: "Missing images field should be rejected",
+			content: `
+# Valid YAML but not a Lima template
+provision:
+  - mode: system
+    script: echo hello
+`,
+			wantErr:         true,
+			wantErrContains: "images",
+		},
+		{
+			name: "Empty images list should be rejected",
+			content: `
+images: []
+provision:
+  - mode: system
+    script: echo hello
+`,
+			wantErr:         true,
+			wantErrContains: "images",
+		},
+		{
+			name: "Valid template with no validation errors",
+			content: `
+images:
+  - location: https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img
+provision:
+  - mode: system
+    script: echo hello
+`,
+			wantErr:          false,
+			wantWarningCount: 0,
+		},
+		{
+			name: "Template with macOS-specific vmType should have validation warning but not be rejected",
+			content: `
+images:
+  - location: https://cloud-images.ubuntu.com/releases/22.04/release/ubuntu-22.04-server-cloudimg-amd64.img
+vmType: vz
+provision:
+  - mode: system
+    script: echo hello
+`,
+			// This should NOT be rejected - vmType: vz is macOS-specific but the template has images
+			// Lima will emit a warning but we should still accept the template
+			wantErr: false,
+			// We may or may not get a warning depending on the host OS
+			// So we don't assert a specific warning count here
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info, err := ParseTemplateContent(tt.content)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("ParseTemplateContent() expected error, got nil")
+					return
+				}
+				if tt.wantErrContains != "" && !strings.Contains(err.Error(), tt.wantErrContains) {
+					t.Errorf("ParseTemplateContent() error = %v, want error containing %q", err, tt.wantErrContains)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("ParseTemplateContent() unexpected error = %v", err)
+				return
+			}
+
+			// Check warning count if specified
+			if tt.wantWarningCount > 0 && info.ValidationWarnings < tt.wantWarningCount {
+				t.Errorf("ValidationWarnings = %d, want >= %d", info.ValidationWarnings, tt.wantWarningCount)
+			}
+
+			// Check warning message contains expected substring
+			if tt.wantWarningContain != "" {
+				found := false
+				for _, msg := range info.ValidationWarningMsgs {
+					if strings.Contains(msg, tt.wantWarningContain) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("ValidationWarningMsgs should contain %q, got %v", tt.wantWarningContain, info.ValidationWarningMsgs)
+				}
+			}
+		})
 	}
 }
