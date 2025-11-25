@@ -16,36 +16,36 @@ import (
 
 // TemplateInfo contains extracted information from a Lima template
 type TemplateInfo struct {
-	Images       []string
-	Arch         []string
-	Keywords     []string
-	HasDocker    bool
-	HasK8s       bool
-	HasPodman    bool
-	Categories   []string
-	VMType       string   // VM driver type (qemu, vz, wsl2, or custom)
+	Images     []string
+	Arch       []string
+	Keywords   []string
+	HasDocker  bool
+	HasK8s     bool
+	HasPodman  bool
+	Categories []string
+	VMType     string // VM driver type (qemu, vz, wsl2, or custom)
 
 	// Notability metrics (raw data for scoring)
-	MessageLength          int
-	ProvisionCount         int
-	ProvisionTotalLines    int
-	ProvisionScriptLines   []int    // Line count per provision script (for counting substantial scripts)
-	ProbeCount             int
-	ProbeTotalLines        int
-	ProbeScriptLines       []int    // Line count per probe script
-	ParamCount             int
-	EnvCount               int
-	CommentLineCount       int
-	ValidationWarnings     int      // Number of validation warnings from Lima
-	ValidationWarningMsgs  []string // Actual warning messages from Lima
-	CommentLines           []string // Normalized comment lines for filtering
-	ProvisionLines         []string // Normalized provision script lines (non-comments)
-	ProbeLines             []string // Normalized probe script lines (non-comments)
-	MessageLines           []string // Normalized message lines
+	MessageLength         int
+	ProvisionCount        int
+	ProvisionTotalLines   int
+	ProvisionScriptLines  []int // Line count per provision script (for counting substantial scripts)
+	ProbeCount            int
+	ProbeTotalLines       int
+	ProbeScriptLines      []int // Line count per probe script
+	ParamCount            int
+	EnvCount              int
+	CommentLineCount      int
+	ValidationWarnings    int      // Number of validation warnings from Lima
+	ValidationWarningMsgs []string // Actual warning messages from Lima
+	CommentLines          []string // Normalized comment lines for filtering
+	ProvisionLines        []string // Normalized provision script lines (non-comments)
+	ProbeLines            []string // Normalized probe script lines (non-comments)
+	MessageLines          []string // Normalized message lines
 
 	// RawContent is the complete YAML content fetched by Lima (after symlink resolution and embedding)
 	// This is used for MinHash signature generation to ensure duplicate detection works correctly
-	RawContent             string
+	RawContent string
 }
 
 // ParseTemplate downloads and parses a Lima template YAML file.
@@ -203,9 +203,25 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load YAML: %w", err)
 	}
+
+	// Collect validation errors as warnings instead of rejecting templates.
+	// Some templates use macOS/Windows specific settings that fail validation on Linux,
+	// and others have templating expressions that need substitution before validation.
+	// We only reject templates that are missing the required "images" field.
+	var validationErrors []string
+
 	if err := limayaml.Validate(y, false); err != nil {
-		return nil, fmt.Errorf("failed to validate YAML: %w", err)
+		errMsg := err.Error()
+		// Only reject if the images field is missing - this is a required field
+		if strings.Contains(errMsg, "field `images` must be set") {
+			return nil, fmt.Errorf("failed to validate YAML: %w", err)
+		}
+		// Otherwise, record as a validation warning
+		validationErrors = append(validationErrors, fmt.Sprintf("validation error: %s", errMsg))
 	}
+
+	// Combine logrus warnings with validation errors
+	allWarnings := append(hook.Warnings, validationErrors...)
 
 	info := &TemplateInfo{
 		Images:                []string{},
@@ -218,8 +234,8 @@ func ParseTemplateContent(content string) (*TemplateInfo, error) {
 		MessageLines:          []string{},
 		ProvisionScriptLines:  []int{},
 		ProbeScriptLines:      []int{},
-		ValidationWarnings:    hook.Count(),
-		ValidationWarningMsgs: hook.Warnings,
+		ValidationWarnings:    len(allWarnings),
+		ValidationWarningMsgs: allWarnings,
 	}
 
 	// Extract notability metrics
@@ -433,4 +449,3 @@ func appendUnique(slice []string, items ...string) []string {
 
 	return slice
 }
-
