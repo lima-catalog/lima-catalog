@@ -119,18 +119,15 @@ func parseTemplateWithOptions(ctx context.Context, url, repo, path string, defau
 
 		// Embed base templates and script files with a timeout
 		// Parameters: (ctx, embedScripts=true, allowInline=false)
-		// If embedding fails (e.g., rate limits, missing templates), fall back to the raw content
+		// This resolves base template references (e.g., template:_images/ubuntu) and embeds their content
 		embedCtx, embedCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer embedCancel()
 
 		if err := tmpl.Embed(embedCtx, true, false); err != nil {
-			// Log the error but don't fail - use the raw template content instead
-			// This handles cases where:
-			// - Template references don't exist in this fork
-			// - GitHub API rate limits are hit
-			// - Network issues occur
-			// The template might not have proper images field, but it won't block the pipeline
-			fmt.Printf("Warning: failed to embed template %s: %v (using raw content)\n", templateURL, err)
+			// If embedding fails, the template content may be incomplete
+			// Templates using base: directives won't have their images: field resolved
+			// Return error to skip this template rather than producing confusing validation errors
+			return nil, fmt.Errorf("failed to embed template: %w", err)
 		}
 
 		content = string(tmpl.Bytes)
