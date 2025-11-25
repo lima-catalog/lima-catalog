@@ -35,7 +35,7 @@ test-js-coverage: ## Run JavaScript unit tests with coverage (CI only)
 		echo "📦 Installing dependencies..."; \
 		npm install; \
 	fi
-	@npx c8 --reporter=text --reporter=text-summary node web/run-tests.js
+	@npx c8 --reporter=text --reporter=text-summary --reporter=lcov node web/run-tests.js
 
 test-e2e-setup: ## Install Playwright and browsers (idempotent)
 	@if ! command -v npm >/dev/null 2>&1; then \
