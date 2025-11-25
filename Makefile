@@ -1,4 +1,4 @@
-.PHONY: test test-go test-js test-e2e test-e2e-setup test-e2e-headed test-all build clean help lint vet pr
+.PHONY: test test-go test-js test-js-coverage test-e2e test-e2e-setup test-e2e-headed test-all build clean help lint vet pr
 
 # Default target
 .DEFAULT_GOAL := help
@@ -17,13 +17,25 @@ test-go: ## Run Go unit tests
 	@echo "🧪 Running Go tests..."
 	@go test ./... -v
 
-test-js: ## Run JavaScript tests (requires Node.js)
-	@echo "🧪 Running JavaScript tests..."
+test-js: ## Run JavaScript unit tests (requires Node.js)
+	@echo "🧪 Running JavaScript unit tests..."
 	@if ! command -v node >/dev/null 2>&1; then \
 		echo "❌ Error: Node.js is not installed. Please install Node.js to run JavaScript tests."; \
 		exit 1; \
 	fi
-	@node test.js
+	@node web/run-tests.js
+
+test-js-coverage: ## Run JavaScript unit tests with coverage (CI only)
+	@echo "🧪 Running JavaScript unit tests with coverage..."
+	@if ! command -v node >/dev/null 2>&1; then \
+		echo "❌ Error: Node.js is not installed."; \
+		exit 1; \
+	fi
+	@if [ ! -d "node_modules/c8" ]; then \
+		echo "📦 Installing dependencies..."; \
+		npm install; \
+	fi
+	@npx c8 --reporter=text --reporter=text-summary --reporter=lcov node web/run-tests.js
 
 test-e2e-setup: ## Install Playwright and browsers (idempotent)
 	@if ! command -v npm >/dev/null 2>&1; then \

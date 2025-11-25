@@ -34,5 +34,8 @@ playwright-report/
 test-results/
 .playwright/
 
+# Coverage reports
+coverage/
+
 # E2E test data (local copy)
 web/catalog.jsonl

@@ -199,11 +199,18 @@
     <script type="module">
         import { runner } from './js/test-framework.js';
 
-        // Import all test files
+        // Import all test files (11 modules)
         import './js/urlHelpers.test.js';
         import './js/data.test.js';
         import './js/filters.test.js';
         import './js/templateCard.test.js';
+        import './js/theme.test.js';
+        import './js/state.test.js';
+        import './js/utils.test.js';
+        import './js/sidebar.test.js';
+        import './js/modal.test.js';
+        import './js/app.test.js';
+        import './js/appActions.test.js';
 
         const runButton = document.getElementById('run-tests');
         const statusDiv = document.getElementById('status');

@@ -37,6 +37,13 @@ jobs:
       - name: Check test coverage
         run: go tool cover -func=coverage.out
 
+      - name: Upload Go coverage to Codecov
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        with:
+          files: ./coverage.out
+          flags: backend
+          name: go-coverage
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -79,6 +86,29 @@ jobs:
         with:
           version: latest
           args: --timeout=5m
+
+  unit-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Run unit tests with coverage
+        run: make test-js-coverage
+
+      - name: Upload JS coverage to Codecov
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        with:
+          files: ./coverage/lcov.info
+          flags: frontend
+          name: js-coverage
 
   e2e:
     name: E2E Tests
