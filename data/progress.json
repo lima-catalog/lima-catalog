@@ -1,11 +1,11 @@
 {
   "phase": "complete",
-  "templates_discovered": 992,
+  "templates_discovered": 684,
   "repos_fetched": 518,
   "orgs_fetched": 473,
-  "last_updated": "2025-11-25T07:29:19.93818672Z",
-  "rate_limit_remaining": 3990,
-  "rate_limit_reset": "2025-11-25T07:30:32Z",
+  "last_updated": "2025-11-26T00:46:14.967304341Z",
+  "rate_limit_remaining": 4992,
+  "rate_limit_reset": "2025-11-26T01:00:54Z",
   "official_templates": 51,
-  "community_templates": 941
+  "community_templates": 633
 }
