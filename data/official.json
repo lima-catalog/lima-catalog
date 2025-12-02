@@ -1,9 +1,10 @@
 {
-  "lastUpdate": "2025-12-01T00:58:08.021656772Z",
+  "lastUpdate": "2025-12-02T00:47:50.319365207Z",
   "knownLines": {
     "comments": [
       "!/bin/bash",
       "!/bin/sh",
+      "\"asif\" requires macOS 26+, and does not support converting back to \"raw\".",
       "\"auto\", \"csv\", \"ini\", \"json\", \"props\", \"tsv\", \"toml\", \"xml\", \"yaml\"",
       "\"default\" corresponds to the host architecture.",
       "\"deleteOnStop\" will delete the file from the host when the instance is stopped.",
@@ -1544,6 +1545,7 @@
       "Control plane node isolation",
       "Copy files from the guest to the host. Copied after provisioning scripts have been completed.",
       "Create or edit a file in the guest filesystem by using `yq`.",
+      "Currently only applies to the primary disk image.",
       "Currently, this port number has to be specified manually.",
       "DEPRECATED The ansible mode is deprecated, and should not be used. Instead call ansible-playbook directly,",
       "DEPRECATED: Debian 11 (Bullseye) is deprecated. Use debian-12 (Bookworm) or debian-13 (Trixie) instead.",
@@ -1834,6 +1836,7 @@
       "Specifies a caching policy. Valid options are: \"none\", \"loose\", \"fscache\" and \"mmap\".",
       "Specify QEMU CPU emulation, e.g., \"host\", \"qemu64\", \"Haswell\".",
       "Specify desired QEMU CPU type for each arch.",
+      "Specify the disk image format: \"raw\" or \"asif\".",
       "Specify the timezone name (as used by the zoneinfo database). Specify the empty string",
       "Static names can be defined here as an alternative to adding them to the hosts /etc/hosts.",
       "Supported security models are \"passthrough\", \"mapped-xattr\", \"mapped-file\" and \"none\".",
@@ -3194,6 +3197,7 @@
       "digest: sha512:c1a1645cf37ce628a8734bb25dce09fcd0858865302635ce0ae88b2da23bb615da43d483984709d743cd6b6b45d56d88e9f6800f0b3110ba1b09c01b990342f3",
       "disk: \"100GiB\"",
       "disk: null",
+      "diskImageFormat: null",
       "disks should be a list of disk name strings, for example:",
       "disks should either be a list of disk name strings, for example:",
       "display: \"none\"",
@@ -3797,6 +3801,7 @@
       "🟢 Builtin default: \"qemu\"",
       "🟢 Builtin default: \"qemu64\" (or \"host\" when running on x86_64 host)",
       "🟢 Builtin default: \"qemu64\" (or \"host,-pdpe1gb\" when running on x86_64 host)",
+      "🟢 Builtin default: \"raw\"",
       "🟢 Builtin default: \"reverse-sshfs\"",
       "🟢 Builtin default: \"reverse-sshfs\" (for QEMU), \"virtiofs\" (for vz)",
       "🟢 Builtin default: \"rv64\" (or \"host\" when running on riscv64 host)",
