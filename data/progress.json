@@ -3,9 +3,9 @@
   "templates_discovered": 684,
   "repos_fetched": 518,
   "orgs_fetched": 473,
-  "last_updated": "2025-12-05T00:48:39.118785138Z",
-  "rate_limit_remaining": 4995,
-  "rate_limit_reset": "2025-12-05T01:41:57Z",
+  "last_updated": "2025-12-06T00:45:16.145592824Z",
+  "rate_limit_remaining": 4975,
+  "rate_limit_reset": "2025-12-06T01:32:10Z",
   "official_templates": 51,
   "community_templates": 633
 }
